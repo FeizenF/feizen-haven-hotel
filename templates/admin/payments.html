@@ -1,0 +1,652 @@
+{% extends "base.html" %}
+
+{% block title %}Payment Management - Feizen Haven{% endblock %}
+
+{% block extra_css %}
+<style>
+    .stat-card {
+        background: white;
+        border-radius: 12px;
+        padding: 20px;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        transition: transform 0.3s ease;
+    }
+    
+    .dark .stat-card {
+        background: #1f2937;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+    }
+    
+    .stat-card:hover {
+        transform: translateY(-5px);
+    }
+    
+    .stat-icon {
+        width: 60px;
+        height: 60px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 16px;
+    }
+    
+    .stat-value {
+        font-size: 2rem;
+        font-weight: bold;
+        margin-bottom: 4px;
+    }
+    
+    .stat-label {
+        color: #6b7280;
+        font-size: 14px;
+    }
+    
+    .admin-table th {
+        font-weight: 600;
+        white-space: nowrap;
+    }
+    
+    .status-badge {
+        display: inline-block;
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .status-pending { background-color: #fef3c7; color: #92400e; }
+    .status-processing { background-color: #dbeafe; color: #1e40af; }
+    .status-completed { background-color: #d1fae5; color: #065f46; }
+    .status-failed { background-color: #fee2e2; color: #991b1b; }
+    .status-expired { background-color: #e5e7eb; color: #374151; }
+    
+    .payment-method-icon {
+        width: 32px;
+        height: 32px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 8px;
+    }
+    
+    .payment-method-qris { background-color: #10b981; color: white; }
+    .payment-method-bank { background-color: #3b82f6; color: white; }
+    .payment-method-credit { background-color: #8b5cf6; color: white; }
+    .payment-method-ewallet { background-color: #f59e0b; color: white; }
+    
+    .action-btn {
+        padding: 6px 10px;
+        border-radius: 6px;
+        transition: all 0.2s ease;
+    }
+    
+    .action-btn:hover {
+        transform: translateY(-2px);
+    }
+    
+    .modal-overlay {
+        background-color: rgba(0, 0, 0, 0.5);
+        backdrop-filter: blur(4px);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="pt-24 pb-16">
+    <div class="max-w-7xl mx-auto px-4">
+        <!-- Header -->
+        <div class="mb-8">
+            <h1 class="text-3xl font-serif font-bold text-gray-900 dark:text-white">Payment Management</h1>
+            <p class="text-gray-600 dark:text-gray-300">Manage and verify customer payments</p>
+        </div>
+        
+        <!-- Stats Cards -->
+        <div class="grid md:grid-cols-4 gap-6 mb-8">
+            <div class="stat-card">
+                <div class="stat-icon bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-300">
+                    <i class="fas fa-clock"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-value">{{ pending_payments|default(0) }}</div>
+                    <div class="stat-label text-gray-600 dark:text-gray-300">Pending</div>
+                </div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-icon bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-300">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-value">{{ completed_payments|default(0) }}</div>
+                    <div class="stat-label text-gray-600 dark:text-gray-300">Completed</div>
+                </div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-icon bg-yellow-100 text-yellow-600 dark:bg-yellow-900/30 dark:text-yellow-300">
+                    <i class="fas fa-sync-alt"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-value">{{ processing_payments|default(0) }}</div>
+                    <div class="stat-label text-gray-600 dark:text-gray-300">Processing</div>
+                </div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-icon bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-300">
+                    <i class="fas fa-times-circle"></i>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-value">{{ failed_payments|default(0) }}</div>
+                    <div class="stat-label text-gray-600 dark:text-gray-300">Failed</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Payment List -->
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden admin-table">
+            <div class="px-6 py-4 border-b dark:border-gray-700 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                <h2 class="text-xl font-semibold text-gray-900 dark:text-white">Payment Requests</h2>
+                
+                <!-- Filter -->
+                <div class="flex flex-wrap gap-4">
+                    <div class="flex items-center space-x-2">
+                        <label class="text-sm text-gray-600 dark:text-gray-300">Status:</label>
+                        <select id="statusFilter" class="px-4 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-800 text-sm">
+                            <option value="all">All Status</option>
+                            <option value="pending">Pending</option>
+                            <option value="processing">Processing</option>
+                            <option value="completed">Completed</option>
+                            <option value="failed">Failed</option>
+                            <option value="expired">Expired</option>
+                        </select>
+                    </div>
+                    
+                    <div class="flex items-center space-x-2">
+                        <label class="text-sm text-gray-600 dark:text-gray-300">Method:</label>
+                        <select id="methodFilter" class="px-4 py-2 rounded-lg border dark:border-gray-700 dark:bg-gray-800 text-sm">
+                            <option value="all">All Methods</option>
+                            <option value="qris">QRIS</option>
+                            <option value="bank_transfer">Bank Transfer</option>
+                            <option value="credit_card">Credit Card</option>
+                            <option value="ovo">OVO</option>
+                            <option value="gopay">GoPay</option>
+                            <option value="dana">DANA</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                    <thead class="bg-gray-50 dark:bg-gray-900">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                Payment ID
+                            </th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                Booking
+                            </th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                Customer
+                            </th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                Method
+                            </th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                Amount
+                            </th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                Status
+                            </th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                Actions
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                        {% if payments %}
+                        {% for payment in payments %}
+                        {% set pay_id = payment.get('payment_id', payment.get('id', 0)) %}
+                        {% set booking_id = payment.get('booking_id', 0) %}
+                        {% set customer_name = payment.get('customer_name', 'N/A') %}
+                        {% set customer_email = payment.get('customer_email', 'N/A') %}
+                        {% set payment_method = payment.get('payment_method', 'N/A') %}
+                        {% set amount = payment.get('amount', 0) %}
+                        {% set status = payment.get('payment_status', payment.get('status', 'pending')) %}
+                        {% set room_name = payment.get('room_name', 'N/A') %}
+                        {% set payment_date = payment.get('payment_date', payment.get('created_at', '')) %}
+                        
+                        <tr class="hover:bg-gray-50 dark:hover:bg-gray-900/50 transition-colors">
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-sm font-medium text-gray-900 dark:text-white">
+                                    #PAY{{ "%04d"|format(pay_id) }}
+                                </div>
+                                <div class="text-xs text-gray-500">
+                                    {% if payment_date %}
+                                        {{ payment_date.strftime('%d/%m/%Y %H:%M') }}
+                                    {% else %}
+                                        N/A
+                                    {% endif %}
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-sm font-medium text-gray-900 dark:text-white">
+                                    #FH{{ "%04d"|format(booking_id) }}
+                                </div>
+                                <div class="text-xs text-gray-500">
+                                    {{ room_name }}
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-sm font-medium text-gray-900 dark:text-white">{{ customer_name }}</div>
+                                <div class="text-xs text-gray-500">{{ customer_email }}</div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="flex items-center">
+                                    {% if payment_method == 'qris' %}
+                                        <div class="payment-method-icon payment-method-qris">
+                                            <i class="fas fa-qrcode"></i>
+                                        </div>
+                                    {% elif payment_method == 'bank_transfer' %}
+                                        <div class="payment-method-icon payment-method-bank">
+                                            <i class="fas fa-university"></i>
+                                        </div>
+                                    {% elif payment_method == 'credit_card' %}
+                                        <div class="payment-method-icon payment-method-credit">
+                                            <i class="fas fa-credit-card"></i>
+                                        </div>
+                                    {% else %}
+                                        <div class="payment-method-icon payment-method-ewallet">
+                                            <i class="fas fa-wallet"></i>
+                                        </div>
+                                    {% endif %}
+                                    <span class="text-sm font-medium text-gray-900 dark:text-white">{{ payment_method|replace('_', ' ')|upper }}</span>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-sm font-bold text-gold">
+                                    Rp{{ "{:,.0f}".format(amount) }}
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                {% if status == 'pending' %}
+                                    <span class="status-badge status-pending">{{ status|title }}</span>
+                                {% elif status == 'processing' %}
+                                    <span class="status-badge status-processing">{{ status|title }}</span>
+                                {% elif status == 'completed' %}
+                                    <span class="status-badge status-completed">{{ status|title }}</span>
+                                {% elif status == 'failed' %}
+                                    <span class="status-badge status-failed">{{ status|title }}</span>
+                                {% elif status == 'expired' %}
+                                    <span class="status-badge status-expired">{{ status|title }}</span>
+                                {% else %}
+                                    <span class="status-badge bg-gray-100 text-gray-800">{{ status|title }}</span>
+                                {% endif %}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                <div class="flex items-center space-x-2">
+                                    <!-- View Payment Details Modal Trigger -->
+                                    <button onclick="openPaymentModal({{ pay_id }})" 
+                                            class="action-btn bg-blue-100 text-blue-600 hover:bg-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:hover:bg-blue-900/50"
+                                            title="View Details">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                    
+                                    <!-- Verify Button -->
+                                    {% if status in ['pending', 'processing'] %}
+                                    <button onclick="verifyPayment({{ pay_id }})" 
+                                            class="action-btn bg-green-100 text-green-600 hover:bg-green-200 dark:bg-green-900/30 dark:text-green-300 dark:hover:bg-green-900/50"
+                                            title="Verify Payment">
+                                        <i class="fas fa-check"></i>
+                                    </button>
+                                    {% endif %}
+                                    
+                                    <!-- Reject Button -->
+                                    {% if status in ['pending', 'processing'] %}
+                                    <button onclick="rejectPayment({{ pay_id }})" 
+                                            class="action-btn bg-red-100 text-red-600 hover:bg-red-200 dark:bg-red-900/30 dark:text-red-300 dark:hover:bg-red-900/50"
+                                            title="Reject Payment">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                        {% else %}
+                        <tr>
+                            <td colspan="7" class="px-6 py-12 text-center">
+                                <div class="flex flex-col items-center justify-center text-gray-500">
+                                    <i class="fas fa-credit-card text-4xl mb-4 opacity-50"></i>
+                                    <p class="text-lg font-medium mb-2">No payments found</p>
+                                    <p class="text-sm">Try adjusting your filters or check back later</p>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- Pagination -->
+            {% if payments|length > 0 %}
+            <div class="px-6 py-4 border-t dark:border-gray-700">
+                <div class="flex flex-col md:flex-row justify-between items-center gap-4">
+                    <div class="text-sm text-gray-500">
+                        Showing {{ payments|length }} of {{ total_payments|default(0) }} payments
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <button class="px-3 py-1 border dark:border-gray-700 rounded-lg hover:border-gold text-sm flex items-center">
+                            <i class="fas fa-chevron-left mr-1"></i>
+                            Previous
+                        </button>
+                        <span class="px-3 py-1 bg-gold text-navy rounded-lg text-sm font-medium">1</span>
+                        <button class="px-3 py-1 border dark:border-gray-700 rounded-lg hover:border-gold text-sm flex items-center">
+                            Next
+                            <i class="fas fa-chevron-right ml-1"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Payment Details Modal -->
+<div id="paymentModal" class="fixed inset-0 modal-overlay hidden z-50">
+    <div class="flex items-center justify-center min-h-screen p-4">
+        <div class="bg-white dark:bg-gray-800 rounded-lg w-full max-w-4xl shadow-2xl">
+            <div class="p-6">
+                <div class="flex justify-between items-center mb-6 pb-4 border-b dark:border-gray-700">
+                    <h3 class="text-xl font-semibold text-gray-900 dark:text-white">Payment Details</h3>
+                    <button onclick="closePaymentModal()" 
+                            class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 text-lg">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                
+                <div id="paymentDetails" class="max-h-[70vh] overflow-y-auto pr-2">
+                    <!-- Content will be loaded via AJAX -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+
+    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+
+     // Helper function untuk fetch dengan CSRF
+    function fetchWithCSRF(url, options = {}) 
+        const defaultOptions = {
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken
+            }
+        };
+        
+        return fetch(url, { ...defaultOptions, ...options });
+    // Payment modal functions
+    function openPaymentModal(paymentId) {
+        if (!paymentId || paymentId === 0) {
+            alert('Payment ID not found');
+            return;
+        }
+        
+        // Show loading state
+        document.getElementById('paymentDetails').innerHTML = `
+            <div class="flex justify-center items-center py-12">
+                <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-gold"></div>
+            </div>
+        `;
+        
+        document.getElementById('paymentModal').classList.remove('hidden');
+        
+        fetch(`/admin/payment/${paymentId}/details`)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.html) {
+                    document.getElementById('paymentDetails').innerHTML = data.html;
+                } else {
+                    document.getElementById('paymentDetails').innerHTML = `
+                        <div class="text-center py-8 text-red-500">
+                            <i class="fas fa-exclamation-triangle text-3xl mb-4"></i>
+                            <p>Error loading payment details</p>
+                        </div>
+                    `;
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                document.getElementById('paymentDetails').innerHTML = `
+                    <div class="text-center py-8 text-red-500">
+                        <i class="fas fa-exclamation-triangle text-3xl mb-4"></i>
+                        <p>Error loading payment details</p>
+                        <p class="text-sm mt-2">${error.message}</p>
+                    </div>
+                `;
+            });
+    }
+    
+    function closePaymentModal() {
+        document.getElementById('paymentModal').classList.add('hidden');
+    }
+    
+    // Close modal when clicking outside
+    document.getElementById('paymentModal').addEventListener('click', function(e) {
+        if (e.target === this) {
+            closePaymentModal();
+        }
+    });
+    
+    // Close modal with Escape key
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape' && !document.getElementById('paymentModal').classList.contains('hidden')) {
+            closePaymentModal();
+        }
+    });
+    
+    // Fungsi untuk verify payment
+function verifyPayment(paymentId) {
+    if (confirm('Are you sure you want to verify this payment?')) {
+        fetch(`/admin/payment/${paymentId}/verify`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('meta[name="csrf-token"]').content
+            },
+            body: JSON.stringify({
+                action: 'verify',
+                reason: 'Payment verified by admin'
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('Payment verified successfully!');
+                // Refresh page or update UI
+                location.reload();
+            } else {
+                alert('Error: ' + data.error);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Failed to verify payment');
+        });
+    }
+}
+
+// Fungsi untuk reject payment
+function rejectPayment(paymentId) {
+    const reason = prompt('Please enter reason for rejection:');
+    if (reason === null) return; // User cancelled
+    
+    if (!reason.trim()) {
+        alert('Please enter a reason');
+        return;
+    }
+    
+    if (confirm('Are you sure you want to reject this payment?')) {
+        fetch(`/admin/payment/${paymentId}/verify`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('meta[name="csrf-token"]').content
+            },
+            body: JSON.stringify({
+                action: 'reject',
+                reason: reason
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('Payment rejected successfully!');
+                location.reload();
+            } else {
+                alert('Error: ' + data.error);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Failed to reject payment');
+        });
+    }
+}
+       
+    // Filter payments
+    document.addEventListener('DOMContentLoaded', function() {
+        const statusFilter = document.getElementById('statusFilter');
+        const methodFilter = document.getElementById('methodFilter');
+        
+        // Set filter values from URL parameters
+        const urlParams = new URLSearchParams(window.location.search);
+        const statusParam = urlParams.get('status');
+        const methodParam = urlParams.get('method');
+        
+        if (statusParam && statusFilter) {
+            statusFilter.value = statusParam;
+        }
+        
+        if (methodParam && methodFilter) {
+            methodFilter.value = methodParam;
+        }
+        
+        if (statusFilter) {
+            statusFilter.addEventListener('change', function() {
+                filterPayments();
+            });
+        }
+        
+        if (methodFilter) {
+            methodFilter.addEventListener('change', function() {
+                filterPayments();
+            });
+        }
+        
+        // Initialize tooltips
+        initializeTooltips();
+    });
+    
+    function filterPayments() {
+        const statusFilter = document.getElementById('statusFilter');
+        const methodFilter = document.getElementById('methodFilter');
+        
+        if (!statusFilter || !methodFilter) return;
+        
+        const status = statusFilter.value;
+        const method = methodFilter.value;
+        
+        let url = '/admin/payments';
+        const params = [];
+        
+        if (status !== 'all') params.push(`status=${status}`);
+        if (method !== 'all') params.push(`method=${method}`);
+        
+        if (params.length > 0) {
+            url += '?' + params.join('&');
+        }
+        
+        window.location.href = url;
+    }
+    
+    // Helper function for notifications
+    function showNotification(message, type = 'info') {
+        // Create notification element
+        const notification = document.createElement('div');
+        notification.className = `fixed top-4 right-4 z-50 px-6 py-4 rounded-lg shadow-lg transform transition-all duration-300 ${
+            type === 'success' ? 'bg-green-500 text-white' :
+            type === 'error' ? 'bg-red-500 text-white' :
+            'bg-blue-500 text-white'
+        }`;
+        notification.innerHTML = `
+            <div class="flex items-center">
+                <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-triangle' : 'info-circle'} mr-3"></i>
+                <span>${message}</span>
+            </div>
+        `;
+        
+        document.body.appendChild(notification);
+        
+        // Animate in
+        setTimeout(() => {
+            notification.classList.add('translate-x-0', 'opacity-100');
+            notification.classList.remove('translate-x-full', 'opacity-0');
+        }, 10);
+        
+        // Remove after 3 seconds
+        setTimeout(() => {
+            notification.classList.remove('translate-x-0', 'opacity-100');
+            notification.classList.add('translate-x-full', 'opacity-0');
+            setTimeout(() => {
+                if (notification.parentNode) {
+                    notification.parentNode.removeChild(notification);
+                }
+            }, 300);
+        }, 3000);
+    }
+    
+    function initializeTooltips() {
+        // Add tooltips to action buttons
+        document.querySelectorAll('[title]').forEach(el => {
+            el.addEventListener('mouseenter', function(e) {
+                const title = this.getAttribute('title');
+                if (title) {
+                    const tooltip = document.createElement('div');
+                    tooltip.className = 'absolute z-50 px-2 py-1 text-xs bg-gray-900 text-white rounded shadow-lg';
+                    tooltip.textContent = title;
+                    document.body.appendChild(tooltip);
+                    
+                    const rect = this.getBoundingClientRect();
+                    tooltip.style.left = `${rect.left + rect.width/2 - tooltip.offsetWidth/2}px`;
+                    tooltip.style.top = `${rect.top - tooltip.offsetHeight - 5}px`;
+                    
+                    this._tooltip = tooltip;
+                }
+            });
+            
+            el.addEventListener('mouseleave', function() {
+                if (this._tooltip) {
+                    this._tooltip.remove();
+                    this._tooltip = null;
+                }
+            });
+        });
+    }
+</script>
+{% endblock %}

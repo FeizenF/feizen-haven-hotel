@@ -1,0 +1,190 @@
+{% extends "base.html" %}
+
+{% block title %}Booking Success - Feizen Haven{% endblock %}
+
+{% block content %}
+<div class="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 py-12 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-md w-full text-center">
+        <!-- Success Icon -->
+        <div class="mx-auto flex items-center justify-center h-24 w-24 rounded-full bg-green-100 dark:bg-green-900 mb-6">
+            <i class="fas fa-check text-green-600 dark:text-green-300 text-4xl"></i>
+        </div>
+        
+        <h1 class="text-3xl font-serif font-bold text-gray-900 dark:text-white mb-4">
+            Booking Confirmed! 🎉
+        </h1>
+        
+        <p class="text-lg text-gray-600 dark:text-gray-300 mb-8">
+            Thank you for choosing Feizen Haven. Your booking has been successfully created.
+        </p>
+        
+        <!-- BOOKING CODE (TAMBAHKAN INI) -->
+        <div class="bg-gradient-to-r from-navy to-gray-900 rounded-lg p-4 mb-6 text-white">
+            <p class="text-sm mb-1">Your Booking Reference</p>
+            <p class="text-2xl font-bold font-mono tracking-wider">
+                {{ booking.booking_code if booking.booking_code else 'FH%06d'|format(booking.id) }}
+            </p>
+            <p class="text-xs mt-2 text-gray-300">
+                <i class="fas fa-info-circle mr-1"></i>
+                Save this code for all inquiries
+            </p>
+        </div>
+        
+        <!-- Booking Details -->
+        <div class="bg-white dark:bg-gray-800 rounded-lg p-6 mb-8 shadow-lg">
+            <h3 class="text-xl font-semibold mb-4">Booking Details</h3>
+            
+            <div class="space-y-3 text-left">
+                <div class="flex justify-between">
+                    <span class="text-gray-600 dark:text-gray-300">Booking ID:</span>
+                    <span class="font-semibold">#FH{{ "%04d"|format(booking.id) }}</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-gray-600 dark:text-gray-300">Room:</span>
+                    <span class="font-semibold">{{ booking.room_name }}</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-gray-600 dark:text-gray-300">Check-in:</span>
+                    <span>{{ booking.check_in_formatted if booking.check_in_formatted else booking.check_in }}</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-gray-600 dark:text-gray-300">Check-out:</span>
+                    <span>{{ booking.check_out_formatted if booking.check_out_formatted else booking.check_out }}</span>
+                </div>
+                <div class="flex justify-between">
+                    <span class="text-gray-600 dark:text-gray-300">Guests:</span>
+                    <span>{{ booking.guests }} {{ 'Guest' if booking.guests == 1 else 'Guests' }}</span>
+                </div>
+                <div class="flex justify-between border-t pt-3 mt-3">
+                    <span class="font-semibold">Total Amount:</span>
+                    <span class="text-gold font-bold text-lg">
+                        {{ booking.formatted_price if booking.formatted_price else 'Rp{:,.0f}'.format(booking.total_price) }}
+                    </span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Next Steps -->
+        <div class="mb-8">
+            <h3 class="text-lg font-semibold mb-3">Next Steps</h3>
+            <p class="text-gray-600 dark:text-gray-300 text-sm mb-4">
+                A confirmation email has been sent to your email address with all the booking details and payment instructions.
+            </p>
+            
+            <div class="flex items-center justify-center text-sm text-gray-500 mb-2">
+                <i class="fas fa-info-circle text-gold mr-2"></i>
+                <span>Please complete your payment within 24 hours</span>
+            </div>
+        </div>
+        
+        <!-- Action Buttons -->
+<div class="space-y-4">
+    <!-- TOMBOL PAY NOW - LOGIC YANG BENAR -->
+    {% if booking.payment_status not in ['verified', 'paid', 'completed'] and booking.status in ['pending', 'waiting_payment'] %}
+    <a href="{{ url_for('booking_payment', booking_id=booking.id) }}" 
+       class="w-full inline-flex justify-center items-center py-4 px-6 border border-transparent text-lg font-bold rounded-lg text-white bg-gradient-to-r from-gold to-yellow-500 hover:from-gold/90 hover:to-yellow-500/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gold shadow-lg hover:shadow-xl transition-all duration-300">
+        PAY NOW - {{ booking.formatted_price if booking.formatted_price else 'Rp{:,.0f}'.format(booking.total_price) }}
+    </a>
+    
+    <!-- Payment Timer Info -->
+    <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+        <div class="flex items-center">
+            <i class="fas fa-clock text-blue-600 mr-3"></i>
+            <div>
+                <p class="font-medium text-blue-800">Complete payment within {{ booking.hours_left if booking.hours_left else '24' }} hours</p>
+                <p class="text-sm text-blue-700">After this time, booking will be automatically cancelled</p>
+            </div>
+        </div>
+    </div>
+    
+    {% elif booking.payment_status in ['waiting_verification', 'pending'] %}
+    <!-- Payment sedang diverifikasi -->
+    <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-6">
+        <div class="flex items-center">
+            <div class="w-12 h-12 bg-yellow-100 rounded-full flex items-center justify-center mr-4">
+                <i class="fas fa-clock text-yellow-600 text-xl"></i>
+            </div>
+            <div class="flex-1">
+                <h4 class="font-bold text-yellow-800 text-lg">Payment Proof Uploaded ✓</h4>
+                <p class="text-yellow-700 mb-3">Waiting for admin verification (1-2 hours)</p>
+                <a href="{{ url_for('booking_payment', booking_id=booking.id) }}" 
+                   class="inline-flex items-center px-4 py-2 bg-yellow-100 text-yellow-800 hover:bg-yellow-200 rounded-lg font-medium transition-colors">
+                    <i class="fas fa-redo mr-2"></i>
+                    Upload New Proof
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    {% elif booking.status == 'confirmed' or booking.payment_status in ['verified', 'paid', 'completed'] %}
+    <!-- Sudah dibayar -->
+    <div class="bg-green-50 border border-green-200 rounded-lg p-6">
+        <div class="flex items-center">
+            <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mr-4">
+                <i class="fas fa-check-circle text-green-600 text-xl"></i>
+            </div>
+            <div>
+                <h4 class="font-bold text-green-800 text-lg">Payment Completed ✓</h4>
+                <p class="text-green-700">Your booking is confirmed and ready for check-in</p>
+            </div>
+        </div>
+    </div>
+    
+    {% elif booking.status == 'cancelled' or booking.status == 'expired' %}
+    <!-- Dibatalkan/expired -->
+    <div class="bg-red-50 border border-red-200 rounded-lg p-6">
+        <div class="flex items-center">
+            <div class="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mr-4">
+                <i class="fas fa-times-circle text-red-600 text-xl"></i>
+            </div>
+            <div>
+                <h4 class="font-bold text-red-800 text-lg">Booking {{ booking.status|title }}</h4>
+                <p class="text-red-700 mb-3">
+                    {% if booking.status == 'expired' %}
+                    Payment time expired. Please create a new booking.
+                    {% else %}
+                    This booking has been cancelled.
+                    {% endif %}
+                </p>
+                <a href="{{ url_for('rooms') }}" 
+                   class="inline-flex items-center px-4 py-2 bg-red-100 text-red-800 hover:bg-red-200 rounded-lg font-medium transition-colors">
+                    <i class="fas fa-bed mr-2"></i>
+                    Book New Room
+                </a>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    
+    <!-- Tombol lainnya -->
+    <div class="space-y-3">
+        <a href="{{ url_for('my_bookings') }}" 
+           class="w-full inline-flex justify-center items-center py-3 px-4 border border-transparent text-sm font-medium rounded-lg text-white bg-navy hover:bg-navy/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-navy transition-colors">
+            <i class="fas fa-calendar-alt mr-2"></i>
+            View All My Bookings
+        </a>
+        
+        <a href="{{ url_for('rooms') }}" 
+           class="w-full inline-flex justify-center items-center py-3 px-4 border border-gold text-sm font-medium rounded-lg text-gold hover:bg-gold/10 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gold transition-colors">
+            <i class="fas fa-bed mr-2"></i>
+            Browse More Rooms
+        </a>
+        
+        <a href="{{ url_for('index') }}" 
+           class="w-full inline-flex justify-center items-center py-3 px-4 border border-gray-300 text-sm font-medium rounded-lg text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-colors">
+            <i class="fas fa-home mr-2"></i>
+            Back to Homepage
+        </a>
+    </div>
+</div>
+        
+        <!-- Contact Info -->
+        <div class="mt-8 pt-8 border-t dark:border-gray-700">
+            <p class="text-sm text-gray-500">
+                <i class="fas fa-phone-alt text-gold mr-2"></i>
+                Need help? Call us at (0274) 714240
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}

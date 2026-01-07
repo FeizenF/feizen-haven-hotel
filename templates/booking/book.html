@@ -1,0 +1,762 @@
+{% extends "base.html" %}
+
+{% block title %}Book Now - Feizen Haven Luxury Hotel{% endblock %}
+
+{% block extra_css %}
+<style>
+    .progress-step {
+        text-align: center;
+        position: relative;
+        flex: 1;
+    }
+    
+    .step-number {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background-color: #e5e7eb;
+        color: #6b7280;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 8px;
+        font-weight: 600;
+        border: 3px solid white;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    .progress-step.active .step-number {
+        background-color: #C5A145;
+        color: white;
+        border-color: #C5A145;
+    }
+    
+    .sticky-summary {
+        position: sticky;
+        top: 100px;
+    }
+    
+    .room-preview {
+        position: relative;
+        border-radius: 12px;
+        overflow: hidden;
+        height: 250px;
+    }
+    
+    .room-badge {
+        position: absolute;
+        top: 16px;
+        left: 16px;
+        background: rgba(0, 0, 0, 0.7);
+        color: white;
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 600;
+        backdrop-filter: blur(4px);
+    }
+    
+    .price-breakdown {
+        background: #f8f9fa;
+        border-radius: 10px;
+        padding: 16px;
+    }
+    
+    .date-display {
+        background: #f8f9fa;
+        padding: 12px;
+        border-radius: 8px;
+        margin-bottom: 8px;
+    }
+    
+    .date-icon {
+        width: 40px;
+        height: 40px;
+        background: #C5A145;
+        color: white;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 14px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="pt-24 pb-16 bg-gray-50 dark:bg-gray-900">
+    <div class="max-w-7xl mx-auto px-4">
+        <!-- Page Header -->
+        <div class="mb-8">
+            <h1 class="text-3xl md:text-4xl font-serif font-bold mb-3">Complete Your Booking</h1>
+            <p class="text-gray-600 dark:text-gray-300">Review your stay details and complete the reservation</p>
+            <!-- OPTIONAL: Tombol back kecil di sini -->
+            <div class="mt-2">
+                <a href="{{ url_for('rooms') }}" 
+                   class="inline-flex items-center text-sm text-gold hover:text-gold/80 font-medium transition-colors">
+                    <i class="fas fa-arrow-left mr-2"></i>
+                    Back to all rooms
+                </a>
+            </div>
+        </div>
+
+        <!-- Progress Indicator -->
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 mb-8">
+            <div class="flex justify-between mb-4">
+                <div class="progress-step active">
+                    <div class="step-number">1</div>
+                    <div class="text-sm font-semibold">Room & Dates</div>
+                </div>
+                <div class="flex items-center justify-center flex-1">
+                    <div class="h-1 bg-gray-200 dark:bg-gray-700 w-full mx-2"></div>
+                </div>
+                <div class="progress-step">
+                    <div class="step-number">2</div>
+                    <div class="text-sm font-medium text-gray-500">Payment</div>
+                </div>
+            </div>
+            <div class="text-center mt-2">
+                <p class="text-sm text-gray-500">Step 1 of 2 • Enter booking details</p>
+            </div>
+        </div>
+
+        <div class="grid lg:grid-cols-3 gap-8">
+            <!-- Left Column - Form (2/3 width) -->
+            <div class="lg:col-span-2">
+                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 mb-6">
+                    <div class="flex items-center justify-between mb-6">
+                        <h2 class="text-2xl font-serif font-bold">Booking Information</h2>
+                    </div>
+                    
+                    <!-- Room Info Card -->
+                    <div class="mb-8 p-4 border border-gray-200 dark:border-gray-700 rounded-xl">
+                        <div class="flex items-start">
+                            <div class="w-24 h-24 rounded-lg overflow-hidden flex-shrink-0 mr-4">
+                                {% if room.images_list and room.images_list|length > 0 %}
+                                    {% set main_image = room.images_list[0] %}
+                                    {% if main_image.startswith('http') %}
+                                        <img src="{{ main_image }}" 
+                                             alt="{{ room.name }}" 
+                                             class="w-full h-full object-cover">
+                                    {% elif main_image.startswith('/static/') %}
+                                        <img src="{{ main_image }}" 
+                                             alt="{{ room.name }}" 
+                                             class="w-full h-full object-cover">
+                                    {% else %}
+                                        <img src="{{ url_for('static', filename='uploads/rooms/' + main_image) }}" 
+                                             alt="{{ room.name }}" 
+                                             class="w-full h-full object-cover"
+                                             onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1611892440504-42a792e24d32?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80'">
+                                    {% endif %}
+                                {% else %}
+                                    <div class="w-full h-full bg-gradient-to-br from-gold/20 to-navy/20 flex items-center justify-center">
+                                        <i class="fas fa-bed text-gray-400 text-2xl"></i>
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="flex-1">
+                                <div class="flex justify-between items-start">
+                                    <div>
+                                        <h3 class="font-bold text-lg mb-1">{{ room.name }}</h3>
+                                        <div class="flex items-center text-sm text-gray-600 dark:text-gray-300 mb-2">
+                                            <i class="fas fa-expand-arrows-alt mr-2"></i>
+                                            <span>{{ room.size or '35 m²' }}</span>
+                                            <span class="mx-2">•</span>
+                                            <i class="fas fa-user-friends mr-2"></i>
+                                            <span>Max {{ room.capacity }} Guests</span>
+                                        </div>
+                                        <div class="flex flex-wrap gap-2">
+                                            {% if room.amenities_list and room.amenities_list|length > 0 %}
+                                                {% for amenity in room.amenities_list[:3] %}
+                                                <span class="px-3 py-1 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-xs rounded-full">
+                                                    {{ amenity }}
+                                                </span>
+                                                {% endfor %}
+                                                {% if room.amenities_list|length > 3 %}
+                                                <span class="px-3 py-1 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-xs rounded-full">
+                                                    +{{ room.amenities_list|length - 3 }} more
+                                                </span>
+                                                {% endif %}
+                                            {% else %}
+                                                <span class="px-3 py-1 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-xs rounded-full">
+                                                    Free WiFi
+                                                </span>
+                                                <span class="px-3 py-1 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-xs rounded-full">
+                                                    Air Conditioning
+                                                </span>
+                                                <span class="px-3 py-1 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-xs rounded-full">
+                                                    TV
+                                                </span>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    <div class="text-right">
+                                        <div class="text-lg font-bold text-gold">{{ room.formatted_price }}</div>
+                                        <div class="text-sm text-gray-500">per night</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Booking Form -->
+                    <form method="POST" action="{{ url_for('book') }}" id="bookingForm">
+                        <input type="hidden" name="room_id" value="{{ room.id }}">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        
+                        <!-- Guest Information Section -->
+                        <div class="mb-8">
+                            <h3 class="text-lg font-semibold mb-4 flex items-center">
+                                <i class="fas fa-user text-gold mr-3"></i>
+                                Guest Information
+                            </h3>
+                            
+                            <div class="grid md:grid-cols-2 gap-4 mb-4">
+                                <div>
+                                    <label class="block text-sm font-medium mb-2">Full Name *</label>
+                                    <input type="text" name="guest_name" 
+                                           value="{{ session.get('first_name', '') }} {{ session.get('last_name', '') }}" 
+                                           class="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-gold focus:border-transparent"
+                                           required>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium mb-2">Email *</label>
+                                    <input type="email" name="guest_email" 
+                                           value="{{ session.get('email', '') }}"
+                                           class="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-gold focus:border-transparent"
+                                           required>
+                                </div>
+                            </div>
+                            
+                            <div class="grid md:grid-cols-2 gap-4 mb-4">
+                                <div>
+                                    <label class="block text-sm font-medium mb-2">Phone Number *</label>
+                                    <input type="tel" name="guest_phone" 
+                                           value="{{ session.get('phone', '') }}"
+                                           class="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-gold focus:border-transparent"
+                                           required>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium mb-2">Country</label>
+                                    <input type="text" name="guest_country" 
+                                           value="Indonesia"
+                                           class="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-gold focus:border-transparent">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Dates Section -->
+                        <div class="mb-8">
+                            <h3 class="text-lg font-semibold mb-4 flex items-center">
+                                <i class="fas fa-calendar-alt text-gold mr-3"></i>
+                                Select Dates
+                            </h3>
+                            <div class="grid md:grid-cols-2 gap-6">
+                                <div class="date-display">
+                                    <div class="flex items-center">
+                                        <div class="date-icon mr-3">
+                                            <i class="fas fa-sign-in-alt"></i>
+                                        </div>
+                                        <div class="flex-1">
+                                            <label class="block text-sm font-medium mb-1">Check-in Date</label>
+                                            <input type="date" 
+                                                   name="check_in" 
+                                                   id="check_in"
+                                                   value="{{ default_checkin }}"
+                                                   min="{{ min_checkin_date if min_checkin_date else tomorrow }}"
+                                                   class="w-full px-3 py-2 border-none bg-transparent focus:outline-none focus:ring-0"
+                                                   required>
+                                            <div class="text-sm text-gray-500 mt-1" id="checkin-display"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="date-display">
+                                    <div class="flex items-center">
+                                        <div class="date-icon mr-3">
+                                            <i class="fas fa-sign-out-alt"></i>
+                                        </div>
+                                        <div class="flex-1">
+                                            <label class="block text-sm font-medium mb-1">Check-out Date</label>
+                                            <input type="date" 
+                                                   name="check_out" 
+                                                   id="check_out"
+                                                   value="{{ default_checkout }}"
+                                                   min="{{ min_checkout_date if min_checkout_date else day_after_tomorrow }}"
+                                                   class="w-full px-3 py-2 border-none bg-transparent focus:outline-none focus:ring-0"
+                                                   required>
+                                            <div class="text-sm text-gray-500 mt-1" id="checkout-display"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Nights Counter -->
+                            <div class="mt-4 flex justify-between items-center p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                                <div>
+                                    <div class="font-semibold" id="nights-display">2 nights</div>
+                                    <div class="text-sm text-gray-600">Total stay duration</div>
+                                </div>
+                                <div class="text-right">
+                                    <div class="font-semibold" id="nights-price-display">{{ room.formatted_price }}</div>
+                                    <div class="text-sm text-gray-600">for 2 nights</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Guests Section -->
+                        <div class="mb-8">
+                            <h3 class="text-lg font-semibold mb-4 flex items-center">
+                                <i class="fas fa-users text-gold mr-3"></i>
+                                Guest Count
+                            </h3>
+                            <div>
+                                <label class="block text-sm font-medium mb-2">Number of Guests</label>
+                                <div class="relative">
+                                    <select name="guests" 
+                                            id="guests"
+                                            class="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-gold focus:border-transparent appearance-none bg-white dark:bg-gray-700">
+                                        {% for i in range(1, max_capacity + 1) %}
+                                        <option value="{{ i }}" {% if i == 2 %}selected{% endif %}>
+                                            {{ i }} {{ 'Guest' if i == 1 else 'Guests' }}
+                                        </option>
+                                        {% endfor %}
+                                    </select>
+                                    <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                                        <i class="fas fa-chevron-down text-gray-400"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Special Requests -->
+                        <div class="mb-8">
+                            <h3 class="text-lg font-semibold mb-4 flex items-center">
+                                <i class="fas fa-comment-dots text-gold mr-3"></i>
+                                Special Requests
+                            </h3>
+                            <textarea name="special_requests" 
+                                      id="special_requests"
+                                      rows="4"
+                                      class="w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-gold focus:border-transparent"
+                                      placeholder="Please let us know if you have any special requirements..."></textarea>
+                        </div>
+                        
+                        <!-- Terms & Conditions -->
+                        <div class="mb-8 p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
+                            <label class="flex items-start">
+                                <input type="checkbox" name="agree_terms" 
+                                       class="mt-1 mr-3" required>
+                                <span class="text-sm text-gray-700 dark:text-gray-300">
+                                    I agree to the <a href="#" class="text-gold underline">Terms & Conditions</a>, 
+                                    <a href="#" class="text-gold underline">Privacy Policy</a>, and understand that 
+                                    payment is required within 24 hours to confirm the booking.
+                                </span>
+                            </label>
+                        </div>
+                        
+                        <!-- Submit Button -->
+                        <button type="submit" 
+                                class="w-full py-4 bg-gradient-to-r from-gold to-gold/90 text-navy font-bold text-lg rounded-lg hover:shadow-xl transition-all duration-300 group relative overflow-hidden">
+                            <div class="absolute inset-0 bg-white/10 transform -translate-x-full group-hover:translate-x-0 transition-transform duration-500"></div>
+                            <i class="fas fa-calendar-check mr-3"></i>
+                            <span>Complete Booking</span>
+                            <i class="fas fa-arrow-right ml-3"></i>
+                        </button>
+                    </form>
+                </div>
+            </div>
+            
+            <!-- Right Column - Summary (1/3 width) -->
+            <div class="lg:col-span-1">
+                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg overflow-hidden sticky-summary">
+                    <!-- Summary Header -->
+                    <div class="bg-gradient-to-r from-navy to-gray-900 text-white p-6">
+                        <h2 class="text-xl font-serif font-bold mb-2">Booking Summary</h2>
+                        <p class="text-gray-200 text-sm">Review your reservation details</p>
+                    </div>
+                    
+                    <div class="p-6">
+                        <!-- Room Preview -->
+                        <div class="room-preview mb-6">
+                            {% if room.images_list and room.images_list|length > 0 %}
+                                {% set main_image = room.images_list[0] %}
+                                {% if main_image.startswith('http') %}
+                                    <img src="{{ main_image }}" 
+                                         alt="{{ room.name }}" 
+                                         class="w-full h-full object-cover"
+                                         onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1611892440504-42a792e24d32?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'">
+                                {% elif main_image.startswith('/static/') %}
+                                    <img src="{{ main_image }}" 
+                                         alt="{{ room.name }}" 
+                                         class="w-full h-full object-cover">
+                                {% else %}
+                                    <img src="{{ url_for('static', filename='uploads/rooms/' + main_image) }}" 
+                                         alt="{{ room.name }}" 
+                                         class="w-full h-full object-cover"
+                                         onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1611892440504-42a792e24d32?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'">
+                                {% endif %}
+                            {% else %}
+                                <div class="w-full h-full bg-gradient-to-br from-gold/20 to-navy/20 flex items-center justify-center">
+                                    <i class="fas fa-bed text-gray-400 text-5xl"></i>
+                                </div>
+                            {% endif %}
+                            
+                            <div class="room-badge">
+                                <i class="fas fa-star mr-1"></i>
+                                {{ room.room_type|title if room.room_type else 'Standard' }}
+                            </div>
+                            
+                            <!-- Room Type & Rating -->
+                            <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-4">
+                                <div class="flex justify-between items-end">
+                                    <div>
+                                        <h3 class="text-white font-bold text-lg">{{ room.name }}</h3>
+                                        <div class="flex items-center text-white/80 text-sm">
+                                            <i class="fas fa-user-friends mr-2"></i>
+                                            <span>Up to {{ room.capacity }} guests</span>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-center bg-black/30 backdrop-blur-sm px-3 py-1 rounded-full">
+                                        <i class="fas fa-star text-gold mr-1"></i>
+                                        <span class="text-white font-bold">4.8</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Booking Details Card -->
+                        <div class="bg-gray-50 dark:bg-gray-900 rounded-xl p-4 mb-6">
+                            <h4 class="font-semibold mb-3 flex items-center">
+                                <i class="fas fa-calendar-check text-gold mr-2"></i>
+                                Stay Details
+                            </h4>
+                            
+                            <div class="space-y-3">
+                                <div class="flex justify-between items-center">
+                                    <div class="flex items-center">
+                                        <i class="fas fa-sign-in-alt text-gray-400 mr-3 w-5"></i>
+                                        <div>
+                                            <div class="text-sm text-gray-500">Check-in</div>
+                                            <div class="font-medium" id="summary-checkin">{{ default_checkin }}</div>
+                                        </div>
+                                    </div>
+                                    <div class="text-right">
+                                        <div class="text-sm text-gray-500">From 14:00</div>
+                                        <div class="text-xs text-gray-400">Early check-in available</div>
+                                    </div>
+                                </div>
+                                
+                                <div class="flex justify-between items-center">
+                                    <div class="flex items-center">
+                                        <i class="fas fa-sign-out-alt text-gray-400 mr-3 w-5"></i>
+                                        <div>
+                                            <div class="text-sm text-gray-500">Check-out</div>
+                                            <div class="font-medium" id="summary-checkout">{{ default_checkout }}</div>
+                                        </div>
+                                    </div>
+                                    <div class="text-right">
+                                        <div class="text-sm text-gray-500">Until 12:00</div>
+                                        <div class="text-xs text-gray-400">Late check-out available</div>
+                                    </div>
+                                </div>
+                                
+                                <div class="border-t pt-3">
+                                    <div class="flex justify-between">
+                                        <div class="flex items-center">
+                                            <i class="fas fa-moon text-gray-400 mr-3 w-5"></i>
+                                            <div>
+                                                <div class="text-sm text-gray-500">Duration</div>
+                                                <div class="font-medium" id="summary-nights">2 nights</div>
+                                            </div>
+                                        </div>
+                                        <div class="text-right">
+                                            <div class="text-sm text-gray-500">Room</div>
+                                            <div class="font-medium" id="summary-guests">2 Guests</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Price Breakdown -->
+                        <div class="price-breakdown mb-6">
+                            <h4 class="font-semibold mb-3">Price Breakdown</h4>
+                            
+                            <div class="space-y-3">
+                                <div class="flex justify-between">
+                                    <div>
+                                        <div class="font-medium">{{ room.formatted_price }} × <span id="breakdown-nights">2</span> nights</div>
+                                        <div class="text-sm text-gray-500">Room rate</div>
+                                    </div>
+                                    <div class="font-medium" id="breakdown-room-total">{{ room.formatted_price }}</div>
+                                </div>
+                                
+                                <div class="flex justify-between">
+                                    <div>
+                                        <div class="font-medium">Service Fee & Taxes</div>
+                                        <div class="text-sm text-gray-500">Government tax (10%) & service charge (11%)</div>
+                                    </div>
+                                    <div class="font-medium" id="breakdown-tax">Included</div>
+                                </div>
+                                
+                                <div class="flex justify-between text-lg font-bold pt-3 border-t">
+                                    <div>
+                                        <div>Total Amount</div>
+                                        <div class="text-sm font-normal text-gray-500">Pay within 24 hours</div>
+                                    </div>
+                                    <div class="text-gold" id="summary-total">{{ room.formatted_price }}</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Important Information -->
+                        <div class="space-y-4">
+                            <div class="flex items-start p-3 bg-green-50 dark:bg-green-900/20 rounded-lg">
+                                <i class="fas fa-check-circle text-green-500 mt-1 mr-3"></i>
+                                <div class="text-sm">
+                                    <div class="font-semibold mb-1">Free Cancellation</div>
+                                    <div class="text-gray-600 dark:text-gray-300">
+                                        Cancel free of charge until 24 hours before check-in
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="flex items-start p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                                <i class="fas fa-credit-card text-blue-500 mt-1 mr-3"></i>
+                                <div class="text-sm">
+                                    <div class="font-semibold mb-1">Payment Required</div>
+                                    <div class="text-gray-600 dark:text-gray-300">
+                                        Complete payment within 24 hours to confirm booking
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Elements
+    const checkinInput = document.getElementById('check_in');
+    const checkoutInput = document.getElementById('check_out');
+    const guestsSelect = document.getElementById('guests');
+    const bookingForm = document.getElementById('bookingForm');
+    
+    // Display elements
+    const checkinDisplay = document.getElementById('checkin-display');
+    const checkoutDisplay = document.getElementById('checkout-display');
+    const nightsDisplay = document.getElementById('nights-display');
+    const nightsPriceDisplay = document.getElementById('nights-price-display');
+    
+    // Summary elements
+    const summaryNights = document.getElementById('summary-nights');
+    const summaryCheckin = document.getElementById('summary-checkin');
+    const summaryCheckout = document.getElementById('summary-checkout');
+    const summaryGuests = document.getElementById('summary-guests');
+    const summaryTotal = document.getElementById('summary-total');
+    
+    // Breakdown elements
+    const breakdownNights = document.getElementById('breakdown-nights');
+    const breakdownRoomTotal = document.getElementById('breakdown-room-total');
+    const breakdownTax = document.getElementById('breakdown-tax');
+    
+    // Room price
+    const roomPrice = parseFloat("{{ room.price|float }}");
+    const formattedPrice = "{{ room.formatted_price }}".replace('Rp', '').replace(/\./g, '').replace(',', '.');
+    const basePrice = parseFloat(formattedPrice) || roomPrice;
+    
+    // Format date to readable string
+    function formatReadableDate(dateStr) {
+        const date = new Date(dateStr);
+        return date.toLocaleDateString('en-US', { 
+            weekday: 'short', 
+            month: 'short', 
+            day: 'numeric',
+            year: 'numeric'
+        });
+    }
+    
+    // Format number as Rupiah
+    function formatRupiah(amount) {
+        if (isNaN(amount)) return 'Rp0';
+        
+        const formatted = new Intl.NumberFormat('id-ID', {
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 0
+        }).format(amount);
+        
+        return 'Rp' + formatted;
+    }
+    
+    // Calculate and update everything
+    function updateBookingSummary() {
+        const checkinDate = new Date(checkinInput.value);
+        const checkoutDate = new Date(checkoutInput.value);
+        const guests = parseInt(guestsSelect.value);
+        
+        // Calculate nights
+        const timeDiff = checkoutDate - checkinDate;
+        const nights = Math.ceil(timeDiff / (1000 * 60 * 60 * 24));
+        
+        // Update displays
+        checkinDisplay.textContent = formatReadableDate(checkinInput.value);
+        checkoutDisplay.textContent = formatReadableDate(checkoutInput.value);
+        
+        nightsDisplay.textContent = nights + (nights === 1 ? ' night' : ' nights');
+        
+        // Update summary
+        summaryCheckin.textContent = formatReadableDate(checkinInput.value);
+        summaryCheckout.textContent = formatReadableDate(checkoutInput.value);
+        summaryGuests.textContent = guests + (guests === 1 ? ' Guest' : ' Guests');
+        summaryNights.textContent = nights + (nights === 1 ? ' night' : ' nights');
+        
+        // Calculate prices
+        if (nights > 0) {
+            const roomCharges = basePrice * nights;
+            const tax = Math.round(roomCharges * 0.21); // 10% gov + 11% service
+            const total = roomCharges + tax;
+            
+            // Update breakdown
+            breakdownNights.textContent = nights;
+            breakdownRoomTotal.textContent = formatRupiah(roomCharges);
+            breakdownTax.textContent = formatRupiah(tax);
+            summaryTotal.textContent = formatRupiah(total);
+            
+            // Update nights price
+            nightsPriceDisplay.textContent = formatRupiah(roomCharges);
+        } else {
+            // Default values
+            summaryTotal.textContent = formatRupiah(basePrice * 2);
+            breakdownRoomTotal.textContent = formatRupiah(basePrice * 2);
+            breakdownTax.textContent = formatRupiah(Math.round(basePrice * 2 * 0.21));
+        }
+    }
+    
+    // Set min dates and initialize
+    function initializeDates() {
+        const today = new Date();
+        const tomorrow = new Date(today);
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        const dayAfterTomorrow = new Date(today);
+        dayAfterTomorrow.setDate(dayAfterTomorrow.getDate() + 2);
+        
+        // Format dates as YYYY-MM-DD
+        const tomorrowStr = tomorrow.toISOString().split('T')[0];
+        const dayAfterTomorrowStr = dayAfterTomorrow.toISOString().split('T')[0];
+        
+        // Set min attributes
+        checkinInput.min = tomorrowStr;
+        checkoutInput.min = dayAfterTomorrowStr;
+        
+        // Set values if empty
+        if (!checkinInput.value) {
+            checkinInput.value = tomorrowStr;
+        }
+        if (!checkoutInput.value) {
+            checkoutInput.value = dayAfterTomorrowStr;
+        }
+        
+        // Initial update
+        updateBookingSummary();
+    }
+    
+    // Event listeners
+    checkinInput.addEventListener('change', function() {
+        const checkinDate = new Date(this.value);
+        const nextDay = new Date(checkinDate);
+        nextDay.setDate(nextDay.getDate() + 1);
+        
+        // Format next day as YYYY-MM-DD
+        const nextDayStr = nextDay.toISOString().split('T')[0];
+        
+        // Set min checkout date
+        checkoutInput.min = nextDayStr;
+        
+        // If current checkout is invalid, set to next day
+        if (checkoutInput.value <= this.value) {
+            checkoutInput.value = nextDayStr;
+        }
+        
+        updateBookingSummary();
+    });
+    
+    checkoutInput.addEventListener('change', updateBookingSummary);
+    guestsSelect.addEventListener('change', updateBookingSummary);
+    
+    // Form validation
+    bookingForm.addEventListener('submit', function(e) {
+        const checkinDate = new Date(checkinInput.value);
+        const checkoutDate = new Date(checkoutInput.value);
+        const guests = parseInt(guestsSelect.value);
+        const maxCapacity = parseInt("{{ max_capacity }}");
+        
+        // Validation
+        let errors = [];
+        
+        // Check-in must be at least tomorrow
+        const minCheckin = new Date();
+        minCheckin.setDate(minCheckin.getDate() + 1);
+        minCheckin.setHours(0, 0, 0, 0);
+        
+        if (checkinDate < minCheckin) {
+            errors.push('Check-in date must be at least tomorrow.');
+        }
+        
+        // Check-out must be after check-in
+        if (checkoutDate <= checkinDate) {
+            errors.push('Check-out date must be after check-in date.');
+        }
+        
+        // Minimum 1 night stay
+        const nights = Math.ceil((checkoutDate - checkinDate) / (1000 * 60 * 60 * 24));
+        if (nights < 1) {
+            errors.push('Minimum stay is 1 night.');
+        }
+        
+        // Guests not exceeding capacity
+        if (guests > maxCapacity) {
+            errors.push(`Maximum capacity for this room is ${maxCapacity} guests.`);
+        }
+        
+        // Check terms agreement
+        const agreeTerms = document.querySelector('input[name="agree_terms"]');
+        if (!agreeTerms.checked) {
+            errors.push('You must agree to the terms and conditions.');
+        }
+        
+        // Show errors if any
+        if (errors.length > 0) {
+            e.preventDefault();
+            alert('Please fix the following errors:\n\n' + errors.join('\n'));
+            return;
+        }
+        
+        // Show loading
+        const submitButton = bookingForm.querySelector('button[type="submit"]');
+        const originalText = submitButton.innerHTML;
+        submitButton.disabled = true;
+        submitButton.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Processing...';
+        submitButton.classList.add('opacity-75');
+        
+        // Safety timeout
+        setTimeout(() => {
+            if (submitButton.disabled) {
+                submitButton.disabled = false;
+                submitButton.innerHTML = originalText;
+                submitButton.classList.remove('opacity-75');
+            }
+        }, 10000);
+    });
+    
+    // Initialize
+    initializeDates();
+});
+</script>
+{% endblock %}

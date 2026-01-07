@@ -1,0 +1,389 @@
+{% extends "base.html" %}
+
+{% block title %}Users Bookings - Feizen Haven{% endblock %}
+
+{% block content %}
+<div class="pt-24 pb-16">
+    <div class="max-w-7xl mx-auto px-4">
+        <!-- Header -->
+        <div class="mb-8">
+            <h1 class="text-3xl font-serif font-bold">My Bookings</h1>
+            <p class="text-gray-600 dark:text-gray-300">View and manage all your reservations</p>
+        </div>
+        
+        {% if bookings %}
+        <!-- Bookings Table -->
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                    <thead class="bg-gray-50 dark:bg-gray-900">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                Booking Code
+                            </th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                Room
+                            </th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                Dates
+                            </th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                Amount
+                            </th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                Status
+                            </th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                Actions
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                        {% for booking in bookings %}
+                        <tr class="hover:bg-gray-50 dark:hover:bg-gray-900/50 transition-colors">
+                            <!-- COLUMN 1: BOOKING CODE -->
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="font-mono font-medium text-sm text-navy dark:text-white">
+                                    {{ booking.booking_code }}
+                                </div>
+                                <div class="text-xs text-gray-500 dark:text-gray-400">
+                                    {{ booking.created_formatted }}
+                                </div>
+                            </td>
+
+                            <!-- COLUMN 2: ROOM DETAILS -->
+                            <td class="px-6 py-4">
+                                <div class="text-sm font-medium">{{ booking.room_name }}</div>
+                                <div class="text-xs text-gray-500 dark:text-gray-400">
+                                    {{ booking.guests }} {{ 'Guest' if booking.guests == 1 else 'Guests' }}
+                                </div>
+                            </td>
+                            
+                            <!-- COLUMN 3: DATES -->
+                            <td class="px-6 py-4">
+                                <div class="text-sm font-medium">
+                                    {{ booking.check_in_formatted }}
+                                </div>
+                                <div class="text-sm">
+                                    to {{ booking.check_out_formatted }}
+                                </div>
+                                <div class="text-xs text-gray-500 dark:text-gray-400">
+                                    {{ booking.nights }} {{ 'Night' if booking.nights == 1 else 'Nights' }}
+                                </div>
+                            </td>
+                            
+                            <!-- COLUMN 4: AMOUNT -->
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-sm font-bold text-gold">
+                                    {{ booking.formatted_price }}
+                                </div>
+                                {% if booking.payment_method_display != 'Not Selected' %}
+                                <div class="text-xs text-gray-500 dark:text-gray-400">
+                                    <i class="fas fa-{{ 
+                                        'qrcode' if booking.payment_method == 'qris' 
+                                        else 'university' if booking.payment_method == 'bank_transfer' 
+                                        else 'credit-card' if booking.payment_method == 'credit_card'
+                                        else 'mobile-alt'
+                                    }} mr-1"></i>
+                                    {{ booking.payment_method_display }}
+                                </div>
+                                {% endif %}
+                            </td>
+                            
+                            <!-- COLUMN 5: STATUS -->
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <!-- Booking Status -->
+                                <div class="mb-2">
+                                    <span class="px-2 py-1 text-xs rounded-full {{ booking.status_bg_color }} {{ booking.status_text_color }}">
+                                        {{ booking.status|replace('_', ' ')|title }}
+                                    </span>
+                                </div>
+                                
+                                <!-- Payment Status -->
+                                {% if booking.payment_status %}
+                                <div class="mb-2">
+                                    <span class="px-2 py-1 text-xs rounded-full {{ booking.payment_status_bg_color }} {{ booking.payment_status_text_color }}">
+                                        {{ booking.payment_status|replace('_', ' ')|title }}
+                                    </span>
+                                </div>
+                                {% endif %}
+                                
+                                <!-- Countdown Timer -->
+                                {% if booking.status == 'waiting_payment' and not booking.is_expired %}
+                                <div class="text-xs text-red-600 dark:text-red-400 font-medium">
+                                    <i class="fas fa-clock mr-1"></i>
+                                    {{ booking.time_left_display }}
+                                </div>
+                                {% elif booking.is_expired %}
+                                <div class="text-xs text-red-600 dark:text-red-400 font-medium">
+                                    <i class="fas fa-exclamation-circle mr-1"></i>
+                                    Expired
+                                </div>
+                                {% endif %}
+                            </td>
+                            
+                            <!-- COLUMN 6: ACTIONS -->
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="flex flex-col space-y-2">
+                                    <!-- PAYMENT LOGIC -->
+                                    {% if booking.status == 'waiting_payment' %}
+                                        {% if booking.payment_status == 'pending' or not booking.payment_status %}
+                                            <!-- Belum upload bukti - TAMPILKAN TOMBOL PAY NOW -->
+                                            <a href="{{ url_for('booking_payment', booking_id=booking.id) }}" 
+                                            class="inline-flex items-center justify-center px-4 py-2 bg-gradient-to-r from-gold to-yellow-500 text-navy font-bold rounded-lg hover:from-gold/90 hover:to-yellow-500/90 transition-all shadow-md hover:shadow-lg w-full">
+                                                <i class="fas fa-credit-card mr-2"></i> PAY NOW
+                                            </a>
+                                        
+                                        {% elif booking.payment_status == 'processing' %}
+                                            <!-- Sudah upload bukti, tunggu verifikasi admin -->
+                                            <div class="flex flex-col space-y-2">
+                                                <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300">
+                                                    <i class="fas fa-clock mr-1"></i> Verifying
+                                                </span>
+                                                <a href="{{ url_for('booking_payment', booking_id=booking.id) }}" 
+                                                class="inline-flex items-center px-3 py-1 bg-yellow-100 text-yellow-800 hover:bg-yellow-200 rounded text-sm transition-colors w-full justify-center">
+                                                    <i class="fas fa-redo mr-1"></i> Upload New
+                                                </a>
+                                            </div>
+                                        
+                                        {% elif booking.payment_status in ['failed', 'expired'] %}
+                                            <!-- Payment gagal/expired, bisa upload ulang -->
+                                            <div class="flex flex-col space-y-2">
+                                                <span class="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300">
+                                                    <i class="fas fa-exclamation-circle mr-1"></i>
+                                                    {{ booking.payment_status|title }}
+                                                </span>
+                                                <a href="{{ url_for('booking_payment', booking_id=booking.id) }}" 
+                                                class="inline-flex items-center px-3 py-2 bg-gold text-navy font-semibold rounded-lg hover:bg-gold/90 transition-colors shadow-sm w-full justify-center">
+                                                    <i class="fas fa-redo mr-2"></i> Re-upload Proof
+                                                </a>
+                                            </div>
+                                        
+                                        {% elif booking.payment_status == 'completed' %}
+                                            <!-- Sudah diverifikasi admin -->
+                                            <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300">
+                                                <i class="fas fa-check-circle mr-1"></i> Verified
+                                            </span>
+                                        {% endif %}
+                                    
+                                    {% elif booking.status == 'confirmed' %}
+                                        <div class="flex flex-col space-y-2">
+                                            <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300">
+                                                <i class="fas fa-check-circle mr-1"></i> Confirmed
+                                            </span>
+                                            <span class="text-xs text-gray-500 dark:text-gray-400">Ready for check-in</span>
+                                        </div>
+                                    
+                                    {% elif booking.status == 'cancelled' %}
+                                        <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300">
+                                            <i class="fas fa-times mr-1"></i> Cancelled
+                                        </span>
+                                    
+                                    {% elif booking.status == 'expired' %}
+                                        <div class="flex flex-col space-y-2">
+                                            <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300">
+                                                <i class="fas fa-clock mr-1"></i> Expired
+                                            </span>
+                                            <a href="{{ url_for('rooms') }}" 
+                                            class="text-xs text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 inline-flex items-center">
+                                                <i class="fas fa-plus mr-1"></i> Book New Room
+                                            </a>
+                                        </div>
+                                    {% endif %}
+                                    
+                                    <!-- ACTION BUTTONS ROW -->
+                                    <div class="flex flex-wrap gap-2 pt-2">
+                                        <!-- View Button -->
+                                        <a href="{{ url_for('booking_success', booking_id=booking.id) }}" 
+                                        class="inline-flex items-center px-3 py-1 bg-blue-100 text-blue-800 hover:bg-blue-200 dark:bg-blue-900 dark:text-blue-300 dark:hover:bg-blue-800 rounded text-sm transition-colors">
+                                            <i class="fas fa-eye mr-1"></i> View
+                                        </a>
+                                        
+                                        <!-- Cancel Button -->
+                                        {% if booking.status == 'waiting_payment' and booking.payment_status in ['pending', 'failed', 'expired', None] %}
+                                        <form action="{{ url_for('cancel_booking', booking_id=booking.id) }}" method="POST" class="inline">
+                                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                            <button type="submit" onclick="return confirm('Are you sure you want to cancel this booking?')"
+                                                    class="inline-flex items-center px-3 py-1 bg-red-100 text-red-800 hover:bg-red-200 dark:bg-red-900 dark:text-red-300 dark:hover:bg-red-800 rounded text-sm transition-colors">
+                                                <i class="fas fa-times mr-1"></i> Cancel
+                                            </button>
+                                        </form>
+                                        {% endif %}
+                                        
+                                        <!-- Invoice Button -->
+                                        {% if booking.status == 'confirmed' %}
+                                        <button onclick="requestInvoice('{{ booking.id }}')" 
+                                                class="inline-flex items-center px-3 py-1 bg-gray-100 text-gray-800 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600 rounded text-sm transition-colors">
+                                            <i class="fas fa-file-invoice mr-1"></i> Invoice
+                                        </button>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        <!-- Booking Stats -->
+        <div class="grid md:grid-cols-5 gap-6 mt-8">
+            <div class="bg-white dark:bg-gray-800 rounded-lg p-6 shadow">
+                <div class="text-2xl font-bold text-gold mb-2">
+                    {{ bookings|length }}
+                </div>
+                <div class="text-sm text-gray-500 dark:text-gray-400">Total Bookings</div>
+            </div>
+            
+            <div class="bg-white dark:bg-gray-800 rounded-lg p-6 shadow">
+                <div class="text-2xl font-bold text-green-600 mb-2">
+                    {{ bookings|selectattr('status', 'equalto', 'confirmed')|list|length }}
+                </div>
+                <div class="text-sm text-gray-500 dark:text-gray-400">Confirmed</div>
+            </div>
+            
+            <div class="bg-white dark:bg-gray-800 rounded-lg p-6 shadow">
+                <div class="text-2xl font-bold text-blue-600 mb-2">
+                    {{ bookings|selectattr('status', 'equalto', 'waiting_payment')|list|length }}
+                </div>
+                <div class="text-sm text-gray-500 dark:text-gray-400">Awaiting Payment</div>
+            </div>
+            
+            <div class="bg-white dark:bg-gray-800 rounded-lg p-6 shadow">
+                <div class="text-2xl font-bold text-yellow-600 mb-2">
+                    {{ bookings|selectattr('payment_status', 'equalto', 'processing')|list|length }}
+                </div>
+                <div class="text-sm text-gray-500 dark:text-gray-400">Verifying</div>
+            </div>
+            
+            <div class="bg-white dark:bg-gray-800 rounded-lg p-6 shadow">
+                <div class="text-2xl font-bold text-red-600 mb-2">
+                    {{ bookings|selectattr('status', 'in', ['cancelled', 'expired'])|list|length }}
+                </div>
+                <div class="text-sm text-gray-500 dark:text-gray-400">Cancelled/Expired</div>
+            </div>
+        </div>
+        
+        {% else %}
+        <!-- No Bookings -->
+        <div class="text-center py-20">
+            <div class="w-24 h-24 bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-6">
+                <i class="fas fa-calendar-times text-gray-400 text-3xl"></i>
+            </div>
+            <h3 class="text-2xl font-semibold mb-4">No Bookings Yet</h3>
+            <p class="text-gray-600 dark:text-gray-300 mb-8 max-w-md mx-auto">
+                You haven't made any bookings yet. Start your luxury experience at Feizen Haven today!
+            </p>
+            <a href="{{ url_for('rooms') }}" class="px-6 py-3 bg-gold text-navy font-semibold rounded-lg hover:bg-gold/90 transition-colors">
+                <i class="fas fa-bed mr-2"></i>
+                Browse Rooms
+            </a>
+        </div>
+        {% endif %}
+        
+        <!-- Booking Flow Guide -->
+        <div class="mt-12 p-6 bg-gradient-to-r from-gold/5 to-blue-500/5 dark:from-gold/10 dark:to-blue-500/10 rounded-xl border border-gold/20">
+            <h3 class="text-lg font-semibold mb-4 flex items-center">
+                <i class="fas fa-info-circle text-gold mr-2"></i>
+                Booking Flow Guide
+            </h3>
+            <div class="grid md:grid-cols-4 gap-4">
+                <div class="text-center p-4 bg-white dark:bg-gray-800 rounded-lg">
+                    <div class="w-10 h-10 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center mx-auto mb-3">
+                        <span class="text-blue-600 dark:text-blue-300 font-bold">1</span>
+                    </div>
+                    <h4 class="font-medium mb-1">Make Booking</h4>
+                    <p class="text-xs text-gray-600 dark:text-gray-400">Select room & dates</p>
+                </div>
+                <div class="text-center p-4 bg-white dark:bg-gray-800 rounded-lg">
+                    <div class="w-10 h-10 bg-yellow-100 dark:bg-yellow-900 rounded-full flex items-center justify-center mx-auto mb-3">
+                        <span class="text-yellow-600 dark:text-yellow-300 font-bold">2</span>
+                    </div>
+                    <h4 class="font-medium mb-1">Upload Payment</h4>
+                    <p class="text-xs text-gray-600 dark:text-gray-400">Upload payment proof</p>
+                </div>
+                <div class="text-center p-4 bg-white dark:bg-gray-800 rounded-lg">
+                    <div class="w-10 h-10 bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center mx-auto mb-3">
+                        <span class="text-green-600 dark:text-green-300 font-bold">3</span>
+                    </div>
+                    <h4 class="font-medium mb-1">Admin Verify</h4>
+                    <p class="text-xs text-gray-600 dark:text-gray-400">Admin verifies payment (1-2 hours)</p>
+                </div>
+                <div class="text-center p-4 bg-white dark:bg-gray-800 rounded-lg">
+                    <div class="w-10 h-10 bg-purple-100 dark:bg-purple-900 rounded-full flex items-center justify-center mx-auto mb-3">
+                        <span class="text-purple-600 dark:text-purple-300 font-bold">4</span>
+                    </div>
+                    <h4 class="font-medium mb-1">Enjoy Stay</h4>
+                    <p class="text-xs text-gray-600 dark:text-gray-400">Check-in & enjoy</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Help Section -->
+        <div class="mt-12 pt-8 border-t dark:border-gray-700">
+            <h3 class="text-lg font-semibold mb-4">Need Help?</h3>
+            <div class="grid md:grid-cols-3 gap-6">
+                <div class="bg-cream dark:bg-gray-800 rounded-lg p-6">
+                    <div class="w-12 h-12 bg-gold/10 rounded-full flex items-center justify-center mb-4">
+                        <i class="fas fa-phone text-gold"></i>
+                    </div>
+                    <h4 class="font-semibold mb-2">Call Us</h4>
+                    <p class="text-sm text-gray-600 dark:text-gray-300">
+                        (0274) 714240<br>
+                        Available 24/7
+                    </p>
+                </div>
+                
+                <div class="bg-cream dark:bg-gray-800 rounded-lg p-6">
+                    <div class="w-12 h-12 bg-gold/10 rounded-full flex items-center justify-center mb-4">
+                        <i class="fas fa-envelope text-gold"></i>
+                    </div>
+                    <h4 class="font-semibold mb-2">Email Us</h4>
+                    <p class="text-sm text-gray-600 dark:text-gray-300">
+                        payments@feizenhaven.com<br>
+                        Response within 2 hours
+                    </p>
+                </div>
+                
+                <div class="bg-cream dark:bg-gray-800 rounded-lg p-6">
+                    <div class="w-12 h-12 bg-gold/10 rounded-full flex items-center justify-center mb-4">
+                        <i class="fas fa-question-circle text-gold"></i>
+                    </div>
+                    <h4 class="font-semibold mb-2">FAQ</h4>
+                    <p class="text-sm text-gray-600 dark:text-gray-300">
+                        <a href="#" class="text-gold hover:underline">Payment Issues</a><br>
+                        <a href="#" class="text-gold hover:underline">Cancellation Policy</a>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+function requestInvoice(bookingId) {
+    if (confirm('Send invoice to your email?')) {
+        fetch(`/api/booking/${bookingId}/invoice`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('meta[name="csrf-token"]').content
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('✅ Invoice sent to your email!');
+            } else {
+                alert('❌ Error: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('❌ Failed to request invoice');
+        });
+    }
+}
+</script>
+
+{% endblock %}

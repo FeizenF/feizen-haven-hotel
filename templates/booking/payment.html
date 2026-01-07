@@ -1,0 +1,1417 @@
+{% extends "base.html" %}
+
+{% block title %}Payment - Feizen Haven{% endblock %}
+
+{% block extra_head %}
+<meta name="csrf-token" content="{{ csrf_token() }}">
+<script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+/* Tambahkan di bagian atas style block */
+.animate-fade-in-up {
+    opacity: 0;
+    transform: translateY(20px);
+    animation: fadeInUp 0.6s ease forwards;
+}
+
+@keyframes fadeInUp {
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.animate-bounce-in {
+    animation: bounceIn 0.6s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+}
+
+@keyframes bounceIn {
+    0% {
+        opacity: 0;
+        transform: scale(0.3);
+    }
+    50% {
+        opacity: 1;
+        transform: scale(1.05);
+    }
+    70% {
+        transform: scale(0.9);
+    }
+    100% {
+        transform: scale(1);
+    }
+}
+
+.animate-shake {
+    animation: shake 0.5s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+}
+
+@keyframes shake {
+    10%, 90% {
+        transform: translateX(-1px);
+    }
+    20%, 80% {
+        transform: translateX(2px);
+    }
+    30%, 50%, 70% {
+        transform: translateX(-4px);
+    }
+    40%, 60% {
+        transform: translateX(4px);
+    }
+}
+
+.payment-method-card {
+    border: 2px solid #e5e7eb;
+    border-radius: 12px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    cursor: pointer;
+    user-select: none;
+    position: relative;
+    overflow: hidden;
+}
+
+.payment-method-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(197, 161, 69, 0.1), transparent);
+    transition: left 0.6s;
+}
+
+.payment-method-card:hover::before {
+    left: 100%;
+}
+
+.payment-method-card:hover {
+    border-color: #C5A145;
+    transform: translateY(-4px);
+    box-shadow: 0 8px 25px rgba(197, 161, 69, 0.15);
+}
+
+.payment-method-card.selected {
+    border-color: #C5A145;
+    background-color: rgba(197, 161, 69, 0.08);
+    box-shadow: 0 6px 20px rgba(197, 161, 69, 0.2);
+    transform: translateY(-2px);
+}
+
+.payment-detail-container {
+    background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+    padding: 28px;
+    border-radius: 16px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.08);
+    animation: slideInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+    border: 1px solid #e5e7eb;
+}
+
+@keyframes slideInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.bank-details-card {
+    background: linear-gradient(135deg, #1A2B3C 0%, #2D3748 100%);
+    color: white;
+    border-radius: 16px;
+    padding: 28px;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 8px 32px rgba(26, 43, 60, 0.2);
+}
+
+.bank-details-card::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(255,255,255,0.1) 1px, transparent 1px);
+    background-size: 20px 20px;
+    opacity: 0.1;
+    animation: float 20s linear infinite;
+}
+
+@keyframes float {
+    0% { transform: translate(0, 0) rotate(0deg); }
+    100% { transform: translate(-20px, -20px) rotate(360deg); }
+}
+
+/* Countdown Styles */
+.countdown-timer {
+    font-size: 2.5rem;
+    font-weight: bold;
+    color: #C5A145;
+    font-family: 'Courier New', monospace, monospace;
+    text-shadow: 0 2px 8px rgba(197, 161, 69, 0.3);
+    letter-spacing: 2px;
+}
+
+.countdown-warning {
+    animation: countdownPulse 1.5s infinite;
+}
+
+@keyframes countdownPulse {
+    0%, 100% { 
+        transform: scale(1); 
+        box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.7);
+    }
+    50% { 
+        transform: scale(1.02);
+        box-shadow: 0 0 0 10px rgba(220, 38, 38, 0);
+    }
+}
+
+.countdown-expired {
+    animation: blink 1s infinite;
+    color: #dc2626 !important;
+}
+
+@keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
+.upload-area {
+    border: 3px dashed #d1d5db;
+    border-radius: 16px;
+    padding: 48px 24px;
+    text-align: center;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
+    position: relative;
+    overflow: hidden;
+}
+
+.upload-area::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #C5A145, #1A2B3C);
+    opacity: 0;
+    transition: opacity 0.3s;
+}
+
+.upload-area:hover::before {
+    opacity: 1;
+}
+
+.upload-area:hover {
+    border-color: #C5A145;
+    background: linear-gradient(135deg, rgba(197, 161, 69, 0.05) 0%, rgba(26, 43, 60, 0.05) 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(197, 161, 69, 0.1);
+}
+
+.upload-area.dragover {
+    border-color: #C5A145;
+    background: linear-gradient(135deg, rgba(197, 161, 69, 0.1) 0%, rgba(26, 43, 60, 0.1) 100%);
+    transform: scale(1.02);
+    box-shadow: 0 15px 35px rgba(197, 161, 69, 0.15);
+}
+
+.file-preview {
+    max-width: 220px;
+    max-height: 220px;
+    border-radius: 12px;
+    display: none;
+    object-fit: cover;
+    border: 3px solid #e5e7eb;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    transition: all 0.3s;
+}
+
+.file-preview:hover {
+    transform: scale(1.05);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+}
+
+.payment-badge {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    background: linear-gradient(135deg, #C5A145, #d4af37);
+    color: white;
+    font-size: 0.75rem;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    box-shadow: 0 2px 8px rgba(197, 161, 69, 0.3);
+    z-index: 1;
+}
+
+.payment-loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.85);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s;
+    backdrop-filter: blur(10px);
+}
+
+.payment-loading-overlay.active {
+    opacity: 1;
+    visibility: visible;
+}
+
+.payment-loading-content {
+    background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+    padding: 40px;
+    border-radius: 20px;
+    text-align: center;
+    min-width: 320px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    animation: scaleIn 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    border: 1px solid rgba(255,255,255,0.1);
+}
+
+@keyframes scaleIn {
+    from {
+        opacity: 0;
+        transform: scale(0.9);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+/* Loading spinner improved */
+.loading-spinner {
+    border: 5px solid rgba(243, 243, 243, 0.3);
+    border-top: 5px solid #C5A145;
+    border-radius: 50%;
+    width: 60px;
+    height: 60px;
+    animation: spin 1.2s cubic-bezier(0.68, -0.55, 0.27, 1.55) infinite;
+    margin: 0 auto 20px;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Progress bar for countdown */
+.countdown-progress {
+    height: 6px;
+    background: linear-gradient(90deg, #10b981, #C5A145, #dc2626);
+    border-radius: 3px;
+    margin-top: 8px;
+    overflow: hidden;
+    position: relative;
+}
+
+.countdown-progress::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+    animation: shimmer 2s infinite;
+}
+
+@keyframes shimmer {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+}
+
+/* Success animation */
+.success-checkmark {
+    width: 80px;
+    height: 80px;
+    margin: 0 auto 20px;
+    position: relative;
+}
+
+.success-checkmark .check-icon {
+    width: 80px;
+    height: 80px;
+    position: relative;
+    border-radius: 50%;
+    box-sizing: content-box;
+    border: 4px solid #10b981;
+}
+
+.success-checkmark .check-icon::before {
+    top: 3px;
+    left: -2px;
+    width: 30px;
+    transform-origin: 100% 50%;
+}
+
+.success-checkmark .check-icon::after {
+    top: 0;
+    left: 30px;
+    width: 60px;
+    transform-origin: 0 50%;
+}
+
+/* QR Code container glow effect */
+.qrcode-container {
+    background: white;
+    padding: 20px;
+    border-radius: 16px;
+    display: inline-block;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+    position: relative;
+    border: 2px solid transparent;
+    background-clip: padding-box;
+}
+
+.qrcode-container::before {
+    content: '';
+    position: absolute;
+    top: -2px;
+    right: -2px;
+    bottom: -2px;
+    left: -2px;
+    background: linear-gradient(45deg, #C5A145, #1A2B3C, #C5A145);
+    border-radius: 18px;
+    z-index: -1;
+    opacity: 0.5;
+    transition: opacity 0.3s;
+}
+
+.qrcode-container:hover::before {
+    opacity: 0.8;
+}
+
+/* Gradient text for headings */
+.gradient-text {
+    background: linear-gradient(135deg, #C5A145 0%, #1A2B3C 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+/* Floating animation for cards */
+@keyframes floatCard {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+}
+
+.floating-card {
+    animation: floatCard 6s ease-in-out infinite;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .payment-detail-container {
+        padding: 20px;
+    }
+    
+    .countdown-timer {
+        font-size: 1.8rem;
+    }
+    
+    .bank-details-card {
+        padding: 20px;
+    }
+    
+    .upload-area {
+        padding: 30px 16px;
+    }
+}
+
+/* Dark mode adjustments */
+.dark .payment-detail-container {
+    background: linear-gradient(135deg, #1f2937 0%, #111827 100%);
+    border-color: #374151;
+}
+
+.dark .upload-area {
+    background: linear-gradient(135deg, #1f2937 0%, #111827 100%);
+    border-color: #374151;
+}
+
+.dark .upload-area:hover {
+    background: linear-gradient(135deg, rgba(197, 161, 69, 0.1) 0%, rgba(26, 43, 60, 0.1) 100%);
+}
+
+.dark .qrcode-container {
+    background: #1f2937;
+}
+
+.dark .payment-loading-content {
+    background: linear-gradient(135deg, #1f2937 0%, #111827 100%);
+}
+
+/* Booking Summary Lebar */
+.wider-summary {
+    width: 380px !important;
+    min-width: 380px !important;
+}
+
+@media (max-width: 1280px) {
+    .wider-summary {
+        width: 340px !important;
+        min-width: 340px !important;
+    }
+}
+
+@media (max-width: 1024px) {
+    .wider-summary {
+        width: 100% !important;
+        min-width: 100% !important;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="pt-24 pb-16">
+    <div class="max-w-7xl mx-auto px-4">
+        <!-- Back Button -->
+        <div class="mb-6">
+            <a href="{{ url_for('rooms') }}" class="inline-flex items-center text-gold hover:text-gold/80 transition-colors">
+                <i class="fas fa-arrow-left mr-2"></i>
+                <span>Back to Room Selection</span>
+            </a>
+        </div>
+
+        <!-- Progress Indicator -->
+        <div class="mb-8">
+            <div class="flex justify-between mb-4">
+                <div class="text-center">
+                    <div class="w-8 h-8 bg-gold text-white rounded-full flex items-center justify-center mx-auto mb-2">
+                        <i class="fas fa-check"></i>
+                    </div>
+                    <div class="text-sm text-gray-500">Room Details</div>
+                </div>
+                <div class="text-center relative">
+                    <div class="absolute left-0 right-0 top-4 h-0.5 bg-gray-200 -z-10"></div>
+                    <div class="w-8 h-8 bg-gold text-white rounded-full flex items-center justify-center mx-auto mb-2">
+                        2
+                    </div>
+                    <div class="text-sm font-medium">Payment</div>
+                </div>
+                <div class="text-center">
+                    <div class="w-8 h-8 bg-gray-200 text-gray-500 rounded-full flex items-center justify-center mx-auto mb-2">
+                        3
+                    </div>
+                    <div class="text-sm text-gray-500">Confirmation</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Loading Overlay -->
+        <div id="paymentLoadingOverlay" class="payment-loading-overlay">
+            <div class="payment-loading-content">
+                <div class="loading-spinner mx-auto mb-4"></div>
+                <h3 class="text-lg font-semibold mb-2">Processing Payment</h3>
+                <p class="text-gray-600">Please wait while we process your payment...</p>
+            </div>
+        </div>
+
+        <!-- Booking Info Card - FIXED STRUCTURE -->
+        <div class="mb-6 p-4 bg-gradient-to-r from-blue-50 to-green-50 dark:from-blue-900/20 dark:to-green-900/20 rounded-xl border border-blue-200 dark:border-blue-800">
+            <div class="flex items-start">
+                <div class="w-10 h-10 bg-blue-100 dark:bg-blue-800 rounded-full flex items-center justify-center flex-shrink-0 mr-3">
+                    <i class="fas fa-check-circle text-blue-600 dark:text-blue-400"></i>
+                </div>
+                <div class="flex-1">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <p class="font-bold text-lg text-gray-800 dark:text-gray-200">Booking #{{ booking.booking_code or booking.id }}</p>
+                            <p class="text-sm text-gray-600 dark:text-gray-300 mt-1">
+                                <i class="fas fa-calendar-alt text-gold mr-1"></i>
+                                {{ booking.check_in_formatted }} to {{ booking.check_out_formatted }}
+                                • {{ booking.guests }} {{ 'Guest' if booking.guests == 1 else 'Guests' }}
+                            </p>
+                        </div>
+                        <div class="text-right">
+                            <div class="text-2xl font-bold text-gold">{{ booking.formatted_price }}</div>
+                            <div class="text-xs text-gray-500">Total Amount</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Payment Timer -->
+                    <div class="mt-3 pt-3 border-t border-blue-100 dark:border-blue-800">
+                        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between">
+                            <div class="flex items-center mb-2 sm:mb-0">
+                                <i class="fas fa-clock text-red-500 mr-2"></i>
+                                <div>
+                                    <p class="text-sm font-medium text-gray-700 dark:text-gray-300">Complete payment within:</p>
+                                    <p class="text-xs text-gray-500">After {{ booking.expiry_time or '24 hours' }}, booking will be cancelled</p>
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <div class="text-xl sm:text-2xl font-mono font-bold text-red-600 dark:text-red-400" 
+                                    id="bookingCountdown"
+                                    data-expiry="{{ booking.expiry_timestamp if booking.expiry_timestamp else '' }}">
+                                    {% if booking.countdown_display %}
+                                        {{ booking.countdown_display }}
+                                    {% else %}
+                                        23:59:59
+                                    {% endif %}
+                                </div>
+                                <p class="text-xs text-red-500">hours:minutes:seconds</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Action Required -->
+                    <div class="mt-4 p-3 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg">
+                        <p class="text-sm text-yellow-800 dark:text-yellow-200">
+                            <i class="fas fa-exclamation-triangle mr-2"></i>
+                            <strong>Action Required:</strong> Select a payment method below and upload payment proof
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid lg:grid-cols-3 gap-8">
+            <!-- Left Column: Payment Methods (2/3 width) -->
+            <div class="lg:col-span-2">
+                <div class="bg-white dark:bg-gray-800 rounded-lg p-8 shadow-lg mb-8">
+                    <h2 class="text-2xl font-serif font-bold mb-6">Select Payment Method</h2>
+                    
+                    <form method="POST" action="{{ url_for('booking_payment', booking_id=booking.id) }}" 
+                          enctype="multipart/form-data" id="paymentForm">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <input type="hidden" name="payment_method" id="selectedMethod" required>
+                        <input type="hidden" name="qris_simulated" id="qrisSimulated" value="false">
+                        
+                        <!-- Payment Methods -->
+                        <div class="grid md:grid-cols-2 gap-4 mb-8" id="paymentMethods">
+                            <!-- QRIS -->
+                            <div class="payment-method-card relative" data-method="qris">
+                                <div class="payment-badge">Instant</div>
+                                <div class="p-4">
+                                    <div class="flex items-center mb-3">
+                                        <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mr-3">
+                                            <i class="fas fa-qrcode text-green-600 text-xl"></i>
+                                        </div>
+                                        <div>
+                                            <div class="font-semibold">QRIS</div>
+                                            <div class="text-xs text-gray-500">Upload Required</div>
+                                        </div>
+                                    </div>
+                                    <div class="text-sm text-gray-600">
+                                        Scan QR code with any e-wallet app
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Bank Transfer -->
+                            <div class="payment-method-card relative" data-method="bank_transfer">
+                                <div class="payment-badge">Manual</div>
+                                <div class="p-4">
+                                    <div class="flex items-center mb-3">
+                                        <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mr-3">
+                                            <i class="fas fa-university text-blue-600 text-xl"></i>
+                                        </div>
+                                        <div>
+                                            <div class="font-semibold">Bank Transfer</div>
+                                            <div class="text-xs text-gray-500">Upload Required</div>
+                                        </div>
+                                    </div>
+                                    <div class="text-sm text-gray-600">
+                                        Transfer to our bank account
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Credit Card -->
+                            <div class="payment-method-card relative" data-method="credit_card">
+                                <div class="payment-badge">Secure</div>
+                                <div class="p-4">
+                                    <div class="flex items-center mb-3">
+                                        <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mr-3">
+                                            <i class="fas fa-credit-card text-purple-600 text-xl"></i>
+                                        </div>
+                                        <div>
+                                            <div class="font-semibold">Credit Card</div>
+                                            <div class="text-xs text-gray-500">Upload Required</div>
+                                        </div>
+                                    </div>
+                                    <div class="text-sm text-gray-600">
+                                        Secure online payment
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- E-Wallets -->
+                            <div class="payment-method-card relative" data-method="ovo">
+                                <div class="payment-badge">E-Wallet</div>
+                                <div class="p-4">
+                                    <div class="flex items-center mb-3">
+                                        <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mr-3">
+                                            <span class="font-bold text-purple-600 text-xl">OVO</span>
+                                        </div>
+                                        <div>
+                                            <div class="font-semibold">OVO</div>
+                                            <div class="text-xs text-gray-500">Upload Required</div>
+                                        </div>
+                                    </div>
+                                    <div class="text-sm text-gray-600">
+                                        Pay with OVO balance
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="payment-method-card relative" data-method="gopay">
+                                <div class="payment-badge">E-Wallet</div>
+                                <div class="p-4">
+                                    <div class="flex items-center mb-3">
+                                        <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mr-3">
+                                            <span class="font-bold text-green-600 text-xl">G</span>
+                                        </div>
+                                        <div>
+                                            <div class="font-semibold">GoPay</div>
+                                            <div class="text-xs text-gray-500">Upload Required</div>
+                                        </div>
+                                    </div>
+                                    <div class="text-sm text-gray-600">
+                                        Pay with GoPay
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="payment-method-card relative" data-method="dana">
+                                <div class="payment-badge">E-Wallet</div>
+                                <div class="p-4">
+                                    <div class="flex items-center mb-3">
+                                        <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mr-3">
+                                            <span class="font-bold text-blue-600 text-xl">D</span>
+                                        </div>
+                                        <div>
+                                            <div class="font-semibold">DANA</div>
+                                            <div class="text-xs text-gray-500">Upload Required</div>
+                                        </div>
+                                    </div>
+                                    <div class="text-sm text-gray-600">
+                                        Pay with DANA
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Payment Details Section (Dynamic) -->
+                        <div id="paymentDetails" class="mb-8">
+                            <!-- Content will be dynamically inserted here -->
+                        </div>
+                        
+                        <!-- Submit Button -->
+                        <button type="submit" id="submitButton" 
+                                class="w-full py-4 bg-gold text-navy font-bold rounded-lg hover:bg-gold/90 transition-colors text-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+                                disabled>
+                            Complete Payment
+                        </button>
+                    </form>
+                </div>
+                
+                <!-- Help Section -->
+                <div class="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-6">
+                    <div class="flex items-start">
+                        <i class="fas fa-info-circle text-yellow-600 dark:text-yellow-400 mt-1 mr-3"></i>
+                        <div>
+                            <h3 class="font-semibold mb-2">Need Help?</h3>
+                            <p class="text-sm text-gray-700 dark:text-gray-300 mb-3">
+                                If you encounter any issues with payment, please contact our support team.
+                            </p>
+                            <div class="flex flex-wrap gap-4">
+                                <a href="https://wa.me/6281234567890" target="_blank" 
+                                   class="flex items-center text-sm bg-green-100 text-green-700 hover:bg-green-200 px-4 py-2 rounded-lg transition-colors">
+                                    <i class="fab fa-whatsapp mr-2"></i>
+                                    WhatsApp Support
+                                </a>
+                                <a href="mailto:payments@feizenhaven.com" 
+                                   class="flex items-center text-sm bg-blue-100 text-blue-700 hover:bg-blue-200 px-4 py-2 rounded-lg transition-colors">
+                                    <i class="fas fa-envelope mr-2"></i>
+                                    Email Support
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Right Column: Booking Summary (Lebar 380px) -->
+            <div class="lg:col-span-1">
+                <div class="sticky top-24 bg-white dark:bg-gray-800 rounded-lg p-6 shadow-lg border border-gray-200 dark:border-gray-700 wider-summary">
+                    
+                    <!-- GAMBAR ROOM -->
+                    <div class="mb-4">
+                        {% if booking.room_main_image %}
+                            <img src="{{ booking.room_main_image }}" 
+                                alt="{{ booking.room_name }}"
+                                class="w-full h-52 object-cover rounded-lg mb-3 shadow-lg">
+                        {% else %}
+                            <div class="w-full h-52 bg-gradient-to-br from-navy/10 to-gold/10 rounded-lg flex flex-col items-center justify-center mb-3">
+                                <i class="fas fa-bed text-gold text-4xl mb-2"></i>
+                                <p class="text-sm text-gray-600 dark:text-gray-400">{{ booking.room_name }}</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <h3 class="text-xl font-semibold mb-6 flex items-center">
+                        <i class="fas fa-receipt text-gold mr-2"></i>
+                        Booking Summary
+                    </h3>
+                    
+                    <!-- Room Info Card -->
+                    <div class="mb-6 p-4 bg-gray-50 dark:bg-gray-900 rounded-lg">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <h4 class="font-bold text-lg">{{ booking.room_name }}</h4>
+                                <p class="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                                    <i class="fas fa-users mr-1"></i>
+                                    {{ booking.guests }} {{ 'Guest' if booking.guests == 1 else 'Guests' }}
+                                </p>
+                            </div>
+                            <div class="text-right">
+                                <div class="text-xs text-gray-500 dark:text-gray-400">Booking ID</div>
+                                <div class="font-mono font-bold text-navy dark:text-white">#FH{{ "%04d"|format(booking.id) }}</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Dates Section -->
+                    <div class="space-y-4 mb-6">
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg">
+                                <p class="text-sm text-gray-600 dark:text-gray-400">Check-in</p>
+                                <p class="font-semibold">{{ booking.check_in_formatted }}</p>
+                                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">From 14:00</p>
+                            </div>
+                            <div class="bg-green-50 dark:bg-green-900/20 p-3 rounded-lg">
+                                <p class="text-sm text-gray-600 dark:text-gray-400">Check-out</p>
+                                <p class="font-semibold">{{ booking.check_out_formatted }}</p>
+                                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Until 12:00</p>
+                            </div>
+                        </div>
+                        
+                        <div class="bg-gray-50 dark:bg-gray-900 p-3 rounded-lg">
+                            <div class="flex justify-between items-center">
+                                <div>
+                                    <p class="text-sm text-gray-600 dark:text-gray-400">Duration</p>
+                                    <p class="font-semibold">
+                                        {{ booking.nights }} {{ 'Night' if booking.nights == 1 else 'Nights' }}
+                                    </p>
+                                </div>
+                                <div class="text-right">
+                                    <p class="text-sm text-gray-600 dark:text-gray-400">Per Night</p>
+                                    <p class="font-semibold text-gold">
+                                        {% if booking.nights > 0 %}
+                                            Rp{{ "{:,.0f}".format(booking.room_price // booking.nights) }}
+                                        {% else %}
+                                            Rp{{ "{:,.0f}".format(booking.room_price) }}
+                                        {% endif %}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Price Breakdown -->
+                    <div class="border-t dark:border-gray-700 pt-4 mb-6">
+                        <h4 class="font-medium text-gray-900 dark:text-white mb-3 flex items-center">
+                            <i class="fas fa-calculator text-gold mr-2"></i>
+                            Price Breakdown
+                        </h4>
+                        
+                        <div class="space-y-2 mb-4">
+                            <!-- Room Charges -->
+                            <div class="flex justify-between">
+                                <div>
+                                    <span class="text-gray-600 dark:text-gray-300">Room Charges</span>
+                                    <div class="text-xs text-gray-500 dark:text-gray-400">
+                                        {{ booking.nights }} {{ 'night' if booking.nights == 1 else 'nights' }}
+                                    </div>
+                                </div>
+                                <span class="font-medium" id="roomCharges">
+                                    Rp{{ "{:,.0f}".format(booking.room_price) }}
+                                </span>
+                            </div>
+                            
+                            <!-- Government Tax 10% -->
+                            <div class="flex justify-between">
+                                <div>
+                                    <span class="text-gray-600 dark:text-gray-300">Government Tax</span>
+                                    <div class="text-xs text-gray-500 dark:text-gray-400">10% of room charges</div>
+                                </div>
+                                <span class="text-red-500" id="govTax">
+                                    {% set gov_tax = booking.room_price * 10 // 100 %}
+                                    Rp{{ "{:,.0f}".format(gov_tax) }}
+                                </span>
+                            </div>
+                            
+                            <!-- Service Charge 11% -->
+                            <div class="flex justify-between">
+                                <div>
+                                    <span class="text-gray-600 dark:text-gray-300">Service Charge</span>
+                                    <div class="text-xs text-gray-500 dark:text-gray-400">11% of room charges</div>
+                                </div>
+                                <span class="text-blue-500" id="serviceCharge">
+                                    {% set service_charge = booking.room_price * 11 // 100 %}
+                                    Rp{{ "{:,.0f}".format(service_charge) }}
+                                </span>
+                            </div>
+                            
+                            <!-- Total Tax (10% + 11% = 21%) -->
+                            <div class="flex justify-between border-t border-gray-200 dark:border-gray-700 pt-2">
+                                <div>
+                                    <span class="text-gray-600 dark:text-gray-300 font-medium">Total Tax & Service</span>
+                                    <div class="text-xs text-gray-500 dark:text-gray-400">Government tax (10%) + Service charge (11%)</div>
+                                </div>
+                                <span class="font-medium text-purple-500" id="totalTax">
+                                    {% set total_tax = booking.room_price * 21 // 100 %}
+                                    Rp{{ "{:,.0f}".format(total_tax) }}
+                                </span>
+                            </div>
+                            
+                            <!-- Grand Total -->
+                            <div class="flex justify-between text-lg font-bold pt-2 border-t-2 border-gray-300 dark:border-gray-600">
+                                <span class="text-gray-900 dark:text-white">Total Amount</span>
+                                <span class="text-gold" id="grandTotal">
+                                    Rp{{ "{:,.0f}".format(booking.total_price) }}
+                                </span>
+                            </div>
+                        </div>
+                        
+                        <!-- Payment Info -->
+                        <div class="text-xs text-gray-500 dark:text-gray-400 pt-2 border-t border-gray-100 dark:border-gray-800">
+                            <p class="flex items-center">
+                                <i class="fas fa-clock text-orange-500 mr-1"></i>
+                                Pay within 24 hours to confirm booking
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <!-- Payment Timer -->
+                    <div class="bg-gradient-to-r from-red-50 to-yellow-50 dark:from-red-900/20 dark:to-yellow-900/20 p-4 rounded-lg mb-6 border border-red-200 dark:border-red-800">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-sm font-medium text-red-800 dark:text-red-300">Complete payment in:</span>
+                            <span class="text-red-600 dark:text-red-400 font-bold font-mono" id="globalCountdown">
+                                {% if booking.countdown_display %}
+                                    {{ booking.countdown_display }}
+                                {% else %}
+                                    23:59:59
+                                {% endif %}
+                            </span>
+                        </div>
+                        <div class="h-2 bg-gray-200 dark:bg-gray-700 rounded-full">
+                            <div class="h-full bg-gradient-to-r from-red-500 to-yellow-500 rounded-full" 
+                                 id="timerBar"
+                                 {% if booking.countdown_seconds is defined %}
+                                 style="width: {{ (1 - (booking.countdown_seconds/(24*3600))) * 100 }}%"
+                                 {% endif %}></div>
+                        </div>
+                        <p class="text-xs text-red-600 dark:text-red-400 mt-2">
+                            <i class="fas fa-exclamation-circle mr-1"></i>
+                            After time expires, booking will be cancelled automatically
+                        </p>
+                    </div>
+                    
+                    <!-- Help Info -->
+                    <div class="text-sm text-gray-600 dark:text-gray-300">
+                        <p class="font-medium mb-2 flex items-center">
+                            <i class="fas fa-shield-alt text-gold mr-2"></i>
+                            Secure Payment
+                        </p>
+                        <ul class="space-y-1 text-xs">
+                            <li class="flex items-center">
+                                <i class="fas fa-lock text-green-500 mr-2"></i>
+                                SSL encrypted connection
+                            </li>
+                            <li class="flex items-center">
+                                <i class="fas fa-credit-card text-blue-500 mr-2"></i>
+                                Multiple payment methods
+                            </li>
+                            <li class="flex items-center">
+                                <i class="fas fa-history text-purple-500 mr-2"></i>
+                                24-hour payment window
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // State variables
+    let selectedMethod = '';
+    let currentPaymentProof = null;
+    
+    // Elements
+    const paymentCards = document.querySelectorAll('.payment-method-card');
+    const selectedMethodInput = document.getElementById('selectedMethod');
+    const paymentDetails = document.getElementById('paymentDetails');
+    const submitButton = document.getElementById('submitButton');
+    const paymentForm = document.getElementById('paymentForm');
+    
+    // Payment information (nomor rekening/kode untuk setiap metode)
+    const paymentInfo = {
+        qris: {
+            name: 'QRIS',
+            icon: 'fas fa-qrcode',
+            color: 'green',
+            instruction: 'Scan QR code below with any e-wallet',
+            details: '<div class="text-center mb-4"><img src="/static/images/payment/qris.jpeg" alt="QRIS Code" class="w-48 h-48 mx-auto rounded-lg border"><p class="text-sm text-gray-500 mt-2">Scan this QR code</p></div>'
+        },
+        bank_transfer: {
+            name: 'Bank Transfer',
+            icon: 'fas fa-university',
+            color: 'blue',
+            instruction: 'Transfer to our bank account',
+            details: `
+                <div class="space-y-3">
+                    <div class="p-3 bg-blue-50 rounded-lg">
+                        <p class="font-medium text-sm mb-1">BCA (Bank Central Asia)</p>
+                        <p class="text-sm">No. Rekening: <span class="font-mono font-bold">8880 1234 5678 90</span></p>
+                        <p class="text-sm">Atas Nama: <span class="font-bold">FEIZEN HAVEN</span></p>
+                    </div>
+                    <div class="p-3 bg-green-50 rounded-lg">
+                        <p class="font-medium text-sm mb-1">Mandiri</p>
+                        <p class="text-sm">No. Rekening: <span class="font-mono font-bold">8880 8765 4321 09</span></p>
+                        <p class="text-sm">Atas Nama: <span class="font-bold">FEIZEN HAVEN</span></p>
+                    </div>
+                    <div class="p-3 bg-purple-50 rounded-lg">
+                        <p class="font-medium text-sm mb-1">BNI (Bank Negara Indonesia)</p>
+                        <p class="text-sm">No. Rekening: <span class="font-mono font-bold">1234 5678 9012</span></p>
+                        <p class="text-sm">Atas Nama: <span class="font-bold">FEIZEN HAVEN</span></p>
+                    </div>
+                </div>
+            `
+        },
+        credit_card: {
+            name: 'Credit Card',
+            icon: 'fas fa-credit-card',
+            color: 'purple',
+            instruction: 'Secure online payment',
+            details: `
+                <div class="space-y-3">
+                    <div class="flex items-center space-x-2 mb-2">
+                        <div class="w-12 h-8 bg-blue-100 rounded flex items-center justify-center">
+                            <i class="fab fa-cc-visa text-blue-600"></i>
+                        </div>
+                        <div class="w-12 h-8 bg-red-100 rounded flex items-center justify-center">
+                            <i class="fab fa-cc-mastercard text-red-600"></i>
+                        </div>
+                        <div class="w-12 h-8 bg-green-100 rounded flex items-center justify-center">
+                            <i class="fab fa-cc-amex text-green-600"></i>
+                        </div>
+                    </div>
+                    <div class="p-3 bg-gray-50 rounded-lg">
+                        <p class="text-sm"><i class="fas fa-shield-alt text-green-500 mr-2"></i>Payment secured with SSL encryption</p>
+                        <p class="text-sm"><i class="fas fa-lock text-blue-500 mr-2"></i>Your card details are protected</p>
+                    </div>
+                </div>
+            `
+        },
+        ovo: {
+            name: 'OVO',
+            icon: 'fas fa-mobile-alt',
+            color: 'purple',
+            instruction: 'Pay with OVO e-wallet',
+            details: `
+                <div class="space-y-3">
+                    <div class="p-3 bg-purple-50 rounded-lg">
+                        <p class="font-medium text-sm mb-1">OVO Payment</p>
+                        <p class="text-sm">OVO Number: <span class="font-mono font-bold">0812 3456 7890</span></p>
+                        <p class="text-sm">Name: <span class="font-bold">FEIZEN HAVEN</span></p>
+                        <p class="text-sm">Payment Code: <span class="font-mono font-bold">FHOVO{{ booking.id if booking.id else "0000" }}</span></p>
+                    </div>
+                    <div class="text-sm text-gray-600">
+                        <p><i class="fas fa-check-circle text-green-500 mr-1"></i> Open OVO app</p>
+                        <p><i class="fas fa-check-circle text-green-500 mr-1"></i> Go to Transfer/Pay</p>
+                        <p><i class="fas fa-check-circle text-green-500 mr-1"></i> Enter OVO number above</p>
+                    </div>
+                </div>
+            `
+        },
+        gopay: {
+            name: 'GoPay',
+            icon: 'fas fa-wallet',
+            color: 'green',
+            instruction: 'Pay with GoPay e-wallet',
+            details: `
+                <div class="space-y-3">
+                    <div class="p-3 bg-green-50 rounded-lg">
+                        <p class="font-medium text-sm mb-1">GoPay Payment</p>
+                        <p class="text-sm">GoPay Number: <span class="font-mono font-bold">0813 4567 8901</span></p>
+                        <p class="text-sm">Name: <span class="font-bold">FEIZEN HAVEN</span></p>
+                        <p class="text-sm">Payment Code: <span class="font-mono font-bold">FHGP{{ booking.id if booking.id else "0000" }}</span></p>
+                    </div>
+                    <div class="text-sm text-gray-600">
+                        <p><i class="fas fa-check-circle text-green-500 mr-1"></i> Open Gojek app</p>
+                        <p><i class="fas fa-check-circle text-green-500 mr-1"></i> Go to GoPay</p>
+                        <p><i class="fas fa-check-circle text-green-500 mr-1"></i> Transfer to number above</p>
+                    </div>
+                </div>
+            `
+        },
+        dana: {
+            name: 'DANA',
+            icon: 'fas fa-money-bill-wave',
+            color: 'blue',
+            instruction: 'Pay with DANA e-wallet',
+            details: `
+                <div class="space-y-3">
+                    <div class="p-3 bg-blue-50 rounded-lg">
+                        <p class="font-medium text-sm mb-1">DANA Payment</p>
+                        <p class="text-sm">DANA Number: <span class="font-mono font-bold">0814 5678 9012</span></p>
+                        <p class="text-sm">Name: <span class="font-bold">FEIZEN HAVEN</span></p>
+                        <p class="text-sm">Payment Code: <span class="font-mono font-bold">FHDN{{ booking.id if booking.id else "0000" }}</span></p>
+                    </div>
+                    <div class="text-sm text-gray-600">
+                        <p><i class="fas fa-check-circle text-green-500 mr-1"></i> Open DANA app</p>
+                        <p><i class="fas fa-check-circle text-green-500 mr-1"></i> Go to Send Money</p>
+                        <p><i class="fas fa-check-circle text-green-500 mr-1"></i> Enter DANA number above</p>
+                    </div>
+                </div>
+            `
+        }
+    };
+    
+    // Helper function untuk format harga
+    function formatCurrency(amount) {
+        return new Intl.NumberFormat('id-ID').format(amount || 0);
+    }
+    
+    // Helper function untuk format ukuran file
+    function formatFileSize(bytes) {
+        if (bytes < 1024) return bytes + ' bytes';
+        else if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
+        else return (bytes / 1048576).toFixed(1) + ' MB';
+    }
+    
+    // Get booking total price
+    function getBookingTotalPrice() {
+        try {
+            const bookingData = {{ booking|tojson|safe if booking else '{}' }};
+            return bookingData.total_price || 0;
+        } catch (e) {
+            return 0;
+        }
+    }
+    
+    // Template sederhana untuk semua metode pembayaran
+    function createPaymentTemplate(method) {
+        const info = paymentInfo[method];
+        if (!info) return '';
+        
+        return `
+            <div class="payment-detail-container">
+                <h3 class="text-lg font-semibold mb-4">${info.name} Payment</h3>
+                
+                <div class="mb-6">
+                    <div class="flex items-center mb-3">
+                        <div class="w-10 h-10 bg-${info.color}-100 rounded-full flex items-center justify-center mr-3">
+                            <i class="${info.icon} text-${info.color}-600"></i>
+                        </div>
+                        <div>
+                            <div class="font-semibold">${info.name}</div>
+                            <div class="text-xs text-gray-500">${info.instruction}</div>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-gray-50 dark:bg-gray-900 rounded-lg p-4 mb-3">
+                        <div class="space-y-2 text-sm">
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Amount to Pay:</span>
+                                <span class="font-bold text-lg text-gold">Rp${formatCurrency(getBookingTotalPrice())}</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">Booking ID:</span>
+                                <span class="font-mono">FH{{ "%04d"|format(booking.id) }}</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Payment Details (nomor rekening/kode) -->
+                    <div class="mt-4">
+                        ${info.details}
+                    </div>
+                    
+                    <div class="mt-4 p-3 bg-yellow-50 rounded-lg">
+                        <p class="text-sm font-medium"><i class="fas fa-info-circle text-yellow-500 mr-1"></i>Important:</p>
+                        <p class="text-sm">Use Booking ID <span class="font-mono font-bold">FH{{ "%04d"|format(booking.id) }}</span> as payment reference</p>
+                    </div>
+                </div>
+                
+                <!-- Upload Section -->
+                <div class="mt-8">
+                    <h4 class="font-medium mb-3">Upload Payment Proof <span class="text-red-500">*</span></h4>
+                    <p class="text-sm text-gray-600 mb-3">
+                        After payment, upload screenshot of payment confirmation
+                    </p>
+                    
+                    <div class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-gold transition-colors">
+                        <input type="file" 
+                               name="payment_proof" 
+                               id="paymentProof" 
+                               accept="image/*" 
+                               class="hidden" 
+                               required>
+                        <label for="paymentProof" class="cursor-pointer">
+                            <i class="fas fa-cloud-upload-alt text-3xl text-gray-400 mb-3"></i>
+                            <p class="font-medium mb-1">Click to upload payment proof</p>
+                            <p class="text-xs text-gray-500">JPG, PNG (Max 5MB)</p>
+                            <button type="button" class="mt-3 px-4 py-2 bg-gold text-navy font-medium rounded hover:bg-gold/90">
+                                <i class="fas fa-image mr-1"></i> Browse from Gallery
+                            </button>
+                        </label>
+                    </div>
+                    
+                    <div id="filePreview" class="mt-4 hidden">
+                        <div class="flex items-center bg-gray-50 p-3 rounded-lg">
+                            <img id="imagePreview" class="w-16 h-16 object-cover rounded mr-3">
+                            <div class="flex-1">
+                                <p id="fileName" class="font-medium text-sm"></p>
+                                <p id="fileSize" class="text-xs text-gray-500"></p>
+                            </div>
+                            <button type="button" id="removeFile" class="text-red-500 hover:text-red-700">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+    
+    // Payment method selection
+    paymentCards.forEach(card => {
+        card.addEventListener('click', function() {
+            // Remove selected class from all cards
+            paymentCards.forEach(c => c.classList.remove('selected'));
+            
+            // Add selected class to clicked card
+            this.classList.add('selected');
+            
+            // Get selected method
+            selectedMethod = this.dataset.method;
+            selectedMethodInput.value = selectedMethod;
+            
+            // Clear current file
+            currentPaymentProof = null;
+            
+            // Show payment details
+            showPaymentDetails(selectedMethod);
+            
+            // Update submit button
+            updateSubmitButton();
+        });
+    });
+    
+    // Show payment details based on method
+    function showPaymentDetails(method) {
+        const template = createPaymentTemplate(method);
+        if (template) {
+            paymentDetails.innerHTML = template;
+            
+            // Setup file upload
+            setTimeout(() => {
+                setupFileUpload();
+            }, 100);
+        }
+    }
+    
+    // Setup file upload
+    function setupFileUpload() {
+        const fileInput = document.getElementById('paymentProof');
+        const previewDiv = document.getElementById('filePreview');
+        const imagePreview = document.getElementById('imagePreview');
+        const fileName = document.getElementById('fileName');
+        const fileSize = document.getElementById('fileSize');
+        const removeBtn = document.getElementById('removeFile');
+        
+        if (!fileInput) return;
+        
+        // Setup file input click
+        const label = document.querySelector('label[for="paymentProof"]');
+        if (label) {
+            label.addEventListener('click', function(e) {
+                e.preventDefault();
+                fileInput.click();
+            });
+        }
+        
+        fileInput.addEventListener('change', function(e) {
+            if (this.files.length) {
+                const file = this.files[0];
+                
+                // Validate file
+                const validTypes = ['image/jpeg', 'image/png', 'image/jpg'];
+                const maxSize = 5 * 1024 * 1024; // 5MB
+                
+                if (!validTypes.includes(file.type)) {
+                    alert('Please upload JPG or PNG file only');
+                    this.value = '';
+                    return;
+                }
+                
+                if (file.size > maxSize) {
+                    alert('File size must be less than 5MB');
+                    this.value = '';
+                    return;
+                }
+                
+                currentPaymentProof = file;
+                
+                // Show preview
+                if (fileName) fileName.textContent = file.name;
+                if (fileSize) fileSize.textContent = formatFileSize(file.size);
+                
+                if (file.type.startsWith('image/')) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        if (imagePreview) imagePreview.src = e.target.result;
+                    };
+                    reader.readAsDataURL(file);
+                }
+                
+                if (previewDiv) previewDiv.classList.remove('hidden');
+                updateSubmitButton();
+            }
+        });
+        
+        if (removeBtn) {
+            removeBtn.addEventListener('click', function() {
+                fileInput.value = '';
+                currentPaymentProof = null;
+                if (previewDiv) previewDiv.classList.add('hidden');
+                updateSubmitButton();
+            });
+        }
+    }
+    
+    // Update submit button state
+    function updateSubmitButton() {
+        const hasProof = currentPaymentProof !== null;
+        
+        if (!selectedMethod) {
+            submitButton.disabled = true;
+            submitButton.innerHTML = 'Select Payment Method First';
+            return;
+        }
+        
+        const methodName = paymentInfo[selectedMethod]?.name || selectedMethod;
+        
+        if (hasProof) {
+            submitButton.disabled = false;
+            submitButton.innerHTML = `Complete ${methodName} Payment`;
+        } else {
+            submitButton.disabled = true;
+            submitButton.innerHTML = 'Upload Payment Proof First';
+        }
+    }
+    
+    // Countdown timer untuk booking
+    function initializeCountdowns() {
+        // Timer utama
+        const countdownElement = document.getElementById('bookingCountdown');
+        if (countdownElement) {
+            let totalSeconds = 23 * 3600 + 59 * 60 + 59;
+            
+            function updateCountdown() {
+                if (totalSeconds <= 0) {
+                    countdownElement.textContent = "00:00:00";
+                    countdownElement.classList.add('text-red-600');
+                    return;
+                }
+                
+                const hours = Math.floor(totalSeconds / 3600);
+                const minutes = Math.floor((totalSeconds % 3600) / 60);
+                const seconds = totalSeconds % 60;
+                
+                countdownElement.textContent = 
+                    `${hours.toString().padStart(2, '0')}:` +
+                    `${minutes.toString().padStart(2, '0')}:` +
+                    `${seconds.toString().padStart(2, '0')}`;
+                
+                totalSeconds--;
+                setTimeout(updateCountdown, 1000);
+            }
+            
+            updateCountdown();
+        }
+        
+        // Timer sidebar
+        const globalCountdown = document.getElementById('globalCountdown');
+        if (globalCountdown) {
+            let totalSeconds = 23 * 3600 + 59 * 60 + 59;
+            
+            function updateGlobalCountdown() {
+                if (totalSeconds <= 0) {
+                    globalCountdown.textContent = "00:00:00";
+                    globalCountdown.classList.add('text-red-600');
+                    return;
+                }
+                
+                const hours = Math.floor(totalSeconds / 3600);
+                const minutes = Math.floor((totalSeconds % 3600) / 60);
+                const seconds = totalSeconds % 60;
+                
+                globalCountdown.textContent = 
+                    `${hours.toString().padStart(2, '0')}:` +
+                    `${minutes.toString().padStart(2, '0')}:` +
+                    `${seconds.toString().padStart(2, '0')}`;
+                
+                totalSeconds--;
+                setTimeout(updateGlobalCountdown, 1000);
+            }
+            
+            updateGlobalCountdown();
+        }
+    }
+    
+    // Form submission
+    paymentForm.addEventListener('submit', function(e) {
+        if (!selectedMethod) {
+            e.preventDefault();
+            alert('Please select a payment method');
+            return false;
+        }
+        
+        if (!currentPaymentProof) {
+            e.preventDefault();
+            alert('Please upload payment proof');
+            return false;
+        }
+        
+        // Show loading
+        submitButton.disabled = true;
+        submitButton.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Processing...';
+    });
+    
+    // Initialize
+    initializeCountdowns();
+});
+</script>
+{% endblock %}

@@ -1,0 +1,819 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Dashboard - Feizen Haven{% endblock %}
+
+{% block extra_css %}
+<style>
+    .dashboard-content {
+        padding-top: 6rem;
+        padding-bottom: 3rem;
+        min-height: 100vh;
+        background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
+    }
+    
+    .dark .dashboard-content {
+        background: linear-gradient(135deg, #111827 0%, #1f2937 100%);
+    }
+    
+    /* Stats Grid */
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(1, 1fr);
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+    
+    @media (min-width: 768px) {
+        .stats-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+    
+    @media (min-width: 1024px) {
+        .stats-grid {
+            grid-template-columns: repeat(4, 1fr);
+        }
+    }
+    
+    /* Stat Card */
+    .stat-card {
+        background: white;
+        border-radius: 1rem;
+        padding: 1.5rem;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        transition: all 0.3s ease;
+        border: 1px solid transparent;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .stat-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        border-color: #C5A145;
+    }
+    
+    .dark .stat-card {
+        background: #1f2937;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2);
+    }
+    
+    .dark .stat-card:hover {
+        border-color: #C5A145;
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.4), 0 10px 10px -5px rgba(0, 0, 0, 0.2);
+    }
+    
+    .stat-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(90deg, #C5A145, #D4B86A);
+        border-radius: 1rem 1rem 0 0;
+    }
+    
+    .stat-card-icon {
+        width: 3.5rem;
+        height: 3.5rem;
+        border-radius: 0.75rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 1rem;
+    }
+    
+    .stat-card-icon.rooms { background: rgba(59, 130, 246, 0.1); }
+    .stat-card-icon.users { background: rgba(34, 197, 94, 0.1); }
+    .stat-card-icon.bookings { background: rgba(168, 85, 247, 0.1); }
+    .stat-card-icon.revenue { background: rgba(245, 158, 11, 0.1); }
+    
+    .dark .stat-card-icon.rooms { background: rgba(59, 130, 246, 0.2); }
+    .dark .stat-card-icon.users { background: rgba(34, 197, 94, 0.2); }
+    .dark .stat-card-icon.bookings { background: rgba(168, 85, 247, 0.2); }
+    .dark .stat-card-icon.revenue { background: rgba(245, 158, 11, 0.2); }
+    
+    .stat-card-icon i {
+        font-size: 1.5rem;
+    }
+    
+    .stat-card-icon.rooms i { color: #3b82f6; }
+    .stat-card-icon.users i { color: #22c55e; }
+    .stat-card-icon.bookings i { color: #a855f7; }
+    .stat-card-icon.revenue i { color: #f59e0b; }
+    
+    .stat-value {
+        font-size: 2.25rem;
+        font-weight: 800;
+        margin-bottom: 0.25rem;
+        color: #111827;
+    }
+    
+    .dark .stat-value {
+        color: #f9fafb;
+    }
+    
+    .stat-label {
+        font-size: 0.875rem;
+        font-weight: 500;
+        color: #6b7280;
+        margin-bottom: 0.5rem;
+    }
+    
+    .dark .stat-label {
+        color: #9ca3af;
+    }
+    
+    .stat-detail {
+        font-size: 0.75rem;
+        color: #10b981;
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+    }
+    
+    /* Quick Actions */
+    .quick-actions-grid {
+        display: grid;
+        grid-template-columns: repeat(1, 1fr);
+        gap: 1rem;
+        margin-bottom: 2rem;
+    }
+    
+    @media (min-width: 768px) {
+        .quick-actions-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+    
+    @media (min-width: 1024px) {
+        .quick-actions-grid {
+            grid-template-columns: repeat(4, 1fr);
+        }
+    }
+    
+    .quick-action-card {
+        background: white;
+        border-radius: 1rem;
+        padding: 1.5rem;
+        text-decoration: none;
+        color: inherit;
+        transition: all 0.3s ease;
+        border: 1px solid #e5e7eb;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+    
+    .quick-action-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+        border-color: #C5A145;
+        background: #fefce8;
+    }
+    
+    .dark .quick-action-card {
+        background: #1f2937;
+        border-color: #374151;
+    }
+    
+    .dark .quick-action-card:hover {
+        background: #374151;
+        border-color: #C5A145;
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+    }
+    
+    .quick-action-icon {
+        width: 3rem;
+        height: 3rem;
+        border-radius: 0.75rem;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+    
+    .quick-action-icon i {
+        color: white;
+        font-size: 1.25rem;
+    }
+    
+    .quick-action-content h3 {
+        font-size: 1rem;
+        font-weight: 600;
+        color: #111827;
+        margin-bottom: 0.25rem;
+    }
+    
+    .dark .quick-action-content h3 {
+        color: #f9fafb;
+    }
+    
+    .quick-action-content p {
+        font-size: 0.75rem;
+        color: #6b7280;
+        margin: 0;
+    }
+    
+    .dark .quick-action-content p {
+        color: #9ca3af;
+    }
+    
+    /* Content Grid */
+    .content-grid {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 2rem;
+    }
+    
+    @media (min-width: 1024px) {
+        .content-grid {
+            grid-template-columns: 2fr 1fr;
+        }
+    }
+    
+    /* Table Container */
+    .table-container {
+        background: white;
+        border-radius: 1rem;
+        overflow: hidden;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    }
+    
+    .dark .table-container {
+        background: #1f2937;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2);
+    }
+    
+    .table-header {
+        padding: 1.5rem;
+        border-bottom: 1px solid #e5e7eb;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .dark .table-header {
+        border-bottom-color: #374151;
+    }
+    
+    .table-header h2 {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: #111827;
+    }
+    
+    .dark .table-header h2 {
+        color: #f9fafb;
+    }
+    
+    .table-content {
+        padding: 1.5rem;
+    }
+    
+    .admin-table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+    }
+    
+    .admin-table th {
+        padding: 0.75rem 1rem;
+        text-align: left;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: #6b7280;
+        border-bottom: 1px solid #e5e7eb;
+        background: #f9fafb;
+    }
+    
+    .dark .admin-table th {
+        color: #9ca3af;
+        border-bottom-color: #374151;
+        background: #111827;
+    }
+    
+    .admin-table td {
+        padding: 1rem;
+        border-bottom: 1px solid #e5e7eb;
+        color: #374151;
+    }
+    
+    .dark .admin-table td {
+        color: #d1d5db;
+        border-bottom-color: #374151;
+    }
+    
+    .admin-table tbody tr:hover {
+        background: #f9fafb;
+    }
+    
+    .dark .admin-table tbody tr:hover {
+        background: #374151;
+    }
+    
+    /* Status Badges */
+    .status-badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.25rem 0.75rem;
+        border-radius: 9999px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+    
+    .status-pending {
+        background: #fef3c7;
+        color: #92400e;
+    }
+    
+    .status-confirmed {
+        background: #d1fae5;
+        color: #065f46;
+    }
+    
+    .status-waiting_payment {
+        background: #dbeafe;
+        color: #1e40af;
+    }
+    
+    .status-cancelled {
+        background: #fee2e2;
+        color: #991b1b;
+    }
+    
+    .status-completed {
+        background: #f3e8ff;
+        color: #5b21b6;
+    }
+    
+    /* Activity List */
+    .activity-list {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+    }
+    
+    .activity-item {
+        display: flex;
+        align-items: flex-start;
+        gap: 1rem;
+        padding: 1rem;
+        background: #f9fafb;
+        border-radius: 0.75rem;
+        border: 1px solid #e5e7eb;
+        transition: all 0.2s ease;
+    }
+    
+    .activity-item:hover {
+        transform: translateX(5px);
+        border-color: #C5A145;
+    }
+    
+    .dark .activity-item {
+        background: #374151;
+        border-color: #4b5563;
+    }
+    
+    .activity-icon {
+        width: 2.5rem;
+        height: 2.5rem;
+        border-radius: 0.75rem;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+    
+    .activity-icon i {
+        color: white;
+        font-size: 1rem;
+    }
+    
+    .activity-content {
+        flex: 1;
+    }
+    
+    .activity-title {
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: #111827;
+        margin-bottom: 0.25rem;
+    }
+    
+    .dark .activity-title {
+        color: #f9fafb;
+    }
+    
+    .activity-desc {
+        font-size: 0.75rem;
+        color: #6b7280;
+    }
+    
+    .dark .activity-desc {
+        color: #9ca3af;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-content">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <!-- Header -->
+        <div class="mb-8">
+            <h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-2">Admin Dashboard</h1>
+            <p class="text-gray-600 dark:text-gray-300">Welcome back, {{ session.name }}! Here's what's happening today.</p>
+        </div>
+
+        <!-- Stats Grid -->
+        <div class="stats-grid mb-8">
+            <!-- Total Rooms -->
+            <div class="stat-card">
+                <div class="stat-card-icon rooms">
+                    <i class="fas fa-door-open"></i>
+                </div>
+                <div>
+                    <div class="stat-value">{{ total_rooms }}</div>
+                    <div class="stat-label">Total Rooms</div>
+                    <div class="stat-detail">
+                        <i class="fas fa-check-circle"></i>
+                        {{ available_rooms }} available
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Total Users -->
+            <div class="stat-card">
+                <div class="stat-card-icon users">
+                    <i class="fas fa-users"></i>
+                </div>
+                <div>
+                    <div class="stat-value">{{ total_users }}</div>
+                    <div class="stat-label">Registered Users</div>
+                    <div class="stat-detail">
+                        <i class="fas fa-user-plus"></i>
+                        {{ recent_users|length }} new this month
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Total Bookings -->
+            <div class="stat-card">
+                <div class="stat-card-icon bookings">
+                    <i class="fas fa-calendar-check"></i>
+                </div>
+                <div>
+                    <div class="stat-value">{{ total_bookings }}</div>
+                    <div class="stat-label">Total Bookings</div>
+                    <div class="stat-detail">
+                        <i class="fas fa-clock"></i>
+                        {{ pending_bookings }} pending
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Total Revenue -->
+            <div class="stat-card">
+                <div class="stat-card-icon revenue">
+                    <i class="fas fa-money-bill-wave"></i>
+                </div>
+                <div>
+                    <div class="stat-value">Rp{{ "{:,.0f}".format(total_revenue) }}</div>
+                    <div class="stat-label">Total Revenue</div>
+                    <div class="stat-detail">
+                        <i class="fas fa-chart-line"></i>
+                        {{ today_bookings }} today
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="quick-actions-grid mb-8">
+            <a href="{{ url_for('manage_rooms') }}" class="quick-action-card">
+                <div class="quick-action-icon">
+                    <i class="fas fa-bed"></i>
+                </div>
+                <div class="quick-action-content">
+                    <h3>Manage Rooms</h3>
+                    <p>Add, edit or remove rooms</p>
+                </div>
+            </a>
+            
+            <a href="{{ url_for('admin_bookings') }}" class="quick-action-card">
+                <div class="quick-action-icon">
+                    <i class="fas fa-calendar-alt"></i>
+                </div>
+                <div class="quick-action-content">
+                    <h3>Manage Bookings</h3>
+                    <p>View and update bookings</p>
+                </div>
+            </a>
+            
+            <a href="{{ url_for('admin_users') }}" class="quick-action-card">
+                <div class="quick-action-icon">
+                    <i class="fas fa-user-cog"></i>
+                </div>
+                <div class="quick-action-content">
+                    <h3>Manage Users</h3>
+                    <p>View user accounts</p>
+                </div>
+            </a>
+            
+            <a href="{{ url_for('admin_settings') if 'admin_settings' in url_map else '#' }}" class="quick-action-card">
+                <div class="quick-action-icon">
+                    <i class="fas fa-cog"></i>
+                </div>
+                <div class="quick-action-content">
+                    <h3>Settings</h3>
+                    <p>Configure system settings</p>
+                </div>
+            </a>
+        </div>
+
+        <!-- Main Content Grid -->
+        <div class="content-grid">
+            <!-- Left Column: Recent Bookings -->
+            <div>
+                <div class="table-container mb-6">
+                    <div class="table-header">
+                        <h2>Recent Bookings</h2>
+                        <a href="{{ url_for('admin_bookings') }}" class="text-sm text-gold hover:text-gold/80 font-medium">
+                            View All
+                        </a>
+                    </div>
+                    <div class="table-content">
+                        {% if recent_bookings %}
+                        <div class="overflow-x-auto">
+                            <table class="admin-table">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Customer</th>
+                                        <th>Room</th>
+                                        <th>Dates</th>
+                                        <th>Status</th>
+                                        <th>Amount</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for booking in recent_bookings %}
+                                    <tr>
+                                        <td class="font-mono text-sm">
+                                            {{ booking.booking_code or 'FH' + '%04d'|format(booking.id) }}
+                                        </td>
+                                        <td>
+                                            <div class="font-medium">{{ booking.first_name }} {{ booking.last_name }}</div>
+                                            <div class="text-xs text-gray-500">{{ booking.email }}</div>
+                                        </td>
+                                        <td class="font-medium">{{ booking.room_name }}</td>
+                                        <td>
+                                            <div class="text-sm">
+                                                {% if booking.check_in and booking.check_out %}
+                                                    {{ booking.check_in.strftime('%d/%m') }} - {{ booking.check_out.strftime('%d/%m') }}
+                                                {% else %}
+                                                    N/A
+                                                {% endif %}
+                                            </div>
+                                            <div class="text-xs text-gray-500">
+                                                {% if booking.check_in and booking.check_out %}
+                                                    {% set nights = (booking.check_out - booking.check_in).days %}
+                                                    {{ nights }} night{% if nights > 1 %}s{% endif %}
+                                                {% endif %}
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <span class="status-badge status-{{ booking.status }}">
+                                                {{ booking.status|replace('_', ' ')|title }}
+                                            </span>
+                                        </td>
+                                        <td class="font-bold text-gold">
+                                            Rp{{ "{:,.0f}".format(booking.total_price) }}
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        {% else %}
+                        <div class="text-center py-8 text-gray-500">
+                            <i class="fas fa-calendar-times text-4xl mb-4"></i>
+                            <p>No bookings found</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Recent Users -->
+                <div class="table-container">
+                    <div class="table-header">
+                        <h2>Recent Users</h2>
+                        <span class="text-sm text-gray-500">{{ recent_users|length }} new</span>
+                    </div>
+                    <div class="table-content">
+                        {% if recent_users %}
+                        <div class="overflow-x-auto">
+                            <table class="admin-table">
+                                <thead>
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Email</th>
+                                        <th>Joined</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for user in recent_users %}
+                                    <tr>
+                                        <td class="font-medium">{{ user.first_name }} {{ user.last_name }}</td>
+                                        <td class="text-sm text-gray-500">{{ user.email }}</td>
+                                        <td class="text-sm">
+                                            {% if user.created_at %}
+                                                {{ user.created_at.strftime('%d/%m/%Y') }}
+                                            {% else %}
+                                                N/A
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <span class="status-badge bg-green-100 text-green-800">
+                                                Active
+                                            </span>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        {% else %}
+                        <div class="text-center py-8 text-gray-500">
+                            <i class="fas fa-user-slash text-4xl mb-4"></i>
+                            <p>No users found</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column: Activity & Quick Stats -->
+            <div>
+                <!-- Recent Activity -->
+                <div class="table-container mb-6">
+                    <div class="table-header">
+                        <h2>Recent Activity</h2>
+                    </div>
+                    <div class="table-content">
+                        <div class="activity-list">
+                            <!-- Today's Bookings -->
+                            <div class="activity-item">
+                                <div class="activity-icon">
+                                    <i class="fas fa-calendar-plus"></i>
+                                </div>
+                                <div class="activity-content">
+                                    <div class="activity-title">New Bookings Today</div>
+                                    <div class="activity-desc">{{ today_bookings }} bookings made today</div>
+                                </div>
+                            </div>
+                            
+                            <!-- Pending Bookings -->
+                            <div class="activity-item">
+                                <div class="activity-icon">
+                                    <i class="fas fa-clock"></i>
+                                </div>
+                                <div class="activity-content">
+                                    <div class="activity-title">Pending Approvals</div>
+                                    <div class="activity-desc">{{ pending_bookings }} bookings awaiting confirmation</div>
+                                </div>
+                            </div>
+                            
+                            <!-- Available Rooms -->
+                            <div class="activity-item">
+                                <div class="activity-icon">
+                                    <i class="fas fa-door-open"></i>
+                                </div>
+                                <div class="activity-content">
+                                    <div class="activity-title">Room Availability</div>
+                                    <div class="activity-desc">{{ available_rooms }} rooms currently available</div>
+                                </div>
+                            </div>
+                            
+                            <!-- Revenue -->
+                            <div class="activity-item">
+                                <div class="activity-icon">
+                                    <i class="fas fa-chart-line"></i>
+                                </div>
+                                <div class="activity-content">
+                                    <div class="activity-title">Revenue Status</div>
+                                    <div class="activity-desc">Rp{{ "{:,.0f}".format(total_revenue) }} total revenue</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick Stats -->
+                <div class="table-container">
+                    <div class="table-header">
+                        <h2>Quick Stats</h2>
+                    </div>
+                    <div class="table-content">
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg">
+                                <div class="text-sm text-blue-600 dark:text-blue-400 mb-1">Occupancy Rate</div>
+                                {% set occupancy_rate = ((total_bookings - available_rooms) / total_rooms * 100)|round(1) if total_rooms > 0 else 0 %}
+                                <div class="text-2xl font-bold text-gray-900 dark:text-white">{{ occupancy_rate }}%</div>
+                            </div>
+                            <div class="bg-green-50 dark:bg-green-900/20 p-4 rounded-lg">
+                                <div class="text-sm text-green-600 dark:text-green-400 mb-1">Avg Booking</div>
+                                {% set avg_booking = (total_revenue / total_bookings if total_bookings > 0 else 0)|round(0) %}
+                                <div class="text-2xl font-bold text-gray-900 dark:text-white">Rp{{ "{:,.0f}".format(avg_booking) }}</div>
+                            </div>
+                            <div class="bg-purple-50 dark:bg-purple-900/20 p-4 rounded-lg">
+                                <div class="text-sm text-purple-600 dark:text-purple-400 mb-1">Completion Rate</div>
+                                {% set completion_rate = ((total_bookings - pending_bookings) / total_bookings * 100)|round(1) if total_bookings > 0 else 0 %}
+                                <div class="text-2xl font-bold text-gray-900 dark:text-white">{{ completion_rate }}%</div>
+                            </div>
+                            <div class="bg-yellow-50 dark:bg-yellow-900/20 p-4 rounded-lg">
+                                <div class="text-sm text-yellow-600 dark:text-yellow-400 mb-1">Today's Growth</div>
+                                <div class="text-2xl font-bold text-gray-900 dark:text-white">+{{ today_bookings }}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Animate stat cards on scroll
+    const observerOptions = {
+        threshold: 0.1,
+        rootMargin: '0px 0px -50px 0px'
+    };
+
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.style.opacity = '1';
+                entry.target.style.transform = 'translateY(0)';
+            }
+        });
+    }, observerOptions);
+
+    // Observe stat cards
+    document.querySelectorAll('.stat-card').forEach(card => {
+        card.style.opacity = '0';
+        card.style.transform = 'translateY(20px)';
+        card.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
+        observer.observe(card);
+    });
+
+    // Hover effects for quick actions
+    const quickActions = document.querySelectorAll('.quick-action-card');
+    quickActions.forEach(action => {
+        action.addEventListener('mouseenter', function() {
+            this.querySelector('.quick-action-icon').style.transform = 'scale(1.1) rotate(5deg)';
+        });
+        
+        action.addEventListener('mouseleave', function() {
+            this.querySelector('.quick-action-icon').style.transform = 'scale(1) rotate(0)';
+        });
+    });
+
+    // Update current time
+    function updateTime() {
+        const now = new Date();
+        const timeString = now.toLocaleTimeString('en-US', { 
+            hour: '2-digit', 
+            minute: '2-digit',
+            hour12: true 
+        });
+        const dateString = now.toLocaleDateString('en-US', {
+            weekday: 'long',
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric'
+        });
+        
+        const timeElement = document.getElementById('current-time');
+        const dateElement = document.getElementById('current-date');
+        
+        if (timeElement) timeElement.textContent = timeString;
+        if (dateElement) dateElement.textContent = dateString;
+    }
+
+    updateTime();
+    setInterval(updateTime, 60000);
+});
+</script>
+{% endblock %}

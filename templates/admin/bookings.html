@@ -1,0 +1,706 @@
+{% extends "base.html" %}
+
+{% block title %}Manage Bookings - Admin{% endblock %}
+
+{% block content %}
+<div class="pt-24 pb-16">
+    <div class="max-w-7xl mx-auto px-4">
+        <!-- Header -->
+        <div class="mb-8">
+            <h1 class="text-3xl font-serif font-bold text-gray-900 dark:text-white">Manage Bookings</h1>
+            <p class="text-gray-600 dark:text-gray-300">View and manage all hotel bookings</p>
+        </div>
+        
+        <!-- Filters -->
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6 mb-8">
+            <div class="flex flex-wrap gap-4 items-center justify-between">
+                <div class="flex flex-wrap items-center gap-2">
+                    <span class="text-gray-600 dark:text-gray-300">Filter by status:</span>
+                    <a href="{{ url_for('admin_bookings') }}" 
+                       class="px-4 py-2 rounded-full {% if status_filter == 'all' %}bg-gold text-navy font-medium{% else %}border dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:border-gold{% endif %} transition-colors">
+                        All
+                    </a>
+                    <a href="{{ url_for('admin_bookings') }}?status=pending" 
+                       class="px-4 py-2 rounded-full {% if status_filter == 'pending' %}bg-yellow-100 text-yellow-800 font-medium{% else %}border dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:border-yellow-500{% endif %} transition-colors">
+                        Pending
+                    </a>
+                    <a href="{{ url_for('admin_bookings') }}?status=waiting_payment" 
+                       class="px-4 py-2 rounded-full {% if status_filter == 'waiting_payment' %}bg-blue-100 text-blue-800 font-medium{% else %}border dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:border-blue-500{% endif %} transition-colors">
+                        Waiting Payment
+                    </a>
+                    <a href="{{ url_for('admin_bookings') }}?status=confirmed" 
+                       class="px-4 py-2 rounded-full {% if status_filter == 'confirmed' %}bg-green-100 text-green-800 font-medium{% else %}border dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:border-green-500{% endif %} transition-colors">
+                        Confirmed
+                    </a>
+                    <a href="{{ url_for('admin_bookings') }}?status=completed" 
+                       class="px-4 py-2 rounded-full {% if status_filter == 'completed' %}bg-purple-100 text-purple-800 font-medium{% else %}border dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:border-purple-500{% endif %} transition-colors">
+                        Completed
+                    </a>
+                    <a href="{{ url_for('admin_bookings') }}?status=cancelled" 
+                       class="px-4 py-2 rounded-full {% if status_filter == 'cancelled' %}bg-red-100 text-red-800 font-medium{% else %}border dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:border-red-500{% endif %} transition-colors">
+                        Cancelled
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Flash Messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="mb-6">
+                    {% for category, message in messages %}
+                    <div class="p-4 rounded-lg {% if category == 'success' %}bg-green-100 text-green-800 border border-green-300 dark:bg-green-900/30 dark:text-green-300 dark:border-green-800
+                                    {% elif category == 'error' or category == 'danger' %}bg-red-100 text-red-800 border border-red-300 dark:bg-red-900/30 dark:text-red-300 dark:border-red-800
+                                    {% else %}bg-blue-100 text-blue-800 border border-blue-300 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-800{% endif %}">
+                        <div class="flex items-center">
+                            <i class="fas {% if category == 'success' %}fa-check-circle{% elif category == 'error' or category == 'danger' %}fa-exclamation-circle{% else %}fa-info-circle{% endif %} mr-3"></i>
+                            <span>{{ message }}</span>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+        
+        <!-- Bookings Table -->
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+                    <thead class="bg-gray-50 dark:bg-gray-900">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                Booking ID
+                            </th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                Customer
+                            </th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                Room & Dates
+                            </th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                Amount & Payment
+                            </th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                Status
+                            </th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                                Actions
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                        {% for booking in bookings %}
+                        <tr class="hover:bg-gray-50 dark:hover:bg-gray-900/50 transition-colors">
+                            <!-- Booking ID & Date -->
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-sm font-bold text-gray-900 dark:text-white">
+                                    {{ booking.booking_code or 'FH' + '%04d'|format(booking.id) }}
+                                </div>
+                                <div class="text-xs text-gray-500 dark:text-gray-400">
+                                    {% if booking.created_at %}
+                                        {{ booking.created_at.strftime('%d/%m/%Y %H:%M') }}
+                                    {% else %}
+                                        N/A
+                                    {% endif %}
+                                </div>
+                            </td>
+                            
+                            <!-- Customer Info -->
+                            <td class="px-6 py-4">
+                                <div class="text-sm font-medium text-gray-900 dark:text-white">
+                                    {{ booking.first_name }} {{ booking.last_name }}
+                                </div>
+                                <div class="text-sm text-gray-500 dark:text-gray-400">{{ booking.email }}</div>
+                                <div class="text-xs text-gray-500 dark:text-gray-400">
+                                    {{ booking.phone or 'No phone' }}
+                                </div>
+                            </td>
+                            
+                            <!-- Room & Dates -->
+                            <td class="px-6 py-4">
+                                <div class="text-sm font-medium text-gray-900 dark:text-white">
+                                    {{ booking.room_name }}
+                                </div>
+                                <div class="text-sm text-gray-600 dark:text-gray-400">
+                                    {% if booking.check_in and booking.check_out %}
+                                        {{ booking.check_in.strftime('%d/%m/%Y') }} → {{ booking.check_out.strftime('%d/%m/%Y') }}
+                                    {% else %}
+                                        Dates not set
+                                    {% endif %}
+                                </div>
+                                <div class="text-xs text-gray-500 dark:text-gray-400">
+                                    {% if booking.check_in and booking.check_out %}
+                                        {% set nights = (booking.check_out - booking.check_in).days %}
+                                        {{ nights }} night{% if nights > 1 %}s{% endif %} • {{ booking.guests }} guest{% if booking.guests > 1 %}s{% endif %}
+                                    {% endif %}
+                                </div>
+                                
+                                <!-- Special Requests -->
+                                {% if booking.special_requests %}
+                                <div class="mt-2">
+                                    <button onclick="toggleRequests('{{ booking.id }}')" 
+                                            class="text-xs text-blue-600 dark:text-blue-400 hover:underline flex items-center transition-colors">
+                                        <i class="fas fa-comment-alt mr-1"></i>
+                                        View Requests
+                                    </button>
+                                    <div id="requests-{{ booking.id }}" 
+                                         class="hidden mt-1 p-2 bg-gray-50 dark:bg-gray-900 rounded text-xs border border-gray-200 dark:border-gray-700">
+                                        <div class="font-medium text-gray-700 dark:text-gray-300 mb-1">Special Requests:</div>
+                                        <div class="text-gray-600 dark:text-gray-400 whitespace-pre-wrap">{{ booking.special_requests }}</div>
+                                    </div>
+                                </div>
+                                {% endif %}
+                            </td>
+                            
+                            <!-- Amount & Payment -->
+                            <td class="px-6 py-4">
+                                <div class="text-sm font-bold text-gold">
+                                    Rp{{ "{:,.0f}".format(booking.total_price) }}
+                                </div>
+                                
+                                <!-- Payment Method -->
+                                {% if booking.payment_method %}
+                                <div class="text-xs text-gray-600 dark:text-gray-400 mt-1 flex items-center">
+                                    <i class="fas 
+                                        {% if booking.payment_method == 'qris' %}fa-qrcode
+                                        {% elif booking.payment_method == 'bank_transfer' %}fa-university
+                                        {% elif booking.payment_method == 'credit_card' %}fa-credit-card
+                                        {% else %}fa-wallet{% endif %} 
+                                        mr-1"></i>
+                                    {{ booking.payment_method|replace('_', ' ')|title }}
+                                </div>
+                                {% endif %}
+                                
+                                <!-- Payment Status -->
+                                <div class="mt-1">
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                                        {% if booking.final_payment_status in ['paid', 'completed'] %}bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300
+                                        {% elif booking.final_payment_status in ['pending', 'waiting_payment'] %}bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300
+                                        {% elif booking.final_payment_status == 'processing' %}bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300
+                                        {% elif booking.final_payment_status == 'failed' %}bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300
+                                        {% else %}bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300{% endif %}">
+                                        {% if booking.final_payment_status %}
+                                            {{ booking.final_payment_status|replace('_', ' ')|title }}
+                                        {% else %}
+                                            Not Paid
+                                        {% endif %}
+                                    </span>
+                                </div>
+                                
+                                <!-- Payment Proof Button -->
+                                {% if booking.proof_image and booking.proof_image|length > 5 %}
+                                <div class="mt-2">
+                                    <button type="button" 
+                                            onclick="showPaymentProof('{{ booking.proof_image }}', '{{ booking.booking_code or ("FH" + "%04d"|format(booking.id)) }}')"
+                                            class="inline-flex items-center px-3 py-1 text-xs bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-colors border border-blue-200 dark:border-blue-800">
+                                        <i class="fas fa-file-invoice-dollar mr-1"></i>
+                                        View Payment Proof
+                                    </button>
+                                </div>
+                                {% elif booking.final_payment_status in ['pending', 'waiting_payment', 'processing'] %}
+                                <div class="mt-2">
+                                    <span class="text-xs text-gray-500 dark:text-gray-400 italic flex items-center">
+                                        <i class="fas fa-clock mr-1"></i>
+                                        Awaiting payment
+                                    </span>
+                                </div>
+                                {% endif %}
+                            </td>
+                            
+                            <!-- Booking Status -->
+                            <td class="px-6 py-4">
+                                <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium
+                                    {% if booking.status == 'confirmed' %}bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300
+                                    {% elif booking.status == 'pending' %}bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300
+                                    {% elif booking.status == 'waiting_payment' %}bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300
+                                    {% elif booking.status == 'completed' %}bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300
+                                    {% elif booking.status == 'cancelled' %}bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300
+                                    {% else %}bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300{% endif %}">
+                                    {{ booking.status|replace('_', ' ')|title }}
+                                </span>
+                                
+                                <!-- Admin Notes -->
+                                {% if booking.admin_notes %}
+                                <div class="mt-2 text-xs">
+                                    <div class="text-gray-500 dark:text-gray-400 font-medium">Note:</div>
+                                    <div class="bg-yellow-50 dark:bg-yellow-900/20 p-1.5 rounded text-gray-700 dark:text-yellow-200 truncate max-w-[200px]"
+                                         title="{{ booking.admin_notes }}">
+                                        {{ booking.admin_notes }}
+                                    </div>
+                                </div>
+                                {% endif %}
+                            </td>
+                            
+                            <!-- Actions -->
+                            <td class="px-6 py-4">
+                                <div class="flex flex-col space-y-2">
+                                    <!-- Status Update Form -->
+                                    <form method="POST" action="{{ url_for('update_booking_status', booking_id=booking.id) }}" 
+                                          class="flex space-x-2 items-center">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                        <select name="status" 
+                                                class="text-xs border dark:border-gray-600 dark:bg-gray-700 rounded px-2 py-1.5 w-full focus:ring-1 focus:ring-gold focus:border-gold">
+                                            <option value="pending" {% if booking.status == 'pending' %}selected{% endif %}>Pending</option>
+                                            <option value="waiting_payment" {% if booking.status == 'waiting_payment' %}selected{% endif %}>Waiting Payment</option>
+                                            <option value="confirmed" {% if booking.status == 'confirmed' %}selected{% endif %}>Confirmed</option>
+                                            <option value="completed" {% if booking.status == 'completed' %}selected{% endif %}>Completed</option>
+                                            <option value="cancelled" {% if booking.status == 'cancelled' %}selected{% endif %}>Cancelled</option>
+                                        </select>
+                                        <button type="submit" 
+                                                class="px-3 py-1.5 bg-gold text-navy text-xs font-medium rounded hover:bg-gold/90 transition-colors whitespace-nowrap">
+                                            Update
+                                        </button>
+                                    </form>
+                                    
+                                    <!-- View Details Button -->
+                                    <button onclick="viewBookingDetails('{{ booking.id }}')"
+                                            class="px-3 py-1.5 border dark:border-gray-600 text-xs font-medium rounded hover:border-gold hover:text-gold dark:hover:border-gold transition-colors flex items-center justify-center">
+                                        <i class="fas fa-eye mr-1.5"></i>
+                                        View Details
+                                    </button>
+                                    
+                                    <!-- Verify Payment Button (if applicable) -->
+                                    {% if booking.final_payment_status in ['waiting_payment', 'processing'] and booking.proof_image %}
+                                    <button onclick="verifyPayment('{{ booking.id }}')"
+                                            class="px-3 py-1.5 bg-green-600 text-white text-xs font-medium rounded hover:bg-green-700 transition-colors flex items-center justify-center">
+                                        <i class="fas fa-check-circle mr-1.5"></i>
+                                        Verify Payment
+                                    </button>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="6" class="px-6 py-12 text-center">
+                                <div class="text-gray-400 dark:text-gray-500">
+                                    <i class="fas fa-calendar-times text-4xl mb-4"></i>
+                                    <p class="text-lg font-medium">No bookings found</p>
+                                    <p class="text-sm mt-1">Try changing your filter criteria</p>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL untuk Payment Proof -->
+<div id="paymentProofModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center p-4">
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-hidden">
+        <div class="flex justify-between items-center p-6 border-b dark:border-gray-700">
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Payment Proof</h3>
+            <button onclick="closePaymentProofModal()" 
+                    class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300 transition-colors">
+                <i class="fas fa-times text-xl"></i>
+            </button>
+        </div>
+        
+        <div class="p-6 overflow-y-auto max-h-[70vh]">
+            <div id="paymentProofContent" class="text-center">
+                <!-- Konten akan diisi via JavaScript -->
+            </div>
+        </div>
+        
+        <div class="p-6 border-t dark:border-gray-700 flex justify-end space-x-3">
+            <button onclick="closePaymentProofModal()"
+                    class="px-4 py-2 border dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:border-gold transition-colors">
+                Close
+            </button>
+            <button onclick="downloadPaymentProof()"
+                    class="px-4 py-2 bg-gold text-navy font-medium rounded-lg hover:bg-gold/90 transition-colors">
+                <i class="fas fa-download mr-2"></i>
+                Download
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL untuk Booking Details -->
+<div id="bookingDetailsModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center p-4">
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-hidden">
+        <div class="flex justify-between items-center p-6 border-b dark:border-gray-700">
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Booking Details</h3>
+            <button onclick="closeBookingDetailsModal()" 
+                    class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300 transition-colors">
+                <i class="fas fa-times text-xl"></i>
+            </button>
+        </div>
+        
+        <div class="p-6 overflow-y-auto max-h-[70vh]">
+            <div id="bookingDetailsContent">
+                <!-- Konten akan diisi via JavaScript -->
+            </div>
+        </div>
+        
+        <div class="p-6 border-t dark:border-gray-700 flex justify-end">
+            <button onclick="closeBookingDetailsModal()"
+                    class="px-4 py-2 bg-gold text-navy font-medium rounded-lg hover:bg-gold/90 transition-colors">
+                Close
+            </button>
+        </div>
+    </div>
+</div>
+
+<style>
+    .modal-enter {
+        animation: modalEnter 0.3s ease-out;
+    }
+    
+    @keyframes modalEnter {
+        from {
+            opacity: 0;
+            transform: translateY(-20px) scale(0.95);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+        }
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Toggle special requests
+function toggleRequests(bookingId) {
+    const element = document.getElementById('requests-' + bookingId);
+    if (element) {
+        element.classList.toggle('hidden');
+    }
+}
+
+// Auto-hide request popup when clicking outside
+document.addEventListener('click', function(event) {
+    if (!event.target.closest('[onclick*="toggleRequests"]')) {
+        document.querySelectorAll('[id^="requests-"]').forEach(el => {
+            el.classList.add('hidden');
+        });
+    }
+});
+
+// ========== PAYMENT PROOF MODAL ==========
+let currentProofImage = '';
+let currentBookingCode = '';
+
+function showPaymentProof(proofImage, bookingCode) {
+    currentProofImage = proofImage;
+    currentBookingCode = bookingCode;
+    
+    const modal = document.getElementById('paymentProofModal');
+    const content = document.getElementById('paymentProofContent');
+    
+    console.log('📸 DEBUG - Opening payment proof:', proofImage, 'for booking:', bookingCode);
+    
+    // Bersihkan modal sebelumnya
+    content.innerHTML = `
+        <div class="text-center py-8">
+            <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-gold mx-auto mb-4"></div>
+            <p class="text-gray-600 dark:text-gray-400">Loading payment proof...</p>
+        </div>
+    `;
+    
+    modal.classList.remove('hidden');
+    modal.classList.add('modal-enter');
+    document.body.classList.add('overflow-hidden');
+    
+    // Buat URL yang benar
+    let imageUrl = '';
+    
+    if (proofImage.startsWith('http')) {
+        imageUrl = proofImage;
+    } else if (proofImage.includes('/')) {
+        imageUrl = proofImage;
+    } else {
+        // Gunakan route yang sudah diperbaiki
+        imageUrl = `/uploads/payments/${encodeURIComponent(proofImage)}`;
+    }
+    
+    console.log('🔗 DEBUG - Image URL:', imageUrl);
+    
+    // Pre-load gambar untuk menghindari flicker
+    const img = new Image();
+    
+    img.onload = function() {
+        console.log('✅ DEBUG - Image loaded successfully');
+        content.innerHTML = `
+            <div class="space-y-4">
+                <div class="relative mx-auto max-w-2xl">
+                    <img src="${imageUrl}" 
+                         alt="Payment Proof for ${bookingCode}" 
+                         class="max-w-full h-auto rounded-lg shadow-lg mx-auto border border-gray-200 dark:border-gray-700 cursor-zoom-in"
+                         onclick="zoomImage(this)"
+                         id="proofImage">
+                    <div class="mt-2 text-xs text-gray-500 text-center">
+                        <i class="fas fa-expand-alt mr-1"></i>
+                        Click to zoom • Scroll to zoom in/out
+                    </div>
+                </div>
+                <div class="text-center">
+                    <h4 class="font-semibold text-lg text-gray-900 dark:text-white">Payment Proof</h4>
+                    <p class="text-gray-600 dark:text-gray-400">Booking: ${bookingCode}</p>
+                    <p class="text-sm text-gray-500 dark:text-gray-400 mt-2">
+                        <i class="fas fa-file-image mr-1"></i>
+                        ${proofImage}
+                    </p>
+                </div>
+            </div>
+        `;
+        
+        // Tambahkan zoom functionality
+        setupImageZoom();
+    };
+    
+    img.onerror = function() {
+        console.error('❌ DEBUG - Failed to load image:', imageUrl);
+        
+        // Coba alternatif path
+        const alternativePaths = [
+            `/static/uploads/payments/${proofImage}`,
+            `/static/images/uploads/payments/${proofImage}`,
+            `/static/images/${proofImage}`,
+            `/uploads/payments/${proofImage}`,
+            `/payment_proof/${proofImage}`
+        ];
+        
+        content.innerHTML = `
+            <div class="space-y-4">
+                <div class="text-center">
+                    <i class="fas fa-exclamation-triangle text-yellow-500 text-4xl mb-4"></i>
+                    <h4 class="font-semibold text-lg text-gray-900 dark:text-white">Payment Proof Not Found</h4>
+                    <p class="text-gray-600 dark:text-gray-400">Booking: ${bookingCode}</p>
+                    <p class="text-sm text-red-500 mt-2">File: ${proofImage}</p>
+                    <div class="mt-4 bg-gray-100 dark:bg-gray-900 p-4 rounded-lg text-left">
+                        <p class="text-sm font-medium mb-2">Trying alternative paths:</p>
+                        <ul class="text-xs space-y-1" id="alternativePaths">
+                            ${alternativePaths.map(path => `<li>${path}</li>`).join('')}
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        // Coba semua alternative paths
+        tryAlternativePaths(alternativePaths, 0, bookingCode);
+    };
+    
+    img.src = imageUrl;
+}
+
+function tryAlternativePaths(paths, index, bookingCode) {
+    if (index >= paths.length) {
+        // Semua path gagal, tampilkan default
+        const content = document.getElementById('paymentProofContent');
+        content.innerHTML = `
+            <div class="text-center py-8">
+                <i class="fas fa-file-image text-gray-400 text-4xl mb-4"></i>
+                <h4 class="font-semibold text-lg text-gray-900 dark:text-white">Default Payment Image</h4>
+                <p class="text-gray-600 dark:text-gray-400">Original file not found</p>
+                <img src="/static/images/default-payment.jpg" 
+                     alt="Default payment" 
+                     class="max-w-xs mx-auto mt-4 rounded-lg">
+            </div>
+        `;
+        return;
+    }
+    
+    const currentPath = paths[index];
+    const listItem = document.querySelector(`#alternativePaths li:nth-child(${index + 1})`);
+    
+    if (listItem) {
+        listItem.classList.add('text-blue-500', 'font-medium');
+    }
+    
+    const testImg = new Image();
+    testImg.onload = function() {
+        console.log(`✅ DEBUG - Found image at alternative path: ${currentPath}`);
+        document.getElementById('paymentProofContent').innerHTML = `
+            <div class="space-y-4">
+                <div class="relative mx-auto max-w-2xl">
+                    <img src="${currentPath}" 
+                         alt="Payment Proof (Alternative Path)" 
+                         class="max-w-full h-auto rounded-lg shadow-lg mx-auto border border-gray-200 dark:border-gray-700">
+                </div>
+                <div class="text-center">
+                    <h4 class="font-semibold text-lg text-gray-900 dark:text-white">Payment Proof</h4>
+                    <p class="text-gray-600 dark:text-gray-400">Booking: ${bookingCode}</p>
+                    <p class="text-sm text-green-500 mt-2">
+                        <i class="fas fa-check-circle mr-1"></i>
+                        Loaded from alternative path
+                    </p>
+                </div>
+            </div>
+        `;
+    };
+    
+    testImg.onerror = function() {
+        if (listItem) {
+            listItem.classList.add('text-red-500', 'line-through');
+        }
+        setTimeout(() => tryAlternativePaths(paths, index + 1, bookingCode), 500);
+    };
+    
+    testImg.src = currentPath;
+}
+
+// Zoom functionality
+function setupImageZoom() {
+    const img = document.getElementById('proofImage');
+    if (img) {
+        let scale = 1;
+        
+        img.addEventListener('wheel', function(e) {
+            e.preventDefault();
+            
+            if (e.deltaY < 0) {
+                scale *= 1.1; // Zoom in
+            } else {
+                scale /= 1.1; // Zoom out
+            }
+            
+            scale = Math.min(Math.max(0.5, scale), 3); // Limit scale
+            img.style.transform = `scale(${scale})`;
+            img.style.transformOrigin = 'center';
+        });
+    }
+}
+
+function zoomImage(img) {
+    if (img.style.transform === 'scale(2)') {
+        img.style.transform = 'scale(1)';
+        img.style.cursor = 'zoom-in';
+    } else {
+        img.style.transform = 'scale(2)';
+        img.style.cursor = 'zoom-out';
+        img.style.transformOrigin = 'center';
+    }
+}
+
+function closePaymentProofModal() {
+    const modal = document.getElementById('paymentProofModal');
+    modal.classList.add('hidden');
+    modal.classList.remove('modal-enter');
+    document.body.classList.remove('overflow-hidden');
+    currentProofImage = '';
+    currentBookingCode = '';
+}
+
+function downloadPaymentProof() {
+    if (!currentProofImage) return;
+    
+    let downloadUrl = '';
+    
+    if (currentProofImage.startsWith('http')) {
+        downloadUrl = currentProofImage;
+    } else {
+        downloadUrl = `/static/uploads/payments/${currentProofImage}`;
+    }
+    
+    const link = document.createElement('a');
+    link.href = downloadUrl;
+    link.download = `payment_proof_${currentBookingCode}_${new Date().getTime()}.${currentProofImage.split('.').pop() || 'jpg'}`;
+    link.target = '_blank';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+}
+
+// ========== BOOKING DETAILS MODAL ==========
+async function viewBookingDetails(bookingId) {
+    try {
+        const response = await fetch(`/admin/booking/${bookingId}/details`);
+        const data = await response.json();
+        
+        if (data.error) {
+            alert('Error: ' + data.error);
+            return;
+        }
+        
+        const modal = document.getElementById('bookingDetailsModal');
+        const content = document.getElementById('bookingDetailsContent');
+        
+        content.innerHTML = data.html;
+        modal.classList.remove('hidden');
+        modal.classList.add('modal-enter');
+        document.body.classList.add('overflow-hidden');
+        
+    } catch (error) {
+        console.error('Error:', error);
+        alert('Failed to load booking details');
+    }
+}
+
+function closeBookingDetailsModal() {
+    const modal = document.getElementById('bookingDetailsModal');
+    modal.classList.add('hidden');
+    modal.classList.remove('modal-enter');
+    document.body.classList.remove('overflow-hidden');
+}
+
+
+async function verifyPayment(bookingId) {
+    if (!confirm('Are you sure you want to verify this payment?')) return;
+    
+    try {
+        const csrfToken = document.querySelector('[name="csrf_token"]').value;
+        
+        const paymentId = await getPaymentIdFromBooking(bookingId);
+        
+        if (!paymentId) {
+            alert('Payment record not found for this booking');
+            return;
+        }
+        
+        const response = await fetch(`/admin/payment/${paymentId}/verify`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken
+            },
+            body: JSON.stringify({ 
+                action: 'verify',
+                reason: 'Payment verified by admin'
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            alert(data.message);
+            location.reload();
+        } else {
+            alert('Error: ' + data.error);
+        }
+        
+    } catch (error) {
+        console.error('Error:', error);
+        alert('Failed to verify payment');
+    }
+}
+
+// Tutup modal saat klik di luar
+document.addEventListener('click', function(event) {
+    const paymentModal = document.getElementById('paymentProofModal');
+    const bookingModal = document.getElementById('bookingDetailsModal');
+    
+    if (event.target === paymentModal) {
+        closePaymentProofModal();
+    }
+    
+    if (event.target === bookingModal) {
+        closeBookingDetailsModal();
+    }
+});
+
+// Tutup modal dengan ESC key
+document.addEventListener('keydown', function(event) {
+    if (event.key === 'Escape') {
+        closePaymentProofModal();
+        closeBookingDetailsModal();
+    }
+});
+</script>
+{% endblock %}

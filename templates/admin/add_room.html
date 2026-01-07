@@ -1,0 +1,510 @@
+{% extends "base.html" %}
+
+{% block title %}Add New Room - Admin{% endblock %}
+
+{% block extra_css %}
+<style>
+    .form-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+    
+    .image-preview-container {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+        gap: 1rem;
+        margin-top: 1rem;
+    }
+    
+    .image-preview {
+        position: relative;
+        width: 100%;
+        height: 120px;
+        border-radius: 0.5rem;
+        overflow: hidden;
+    }
+    
+    .image-preview img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+    
+    .remove-image-btn {
+        position: absolute;
+        top: 5px;
+        right: 5px;
+        background: rgba(239, 68, 68, 0.9);
+        color: white;
+        border: none;
+        border-radius: 50%;
+        width: 24px;
+        height: 24px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        font-size: 12px;
+    }
+    
+    .checkbox-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 0.75rem;
+        margin-top: 0.5rem;
+    }
+    
+    .checkbox-item {
+        display: flex;
+        align-items: center;
+        padding: 0.5rem;
+        border: 1px solid #e5e7eb;
+        border-radius: 0.375rem;
+        background: white;
+        transition: all 0.2s;
+    }
+    
+    .checkbox-item:hover {
+        background: #f9fafb;
+        border-color: #d1d5db;
+    }
+    
+    .checkbox-item input[type="checkbox"] {
+        margin-right: 0.5rem;
+    }
+    
+    .checkbox-item.dark {
+        background: #374151;
+        border-color: #4b5563;
+    }
+    
+    .checkbox-item.dark:hover {
+        background: #4b5563;
+        border-color: #6b7280;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="pt-24 pb-16">
+    <div class="max-w-4xl mx-auto px-4">
+        <!-- Header -->
+        <div class="mb-8">
+            <nav class="flex mb-4" aria-label="Breadcrumb">
+                <ol class="inline-flex items-center space-x-1 md:space-x-3">
+                    <li class="inline-flex items-center">
+                        <a href="{{ url_for('admin_dashboard') }}" 
+                           class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-gold dark:text-gray-400 dark:hover:text-white">
+                            <i class="fas fa-tachometer-alt mr-2"></i>
+                            Dashboard
+                        </a>
+                    </li>
+                    <li>
+                        <div class="flex items-center">
+                            <i class="fas fa-chevron-right text-gray-400"></i>
+                            <a href="{{ url_for('manage_rooms') }}" 
+                               class="ml-1 text-sm font-medium text-gray-700 hover:text-gold dark:text-gray-400 dark:hover:text-white md:ml-2">
+                                Rooms
+                            </a>
+                        </div>
+                    </li>
+                    <li aria-current="page">
+                        <div class="flex items-center">
+                            <i class="fas fa-chevron-right text-gray-400"></i>
+                            <span class="ml-1 text-sm font-medium text-gray-500 dark:text-gray-400 md:ml-2">
+                                Add New Room
+                            </span>
+                        </div>
+                    </li>
+                </ol>
+            </nav>
+            
+            <div class="flex justify-between items-center">
+                <div>
+                    <h1 class="text-3xl font-serif font-bold text-gray-900 dark:text-white">Add New Room</h1>
+                    <p class="text-gray-600 dark:text-gray-300">Create a new room listing</p>
+                </div>
+                <a href="{{ url_for('manage_rooms') }}" 
+                   class="px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors">
+                    <i class="fas fa-arrow-left mr-2"></i>
+                    Back to Rooms
+                </a>
+            </div>
+        </div>
+
+        <!-- Flash Messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="mb-6">
+                    {% for category, message in messages %}
+                    <div class="p-4 rounded-lg {% if category == 'success' %}bg-green-100 text-green-800 border border-green-300 dark:bg-green-900/30 dark:text-green-300 dark:border-green-800
+                                    {% elif category == 'error' %}bg-red-100 text-red-800 border border-red-300 dark:bg-red-900/30 dark:text-red-300 dark:border-red-800
+                                    {% else %}bg-blue-100 text-blue-800 border border-blue-300 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-800{% endif %}">
+                        <div class="flex items-center">
+                            <i class="fas {% if category == 'success' %}fa-check-circle{% elif category == 'error' %}fa-exclamation-circle{% else %}fa-info-circle{% endif %} mr-3"></i>
+                            <span>{{ message }}</span>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+
+        <!-- Add Room Form -->
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg overflow-hidden">
+            <!-- Form Header -->
+            <div class="form-card px-8 py-6 text-white">
+                <div class="flex items-center">
+                    <div class="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center mr-4">
+                        <i class="fas fa-plus text-xl"></i>
+                    </div>
+                    <div>
+                        <h2 class="text-2xl font-bold">New Room Information</h2>
+                        <p class="text-white/80">Fill in the details for the new room</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Form Content -->
+            <div class="p-8">
+                <form method="POST" action="{{ url_for('add_room') }}" enctype="multipart/form-data" class="space-y-6">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    
+                    <!-- Basic Information -->
+                    <div class="grid md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
+                                Room Name *
+                            </label>
+                            <input type="text" name="name" required
+                                   class="w-full px-4 py-3 rounded-lg border dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:border-gold focus:ring-1 focus:ring-gold"
+                                   placeholder="e.g., Deluxe Suite">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
+                                Room Type *
+                            </label>
+                            <select name="room_type" required
+                                    class="w-full px-4 py-3 rounded-lg border dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:border-gold focus:ring-1 focus:ring-gold">
+                                <option value="hotel_room">Hotel Room</option>
+                                <option value="meeting_room">Meeting Room</option>
+                                <option value="facility">Facility</option>
+                                <option value="restaurant">Restaurant</option>
+                                <option value="spa">Spa</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
+                            Description *
+                        </label>
+                        <textarea name="description" rows="3" required
+                                  class="w-full px-4 py-3 rounded-lg border dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:border-gold focus:ring-1 focus:ring-gold"
+                                  placeholder="Describe the room features"></textarea>
+                    </div>
+                    
+                    <!-- Specifications -->
+                    <div class="grid md:grid-cols-4 gap-6">
+                        <div>
+                            <label class="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
+                                Price *
+                            </label>
+                            <div class="relative">
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <span class="text-gray-500">Rp</span>
+                                </div>
+                                <input type="number" name="price" required min="0" step="1000"
+                                       class="w-full pl-10 pr-4 py-3 rounded-lg border dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:border-gold focus:ring-1 focus:ring-gold"
+                                       placeholder="500000">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
+                                Size *
+                            </label>
+                            <div class="relative">
+                                <input type="text" name="size" required
+                                       class="w-full px-4 py-3 rounded-lg border dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:border-gold focus:ring-1 focus:ring-gold"
+                                       placeholder="45">
+                                <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                                    <span class="text-gray-500">m²</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
+                                Capacity *
+                            </label>
+                            <input type="number" name="capacity" required min="1"
+                                   class="w-full px-4 py-3 rounded-lg border dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:border-gold focus:ring-1 focus:ring-gold"
+                                   placeholder="2">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
+                                Available Rooms *
+                            </label>
+                            <input type="number" name="available_count" required min="0"
+                                   class="w-full px-4 py-3 rounded-lg border dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:border-gold focus:ring-1 focus:ring-gold"
+                                   placeholder="5">
+                        </div>
+                    </div>
+                    
+                    <!-- View Type -->
+                    <div>
+                        <label class="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
+                            View Type
+                        </label>
+                        <select name="view_type"
+                                class="w-full px-4 py-3 rounded-lg border dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:border-gold focus:ring-1 focus:ring-gold">
+                            <option value="">Select view type</option>
+                            <option value="Sea View">Sea View</option>
+                            <option value="Garden View">Garden View</option>
+                            <option value="City View">City View</option>
+                            <option value="Pool View">Pool View</option>
+                            <option value="Mountain View">Mountain View</option>
+                        </select>
+                    </div>
+                    
+                    <!-- Amenities -->
+                    <div>
+                        <label class="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
+                            Amenities
+                        </label>
+                        <div class="checkbox-grid">
+                            {% set amenities_list = [
+                                'Free WiFi', 'Air Conditioning', 'TV', 'Minibar', 'Safe',
+                                'Coffee Maker', 'Tea Maker', 'Hair Dryer', 'Iron',
+                                'Desk', 'Balcony', 'Terrace', 'Room Service',
+                                'Daily Housekeeping', 'Wake-up Service'
+                            ] %}
+                            
+                            {% for amenity in amenities_list %}
+                            <label class="checkbox-item {% if config['DEFAULT_THEME'] == 'dark' %}dark{% endif %}">
+                                <input type="checkbox" name="amenities" value="{{ amenity }}"
+                                       class="rounded text-gold focus:ring-gold">
+                                <span class="text-sm">{{ amenity }}</span>
+                            </label>
+                            {% endfor %}
+                        </div>
+                        
+                        <!-- Custom Amenities -->
+                        <div class="mt-4">
+                            <label class="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
+                                Add Custom Amenities
+                            </label>
+                            <div class="flex gap-2">
+                                <input type="text" id="customAmenityInput"
+                                       class="flex-1 px-4 py-2 rounded-lg border dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:border-gold focus:ring-1 focus:ring-gold"
+                                       placeholder="e.g., Jacuzzi, Fireplace">
+                                <button type="button" onclick="addCustomAmenity()"
+                                        class="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600">
+                                    Add
+                                </button>
+                            </div>
+                            <div id="customAmenitiesContainer" class="flex flex-wrap gap-2 mt-2"></div>
+                        </div>
+                    </div>
+                    
+                    <!-- Images -->
+                    <div>
+                        <label class="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
+                            Room Images
+                        </label>
+                        <div class="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-8 text-center">
+                            <i class="fas fa-cloud-upload-alt text-gray-400 text-4xl mb-4"></i>
+                            <p class="font-medium mb-2">Drag & drop images here</p>
+                            <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">or click to browse files</p>
+                            
+                            <input type="file" name="images" id="imageUpload" multiple accept="image/*"
+                                   class="hidden" onchange="previewImages(event)">
+                            <label for="imageUpload" 
+                                   class="px-6 py-3 bg-gold text-navy font-semibold rounded-lg hover:bg-gold/90 transition-colors cursor-pointer inline-block">
+                                <i class="fas fa-upload mr-2"></i>
+                                Choose Images
+                            </label>
+                            <p class="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                                Supported: JPG, PNG, GIF (Max 5MB each)
+                            </p>
+                        </div>
+                        
+                        <!-- Image Preview -->
+                        <div id="imagePreviewContainer" class="image-preview-container hidden">
+                            <!-- Images will be previewed here -->
+                        </div>
+                    </div>
+                    
+                    <!-- Availability -->
+                    <div class="flex items-center">
+                        <input type="checkbox" name="is_available" id="isAvailable" value="1" checked
+                               class="mr-3 rounded text-gold focus:ring-gold">
+                        <label for="isAvailable" class="text-sm font-medium text-gray-700 dark:text-gray-300">
+                            Make room available for booking
+                        </label>
+                    </div>
+                    
+                    <!-- Submit -->
+                    <div class="pt-6 border-t dark:border-gray-700">
+                        <button type="submit" 
+                                class="px-6 py-3 bg-gold text-navy font-semibold rounded-lg hover:bg-gold/90 transition-colors transition-all duration-300">
+                            <i class="fas fa-save mr-2"></i>
+                            Add Room
+                        </button>
+                        <a href="{{ url_for('manage_rooms') }}" 
+                           class="ml-4 px-6 py-3 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                            Cancel
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let customAmenities = [];
+let imageFiles = [];
+
+function addCustomAmenity() {
+    const input = document.getElementById('customAmenityInput');
+    const amenity = input.value.trim();
+    
+    if (!amenity) {
+        alert('Please enter an amenity name.');
+        return;
+    }
+    
+    if (customAmenities.includes(amenity)) {
+        alert('This amenity already exists.');
+        return;
+    }
+    
+    customAmenities.push(amenity);
+    
+    const container = document.getElementById('customAmenitiesContainer');
+    const tag = document.createElement('div');
+    tag.className = 'inline-flex items-center px-3 py-1 bg-gold/20 text-gold rounded-full text-sm';
+    tag.innerHTML = `
+        ${amenity}
+        <button type="button" onclick="removeCustomAmenity('${amenity}')" 
+                class="ml-2 text-gold hover:text-gold/70">
+            <i class="fas fa-times text-xs"></i>
+        </button>
+        <input type="hidden" name="amenities" value="${amenity}">
+    `;
+    container.appendChild(tag);
+    
+    input.value = '';
+}
+
+function removeCustomAmenity(amenity) {
+    customAmenities = customAmenities.filter(a => a !== amenity);
+    
+    const tags = document.querySelectorAll('#customAmenitiesContainer div');
+    tags.forEach(tag => {
+        if (tag.textContent.includes(amenity)) {
+            tag.remove();
+        }
+    });
+}
+
+function previewImages(event) {
+    const files = Array.from(event.target.files);
+    const container = document.getElementById('imagePreviewContainer');
+    
+    // Clear previous previews
+    container.innerHTML = '';
+    imageFiles = [];
+    
+    if (files.length === 0) {
+        container.classList.add('hidden');
+        return;
+    }
+    
+    files.forEach((file, index) => {
+        // Validate file size (5MB)
+        if (file.size > 5 * 1024 * 1024) {
+            alert(`File ${file.name} is too large. Maximum size is 5MB.`);
+            return;
+        }
+        
+        // Validate file type
+        if (!file.type.match('image.*')) {
+            alert(`File ${file.name} is not an image.`);
+            return;
+        }
+        
+        imageFiles.push(file);
+        
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const preview = document.createElement('div');
+            preview.className = 'image-preview';
+            preview.innerHTML = `
+                <img src="${e.target.result}" alt="Preview" class="w-full h-full object-cover">
+                <button type="button" onclick="removeImage(${index})" class="remove-image-btn">
+                    <i class="fas fa-times"></i>
+                </button>
+            `;
+            container.appendChild(preview);
+        };
+        reader.readAsDataURL(file);
+    });
+    
+    container.classList.remove('hidden');
+}
+
+function removeImage(index) {
+    imageFiles.splice(index, 1);
+    
+    // Update file input
+    const dataTransfer = new DataTransfer();
+    imageFiles.forEach(file => dataTransfer.items.add(file));
+    document.getElementById('imageUpload').files = dataTransfer.files;
+    
+    // Update preview
+    const event = new Event('change');
+    document.getElementById('imageUpload').dispatchEvent(event);
+}
+
+// Form validation
+const form = document.querySelector('form');
+if (form) {
+    form.addEventListener('submit', function(e) {
+        // Basic validation
+        const price = form.querySelector('input[name="price"]').value;
+        if (price < 100000) {
+            e.preventDefault();
+            alert('Price must be at least Rp 100,000');
+            return false;
+        }
+        
+        const capacity = form.querySelector('input[name="capacity"]').value;
+        if (capacity < 1 || capacity > 20) {
+            e.preventDefault();
+            alert('Capacity must be between 1 and 20 persons');
+            return false;
+        }
+        
+        const availableCount = form.querySelector('input[name="available_count"]').value;
+        if (availableCount < 0) {
+            e.preventDefault();
+            alert('Available rooms cannot be negative');
+            return false;
+        }
+        
+        // Show loading
+        const submitBtn = form.querySelector('button[type="submit"]');
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Saving...';
+        
+        // Re-enable after 5 seconds
+        setTimeout(() => {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '<i class="fas fa-save mr-2"></i> Add Room';
+        }, 5000);
+    });
+}
+</script>
+{% endblock %}

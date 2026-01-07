@@ -1,0 +1,446 @@
+/* CSS khusus untuk book.html */
+
+.section-hidden {
+    display: none;
+}
+
+.section-active {
+    display: block;
+    animation: fadeIn 0.5s ease;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.facility-image-card {
+    position: relative;
+    overflow: hidden;
+    border-radius: 12px;
+    height: 300px;
+}
+
+.facility-image-card img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.5s ease;
+}
+
+.facility-image-card:hover img {
+    transform: scale(1.1);
+}
+
+.facility-image-overlay {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: linear-gradient(to top, rgba(26, 43, 60, 0.9), transparent);
+    padding: 20px;
+    color: white;
+}
+
+.room-option {
+    border: 2px solid #E5E7EB;
+    border-radius: 12px;
+    padding: 20px;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    margin-bottom: 16px;
+    position: relative;
+}
+
+.room-option:hover {
+    border-color: #C5A145;
+    background: rgba(197, 161, 69, 0.05);
+}
+
+.room-option.selected {
+    border-color: #C5A145;
+    background: rgba(197, 161, 69, 0.1);
+    box-shadow: 0 10px 25px rgba(197, 161, 69, 0.1);
+}
+
+.room-option.selected::before {
+    content: "✓ Selected";
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: #C5A145;
+    color: white;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.progress-step {
+    position: relative;
+    text-align: center;
+    flex: 1;
+}
+
+.progress-step .step-number {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: #E5E7EB;
+    color: #6B7280;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 8px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.progress-step.active .step-number {
+    background: #C5A145;
+    color: white;
+}
+
+.progress-step.completed .step-number {
+    background: #10B981;
+    color: white;
+}
+
+.progress-step.completed .step-number::after {
+    content: "✓";
+    font-size: 18px;
+}
+
+.sticky-booking-summary {
+    position: sticky;
+    top: 100px;
+}
+
+/* Tambahkan di CSS Anda */
+.booking-row:hover {
+    background-color: rgba(197, 161, 69, 0.05);
+}
+
+.status-badge {
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    display: inline-flex;
+    align-items: center;
+}
+
+.pay-now-btn {
+    background: linear-gradient(135deg, #C5A145, #E6C366);
+    color: #1A2B3C;
+    font-weight: bold;
+    padding: 8px 16px;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 4px rgba(197, 161, 69, 0.2);
+}
+
+.pay-now-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(197, 161, 69, 0.3);
+}
+
+/* Payment Method Styles */
+.payment-method {
+    border: 2px solid #E5E7EB;
+    border-radius: 12px;
+    padding: 20px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-align: center;
+    background: white;
+}
+
+.dark .payment-method {
+    background: #1f2937;
+    border-color: #374151;
+}
+
+.payment-method:hover {
+    border-color: #C5A145;
+    transform: translateY(-2px);
+    box-shadow: 0 10px 25px rgba(197, 161, 69, 0.1);
+}
+
+.payment-method.selected {
+    border-color: #C5A145;
+    background: rgba(197, 161, 69, 0.1);
+    box-shadow: 0 10px 25px rgba(197, 161, 69, 0.15);
+}
+
+.payment-method.selected::after {
+    content: "✓";
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    background: #C5A145;
+    color: white;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    font-weight: bold;
+}
+
+/* QRIS Special Styling */
+.payment-method.qris {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+}
+
+.payment-method.qris .payment-icon {
+    color: white;
+}
+
+.payment-method.qris .payment-text {
+    color: rgba(255, 255, 255, 0.9);
+}
+
+/* Popup Modal */
+.popup-modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    z-index: 9999;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(5px);
+}
+
+.popup-modal.active {
+    display: flex;
+    animation: fadeIn 0.3s ease;
+}
+
+.popup-content {
+    background: white;
+    border-radius: 20px;
+    padding: 40px;
+    max-width: 500px;
+    width: 90%;
+    position: relative;
+    animation: slideUp 0.5s ease;
+    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.3);
+}
+
+.dark .popup-content {
+    background: #1f2937;
+    color: white;
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(50px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.popup-success-icon {
+    width: 80px;
+    height: 80px;
+    background: #10B981;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 24px;
+    color: white;
+    font-size: 36px;
+}
+
+.popup-close-btn {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    background: none;
+    border: none;
+    color: #6B7280;
+    cursor: pointer;
+    font-size: 24px;
+    transition: color 0.3s ease;
+}
+
+.popup-close-btn:hover {
+    color: #C5A145;
+}
+
+/* Responsive improvements */
+@media (max-width: 768px) {
+    .facility-image-card {
+        height: 200px;
+    }
+    
+    .room-option {
+        padding: 16px;
+    }
+    
+    .sticky-booking-summary {
+        position: static;
+        margin-top: 32px;
+    }
+    
+    .popup-content {
+        padding: 30px 20px;
+        margin: 20px;
+    }
+}
+/* booking.css - Perbaikan Tambahan */
+
+/* Table styling improvements */
+.booking-table {
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+.booking-table th {
+    position: sticky;
+    top: 0;
+    background-color: #f9fafb;
+    z-index: 10;
+}
+
+.dark .booking-table th {
+    background-color: #111827;
+}
+
+/* Status badge improvements */
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
+}
+
+.status-badge i {
+    margin-right: 4px;
+}
+
+/* Action buttons improvements */
+.action-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+}
+
+.action-btn {
+    display: inline-flex;
+    align-items: center;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    border: none;
+    cursor: pointer;
+}
+
+.action-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+/* Countdown timer */
+.countdown-timer {
+    font-family: 'Courier New', monospace;
+    font-weight: bold;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
+}
+
+/* Responsive table */
+@media (max-width: 768px) {
+    .booking-table {
+        display: block;
+        overflow-x: auto;
+        white-space: nowrap;
+    }
+    
+    .booking-table thead {
+        display: none;
+    }
+    
+    .booking-table tr {
+        display: block;
+        margin-bottom: 16px;
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        padding: 16px;
+        background: white;
+    }
+    
+    .dark .booking-table tr {
+        background: #1f2937;
+        border-color: #374151;
+    }
+    
+    .booking-table td {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 8px 0;
+        border-bottom: 1px solid #f3f4f6;
+    }
+    
+    .dark .booking-table td {
+        border-bottom-color: #374151;
+    }
+    
+    .booking-table td:last-child {
+        border-bottom: none;
+    }
+    
+    .booking-table td::before {
+        content: attr(data-label);
+        font-weight: 600;
+        color: #6b7280;
+        margin-right: 12px;
+        flex-shrink: 0;
+    }
+    
+    .dark .booking-table td::before {
+        color: #9ca3af;
+    }
+}
+
+/* Print styles */
+@media print {
+    .no-print {
+        display: none !important;
+    }
+    
+    .booking-table {
+        border: 1px solid #000;
+    }
+    
+    .booking-table th {
+        background-color: #f0f0f0 !important;
+        color: #000 !important;
+        -webkit-print-color-adjust: exact;
+    }
+}

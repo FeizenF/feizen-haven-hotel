@@ -1,0 +1,982 @@
+{% extends "base.html" %}
+
+{% block title %}Venues & Amenities - Feizen Haven Luxury Hotel{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Enhanced Tab System */
+    .tab-container {
+        position: sticky;
+        top: 80px;
+        z-index: 100;
+        background: white;
+        padding: 20px 0;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        transition: all 0.3s ease;
+    }
+    
+    .dark .tab-container {
+        background: #1f2937;
+    }
+    
+    .tab-btn {
+        transition: all 0.3s ease;
+        border: 2px solid transparent;
+        font-weight: 500;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .tab-btn.active {
+        border-color: #C5A145;
+        box-shadow: 0 4px 12px rgba(197, 161, 69, 0.2);
+        transform: translateY(-2px);
+    }
+    
+    /* Card Hover Effects */
+    .venue-card {
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+        overflow: hidden;
+        border: 1px solid #e5e7eb;
+    }
+    
+    .dark .venue-card {
+        border-color: #374151;
+    }
+    
+    .venue-card:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+    }
+    
+    .dark .venue-card:hover {
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+    }
+    
+    /* Image Container */
+    .image-container {
+        position: relative;
+        overflow: hidden;
+        height: 250px;
+    }
+    
+    .image-container img {
+        transition: transform 0.6s ease;
+    }
+    
+    .venue-card:hover .image-container img {
+        transform: scale(1.1);
+    }
+    
+    /* Badge Styling */
+    .venue-badge {
+        position: absolute;
+        top: 15px;
+        left: 15px;
+        background: #C5A145;
+        color: #1A2B3C;
+        padding: 6px 15px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 600;
+        letter-spacing: 0.5px;
+        z-index: 10;
+    }
+    
+    /* Pricing Styling */
+    .price-tag {
+        display: inline-block;
+        background: linear-gradient(135deg, #C5A145, #E6C878);
+        color: #1A2B3C;
+        padding: 6px 16px;
+        border-radius: 20px;
+        font-weight: 700;
+        font-size: 14px;
+        box-shadow: 0 4px 12px rgba(197, 161, 69, 0.2);
+    }
+    
+    /* Amenities Grid */
+    .amenities-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 20px;
+    }
+    
+    .amenity-card {
+        background: white;
+        border-radius: 16px;
+        padding: 30px;
+        text-align: center;
+        transition: all 0.3s ease;
+        border: 1px solid #e5e7eb;
+    }
+    
+    .dark .amenity-card {
+        background: #1f2937;
+        border-color: #374151;
+    }
+    
+    .amenity-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        border-color: #C5A145;
+    }
+    
+    /* Empty State */
+    .empty-state {
+        padding: 60px 20px;
+        text-align: center;
+        background: #f9fafb;
+        border-radius: 16px;
+        border: 2px dashed #e5e7eb;
+    }
+    
+    .dark .empty-state {
+        background: #111827;
+        border-color: #374151;
+    }
+    
+    /* CTA Button Styling */
+    .cta-button {
+        background: linear-gradient(135deg, #C5A145, #E6C878);
+        color: #1A2B3C;
+        font-weight: 600;
+        padding: 14px 32px;
+        border-radius: 30px;
+        transition: all 0.3s ease;
+        border: none;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .cta-button:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 10px 25px rgba(197, 161, 69, 0.3);
+    }
+    
+    /* Responsive Design */
+    @media (max-width: 768px) {
+        .tab-container {
+            top: 70px;
+            padding: 15px 0;
+        }
+        
+        .tab-btn {
+            font-size: 14px;
+            padding: 8px 16px;
+            margin-bottom: 5px;
+        }
+        
+        .image-container {
+            height: 200px;
+        }
+        
+        .amenity-card {
+            padding: 20px;
+        }
+        
+        .cta-button {
+            padding: 12px 24px;
+            font-size: 14px;
+        }
+    }
+    
+    @media (max-width: 640px) {
+        .tab-btn span {
+            display: none;
+        }
+        
+        .tab-btn {
+            padding: 10px;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+        }
+        
+        .tab-btn i {
+            margin: 0 !important;
+            font-size: 18px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- ===== HERO SECTION ===== -->
+<section class="relative min-h-[60vh] flex items-center justify-center overflow-hidden">
+    <!-- Background Image with Overlay -->
+    <div class="absolute inset-0 z-0">
+        <img src="https://images.unsplash.com/photo-1566073771259-6a8506099945?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80" 
+             alt="Feizen Haven Venues" 
+             class="w-full h-full object-cover">
+        <div class="absolute inset-0 bg-gradient-to-r from-navy/90 to-navy/70"></div>
+    </div>
+    
+    <!-- Hero Content -->
+    <div class="relative z-10 max-w-7xl mx-auto px-4 w-full text-center">
+        <div class="mb-6">
+            <div class="inline-flex items-center bg-white/20 backdrop-blur-sm px-6 py-3 rounded-full border border-white/30">
+                <i class="fas fa-building text-gold mr-3"></i>
+                <span class="text-white font-medium">Premium Venues & Facilities</span>
+            </div>
+        </div>
+        
+        <h1 class="text-4xl md:text-6xl lg:text-7xl font-serif font-bold text-white mb-6 leading-tight">
+            Our <span class="text-gold">Venues</span>
+        </h1>
+        
+        <p class="text-xl text-gray-200 max-w-3xl mx-auto mb-8">
+            Discover our comprehensive range of meeting spaces, wellness facilities, and exquisite dining venues
+        </p>
+    </div>
+</section>
+
+<!-- ===== TAB NAVIGATION ===== -->
+<div class="tab-container">
+    <div class="max-w-7xl mx-auto px-4">
+        <div class="flex flex-wrap justify-center gap-4">
+            <button class="tab-btn active px-6 py-3 bg-gold text-navy font-medium rounded-full" data-tab="meeting">
+                <i class="fas fa-users mr-2"></i>
+                <span>Meeting Rooms</span>
+            </button>
+            <button class="tab-btn px-6 py-3 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 font-medium rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors" data-tab="facilities">
+                <i class="fas fa-swimming-pool mr-2"></i>
+                <span>Wellness Facilities</span>
+            </button>
+            <button class="tab-btn px-6 py-3 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 font-medium rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors" data-tab="dining">
+                <i class="fas fa-utensils mr-2"></i>
+                <span>Dining & Restaurants</span>
+            </button>
+            <button class="tab-btn px-6 py-3 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 font-medium rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors" data-tab="amenities">
+                <i class="fas fa-star mr-2"></i>
+                <span>Complimentary Amenities</span>
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- ===== MEETING ROOMS SECTION ===== -->
+<section id="meeting-section" class="tab-content py-20 bg-white dark:bg-gray-900">
+    <div class="max-w-7xl mx-auto px-4">
+        <div class="text-center mb-12">
+            <h2 class="text-3xl md:text-4xl font-serif font-bold mb-4">Meeting & Event Spaces</h2>
+            <p class="text-gray-600 dark:text-gray-300 max-w-2xl mx-auto text-lg">
+                Host your next event in our state-of-the-art meeting rooms and ballrooms. 
+                Contact us for bookings and inquiries.
+            </p>
+        </div>
+        
+        {% if meeting_rooms and meeting_rooms|length > 0 %}
+        <div class="grid lg:grid-cols-2 gap-8">
+            {% for venue in meeting_rooms %}
+            <div class="venue-card bg-white dark:bg-gray-800 rounded-2xl overflow-hidden shadow-lg">
+                <div class="md:flex h-full">
+                    <div class="md:w-1/2">
+                        <div class="image-container">
+                            {% if venue.main_image %}
+                                <img src="{{ venue.main_image }}" 
+                                     alt="{{ venue.name }}" 
+                                     class="w-full h-full object-cover"
+                                     loading="lazy"
+                                     onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1542744173-8e7e53415bb0?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'">
+                            {% else %}
+                                <div class="w-full h-full bg-gradient-to-br from-gold/20 to-navy/20 flex items-center justify-center">
+                                    <i class="fas fa-users text-gray-400 text-5xl"></i>
+                                </div>
+                            {% endif %}
+                            <span class="venue-badge">Meeting Room</span>
+                        </div>
+                    </div>
+                    
+                    <div class="md:w-1/2 p-8 flex flex-col">
+                        <div>
+                            <h3 class="text-2xl font-serif font-bold mb-3">{{ venue.name }}</h3>
+                            <p class="text-gray-600 dark:text-gray-300 mb-6">
+                                {{ venue.description or 'Premium meeting space with modern amenities.' }}
+                            </p>
+                            
+                            <div class="space-y-3 mb-6">
+                                <div class="flex items-center">
+                                    <div class="w-10 h-10 bg-gold/10 rounded-lg flex items-center justify-center mr-3">
+                                        <i class="fas fa-user-friends text-gold"></i>
+                                    </div>
+                                    <div>
+                                        <div class="font-medium">Capacity</div>
+                                        <div class="text-sm text-gray-500 dark:text-gray-400">{{ venue.capacity or 20 }} people</div>
+                                    </div>
+                                </div>
+                                
+                                {% if venue.price_per_hour and venue.price_per_hour > 0 %}
+                                <div class="flex items-center">
+                                    <div class="w-10 h-10 bg-gold/10 rounded-lg flex items-center justify-center mr-3">
+                                        <i class="fas fa-clock text-gold"></i>
+                                    </div>
+                                    <div>
+                                        <div class="font-medium">Hourly Rate</div>
+                                        <div class="text-sm text-gray-500 dark:text-gray-400">
+                                            {% if venue.formatted_price %}
+                                                {{ venue.formatted_price }}
+                                            {% else %}
+                                                Rp{{ "{:,.0f}".format(venue.price_per_hour|float) }}/hour
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endif %}
+                            </div>
+                            
+                            {% if venue.amenities %}
+                            <div class="mb-6">
+                                <h4 class="font-semibold mb-3">Featured Amenities:</h4>
+                                <div class="flex flex-wrap gap-2">
+                                    {% if venue.amenities is string %}
+                                        {% if venue.amenities.startswith('[') %}
+                                            {% set amenities_list = venue.amenities|from_json %}
+                                            {% for amenity in amenities_list[:4] %}
+                                            <span class="px-3 py-1.5 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-sm rounded-full border border-gray-200 dark:border-gray-600">
+                                                {{ amenity }}
+                                            </span>
+                                            {% endfor %}
+                                        {% else %}
+                                            {% set amenities_list = venue.amenities.split(',') %}
+                                            {% for amenity in amenities_list[:4] %}
+                                            <span class="px-3 py-1.5 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-sm rounded-full border border-gray-200 dark:border-gray-600">
+                                                {{ amenity|trim }}
+                                            </span>
+                                            {% endfor %}
+                                        {% endif %}
+                                    {% elif venue.amenities is iterable %}
+                                        {% for amenity in venue.amenities[:4] %}
+                                        <span class="px-3 py-1.5 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-sm rounded-full border border-gray-200 dark:border-gray-600">
+                                            {{ amenity }}
+                                        </span>
+                                        {% endfor %}
+                                    {% endif %}
+                                </div>
+                            </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mt-auto pt-6">
+                            <div class="flex space-x-3">
+                                <a href="{{ url_for('contact') }}?subject=Meeting Room Inquiry: {{ venue.name }}" 
+                                   class="flex-1 py-3 bg-gold text-navy font-semibold rounded-lg hover:bg-gold/90 transition-colors text-center">
+                                    <i class="fas fa-info-circle mr-1"></i>More Information
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state"> 
+            <i class="fas fa-users text-gray-400 text-6xl mb-6"></i>
+            <h3 class="text-2xl font-semibold mb-3">No Meeting Rooms Available</h3>
+            <p class="text-gray-500 dark:text-gray-400 max-w-md mx-auto mb-8">
+                Our meeting rooms are currently being updated. Please contact us directly for event space inquiries.
+            </p>
+            <a href="{{ url_for('contact') }}" class="cta-button">
+                <i class="fas fa-envelope mr-2"></i>
+                Contact Events Team
+            </a>
+        </div>
+        {% endif %}
+        
+        <!-- Additional Contact Info -->
+        <div class="mt-16 p-8 bg-gradient-to-r from-gold/5 to-transparent dark:from-gold/10 rounded-2xl border border-gold/20">
+            <div class="text-center">
+                <h3 class="text-2xl font-bold mb-4">Need a Custom Event Space?</h3>
+                <p class="text-gray-600 dark:text-gray-300 mb-8 max-w-2xl mx-auto text-lg">
+                    Our dedicated events team can help you plan the perfect meeting, conference, or celebration.
+                    We offer full event planning services including catering, audio-visual equipment, and decoration.
+                </p>
+                <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                    <a href="{{ url_for('contact') }}?subject=Custom Event Inquiry" 
+                       class="px-8 py-4 bg-gold text-navy font-semibold rounded-full hover:bg-gold/90 transition-colors inline-flex items-center">
+                        <i class="fas fa-calendar-star mr-3"></i>
+                        Request a Proposal
+                    </a>
+                    <a href="tel:+622742405420" 
+                       class="px-8 py-4 border-2 border-gold text-gold font-semibold rounded-full hover:bg-gold/10 transition-colors inline-flex items-center">
+                        <i class="fas fa-phone mr-3"></i>
+                        Call Events Team
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ===== WELLNESS FACILITIES SECTION ===== -->
+<section id="facilities-section" class="tab-content py-20 bg-gray-50 dark:bg-gray-800 hidden">
+    <div class="max-w-7xl mx-auto px-4">
+        <div class="text-center mb-12">
+            <h2 class="text-3xl md:text-4xl font-serif font-bold mb-4">Wellness & Recreation</h2>
+            <p class="text-gray-600 dark:text-gray-300 max-w-2xl mx-auto text-lg">
+                Relax and rejuvenate with our premium facilities designed for your wellbeing
+            </p>
+        </div>
+        
+        {% if hotel_facilities and hotel_facilities|length > 0 %}
+        <div class="grid md:grid-cols-3 gap-8">
+            {% for venue in hotel_facilities %}
+            <div class="venue-card bg-white dark:bg-gray-800 rounded-2xl overflow-hidden shadow-lg">
+                <div class="image-container">
+                    {% if venue.main_image %}
+                        <img src="{{ venue.main_image }}" 
+                             alt="{{ venue.name }}" 
+                             class="w-full h-full object-cover"
+                             loading="lazy"
+                             onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1566073771259-6a8506099945?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'">
+                    {% else %}
+                        <div class="w-full h-full bg-gradient-to-br from-gold/20 to-navy/20 flex items-center justify-center">
+                            {% set venue_type = (venue.type or '')|lower %}
+                            {% if 'pool' in venue_type %}
+                                <i class="fas fa-swimming-pool text-gray-400 text-5xl"></i>
+                            {% elif 'spa' in venue_type or 'wellness' in venue_type %}
+                                <i class="fas fa-spa text-gray-400 text-5xl"></i>
+                            {% elif 'gym' in venue_type or 'fitness' in venue_type %}
+                                <i class="fas fa-dumbbell text-gray-400 text-5xl"></i>
+                            {% else %}
+                                <i class="fas fa-star text-gray-400 text-5xl"></i>
+                            {% endif %}
+                        </div>
+                    {% endif %}
+                    
+                    <div class="venue-badge">
+                        {{ (venue.type|title if venue.type else 'Facility') }}
+                    </div>
+                </div>
+                
+                <div class="p-6">
+                    <h3 class="text-xl font-serif font-bold mb-3">{{ venue.name }}</h3>
+                    <p class="text-gray-600 dark:text-gray-300 text-sm mb-6">
+                        {{ venue.description or 'Premium hotel facility with modern amenities.' }}
+                    </p>
+                    
+                    <div class="space-y-4 mb-6">
+                        {% if venue.capacity %}
+                        <div class="flex items-center text-sm">
+                            <i class="fas fa-user-friends text-gold mr-2 w-5"></i>
+                            <span class="text-gray-600 dark:text-gray-400">Capacity: {{ venue.capacity }} people</span>
+                        </div>
+                        {% endif %}
+                        
+                        {% if venue.opening_hours %}
+                        <div class="flex items-center text-sm">
+                            <i class="fas fa-clock text-gold mr-2 w-5"></i>
+                            <span class="text-gray-600 dark:text-gray-400">Hours: {{ venue.opening_hours }}</span>
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    {% if venue.amenities %}
+                    <div class="mb-6">
+                        <h4 class="font-semibold text-sm mb-2">Features:</h4>
+                        <div class="flex flex-wrap gap-2">
+                            {% if venue.amenities is string %}
+                                {% if venue.amenities.startswith('[') %}
+                                    {% set amenities_list = venue.amenities|from_json %}
+                                    {% for amenity in amenities_list[:3] %}
+                                    <span class="px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-xs rounded border border-gray-200 dark:border-gray-600">
+                                        {{ amenity }}
+                                    </span>
+                                    {% endfor %}
+                                {% else %}
+                                    {% set amenities_list = venue.amenities.split(',') %}
+                                    {% for amenity in amenities_list[:3] %}
+                                    <span class="px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-xs rounded border border-gray-200 dark:border-gray-600">
+                                        {{ amenity|trim }}
+                                    </span>
+                                    {% endfor %}
+                                {% endif %}
+                            {% elif venue.amenities is iterable %}
+                                {% for amenity in venue.amenities[:3] %}
+                                <span class="px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-xs rounded border border-gray-200 dark:border-gray-600">
+                                    {{ amenity }}
+                                </span>
+                                {% endfor %}
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    <div class="text-center">
+                        <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">Available for hotel guests</p>
+                        <a href="{{ url_for('contact') }}?subject=Facility Inquiry: {{ venue.name }}" 
+                           class="inline-block px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-sm rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors border border-gray-300 dark:border-gray-600">
+                            <i class="fas fa-info-circle mr-1"></i> More Information
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <i class="fas fa-swimming-pool text-gray-400 text-6xl mb-6"></i>
+            <h3 class="text-2xl font-semibold mb-3">Facilities Coming Soon</h3>
+            <p class="text-gray-500 dark:text-gray-400 max-w-md mx-auto mb-8">
+                Our wellness facilities are currently being upgraded. Check back soon for our new pool, spa, and fitness center.
+            </p>
+            <a href="{{ url_for('book') }}" class="cta-button">
+                <i class="fas fa-calendar-check mr-2"></i>
+                Book Your Stay
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</section>
+
+<!-- ===== DINING SECTION ===== -->
+<section id="dining-section" class="tab-content py-20 bg-white dark:bg-gray-900 hidden">
+    <div class="max-w-7xl mx-auto px-4">
+        <div class="text-center mb-12">
+            <h2 class="text-3xl md:text-4xl font-serif font-bold mb-4">Dining & Restaurants</h2>
+            <p class="text-gray-600 dark:text-gray-300 max-w-2xl mx-auto text-lg">
+                Savor exquisite culinary experiences at our award-winning restaurants
+            </p>
+        </div>
+        
+        {% if dining and dining|length > 0 %}
+        <div class="grid lg:grid-cols-2 gap-8">
+            {% for venue in dining %}
+            <div class="venue-card bg-white dark:bg-gray-800 rounded-2xl overflow-hidden shadow-lg">
+                <div class="relative h-72 overflow-hidden">
+                    {% if venue.main_image %}
+                        <img src="{{ venue.main_image }}" 
+                             alt="{{ venue.name }}" 
+                             class="w-full h-full object-cover"
+                             loading="lazy"
+                             onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'">
+                    {% else %}
+                        <div class="w-full h-full bg-gradient-to-br from-gold/20 to-navy/20 flex items-center justify-center">
+                            <i class="fas fa-utensils text-gray-400 text-6xl"></i>
+                        </div>
+                    {% endif %}
+                    
+                    <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent flex items-end p-8">
+                        <div>
+                            <h3 class="text-3xl font-serif font-bold text-white mb-2">{{ venue.name }}</h3>
+                            <div class="flex items-center text-white">
+                                <div class="flex text-gold mr-4">
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star-half-alt"></i>
+                                </div>
+                                <span>{{ venue.cuisine_type or 'Fine Dining' }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="p-8">
+                    <p class="text-gray-600 dark:text-gray-300 mb-8 text-lg">
+                        {{ venue.description or 'Exquisite dining experience with premium cuisine prepared by our award-winning chefs.' }}
+                    </p>
+                    
+                    <div class="grid grid-cols-2 gap-6 mb-8">
+                        {% if venue.capacity %}
+                        <div class="text-center p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                            <div class="text-2xl font-bold text-gold mb-1">{{ venue.capacity }}</div>
+                            <div class="text-sm text-gray-600 dark:text-gray-400">Seating Capacity</div>
+                        </div>
+                        {% endif %}
+                        
+                        {% if venue.opening_hours %}
+                        <div class="text-center p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                            <div class="text-sm text-gold mb-1">{{ venue.opening_hours }}</div>
+                            <div class="text-sm text-gray-600 dark:text-gray-400">Opening Hours</div>
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    {% if venue.amenities %}
+                    <div class="mb-8">
+                        <h4 class="font-semibold text-lg mb-4">Dining Experience:</h4>
+                        <div class="flex flex-wrap gap-2">
+                            {% if venue.amenities is string %}
+                                {% if venue.amenities.startswith('[') %}
+                                    {% set amenities_list = venue.amenities|from_json %}
+                                    {% for amenity in amenities_list %}
+                                    <span class="px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-sm rounded-full border border-gray-200 dark:border-gray-600">
+                                        {{ amenity }}
+                                    </span>
+                                    {% endfor %}
+                                {% else %}
+                                    {% set amenities_list = venue.amenities.split(',') %}
+                                    {% for amenity in amenities_list %}
+                                    <span class="px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-sm rounded-full border border-gray-200 dark:border-gray-600">
+                                        {{ amenity|trim }}
+                                    </span>
+                                    {% endfor %}
+                                {% endif %}
+                            {% elif venue.amenities is iterable %}
+                                {% for amenity in venue.amenities %}
+                                <span class="px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-sm rounded-full border border-gray-200 dark:border-gray-600">
+                                    {{ amenity }}
+                                </span>
+                                {% endfor %}
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    <div class="flex space-x-4">
+                        <a href="{{ url_for('contact') }}?subject=Restaurant Reservation: {{ venue.name }}" 
+                           class="flex-1 py-4 bg-gold text-navy font-semibold rounded-lg hover:bg-gold/90 transition-colors text-center text-lg">
+                            <i class="fas fa-info-circle mr-1"></i>More Information
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <i class="fas fa-utensils text-gray-400 text-6xl mb-6"></i>
+            <h3 class="text-2xl font-semibold mb-3">Restaurants Information</h3>
+            <p class="text-gray-500 dark:text-gray-400 max-w-md mx-auto mb-8">
+                Our restaurants are currently updating their menus and hours. Please contact us directly for dining inquiries and reservations.
+            </p>
+            <a href="{{ url_for('contact') }}" class="cta-button">
+                <i class="fas fa-phone-alt mr-2"></i>
+                Contact Restaurant
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</section>
+
+<!-- ===== AMENITIES SECTION ===== -->
+<section id="amenities-section" class="tab-content py-20 bg-gray-50 dark:bg-gray-800 hidden">
+    <div class="max-w-7xl mx-auto px-4">
+        <div class="text-center mb-12">
+            <h2 class="text-3xl md:text-4xl font-serif font-bold mb-4">Complimentary Amenities</h2>
+            <p class="text-gray-600 dark:text-gray-300 max-w-2xl mx-auto text-lg">
+                Enjoy these premium amenities included with your stay at Feizen Haven
+            </p>
+        </div>
+
+        <div class="amenities-grid">
+            <!-- Amenity 1 -->
+            <div class="amenity-card">
+                <div class="w-20 h-20 bg-gradient-to-br from-gold/20 to-gold/10 rounded-full flex items-center justify-center mx-auto mb-6">
+                    <i class="fas fa-swimming-pool text-gold text-3xl"></i>
+                </div>
+                <h3 class="text-xl font-serif font-bold mb-3">Infinity Pool</h3>
+                <p class="text-gray-600 dark:text-gray-300 mb-4">
+                    Stunning rooftop pool with panoramic views of Yogyakarta
+                </p>
+                <div class="text-sm text-gold font-semibold">
+                    <i class="fas fa-clock mr-2"></i> 7:00 AM - 10:00 PM
+                </div>
+            </div>
+
+            <!-- Amenity 2 -->
+            <div class="amenity-card">
+                <div class="w-20 h-20 bg-gradient-to-br from-gold/20 to-gold/10 rounded-full flex items-center justify-center mx-auto mb-6">
+                    <i class="fas fa-dumbbell text-gold text-3xl"></i>
+                </div>
+                <h3 class="text-xl font-serif font-bold mb-3">Fitness Center</h3>
+                <p class="text-gray-600 dark:text-gray-300 mb-4">
+                    24/7 access to modern exercise equipment and cardio machines
+                </p>
+                <div class="text-sm text-gold font-semibold">
+                    <i class="fas fa-check-circle mr-2"></i> 24 Hours Access
+                </div>
+            </div>
+
+            <!-- Amenity 3 -->
+            <div class="amenity-card">
+                <div class="w-20 h-20 bg-gradient-to-br from-gold/20 to-gold/10 rounded-full flex items-center justify-center mx-auto mb-6">
+                    <i class="fas fa-wifi text-gold text-3xl"></i>
+                </div>
+                <h3 class="text-xl font-serif font-bold mb-3">High-Speed WiFi</h3>
+                <p class="text-gray-600 dark:text-gray-300 mb-4">
+                    Fiber optic internet throughout the property for seamless connectivity
+                </p>
+                <div class="text-sm text-gold font-semibold">
+                    <i class="fas fa-bolt mr-2"></i> Up to 1 Gbps
+                </div>
+            </div>
+
+            <!-- Amenity 4 -->
+            <div class="amenity-card">
+                <div class="w-20 h-20 bg-gradient-to-br from-gold/20 to-gold/10 rounded-full flex items-center justify-center mx-auto mb-6">
+                    <i class="fas fa-parking text-gold text-3xl"></i>
+                </div>
+                <h3 class="text-xl font-serif font-bold mb-3">Secure Parking</h3>
+                <p class="text-gray-600 dark:text-gray-300 mb-4">
+                    Valet and self-parking with 24-hour security surveillance
+                </p>
+                <div class="text-sm text-gold font-semibold">
+                    <i class="fas fa-shield-alt mr-2"></i> 24/7 Security
+                </div>
+            </div>
+
+            <!-- Amenity 5 -->
+            <div class="amenity-card">
+                <div class="w-20 h-20 bg-gradient-to-br from-gold/20 to-gold/10 rounded-full flex items-center justify-center mx-auto mb-6">
+                    <i class="fas fa-concierge-bell text-gold text-3xl"></i>
+                </div>
+                <h3 class="text-xl font-serif font-bold mb-3">Concierge Service</h3>
+                <p class="text-gray-600 dark:text-gray-300 mb-4">
+                    24/7 assistance, tour arrangements, and local recommendations
+                </p>
+                <div class="text-sm text-gold font-semibold">
+                    <i class="fas fa-headset mr-2"></i> Always Available
+                </div>
+            </div>
+
+            <!-- Amenity 6 -->
+            <div class="amenity-card">
+                <div class="w-20 h-20 bg-gradient-to-br from-gold/20 to-gold/10 rounded-full flex items-center justify-center mx-auto mb-6">
+                    <i class="fas fa-utensils text-gold text-3xl"></i>
+                </div>
+                <h3 class="text-xl font-serif font-bold mb-3">Breakfast Buffet</h3>
+                <p class="text-gray-600 dark:text-gray-300 mb-4">
+                    Daily international and local breakfast featuring fresh ingredients
+                </p>
+                <div class="text-sm text-gold font-semibold">
+                    <i class="fas fa-sun mr-2"></i> 6:30 AM - 10:30 AM
+                </div>
+            </div>
+
+            <!-- Amenity 7 -->
+            <div class="amenity-card">
+                <div class="w-20 h-20 bg-gradient-to-br from-gold/20 to-gold/10 rounded-full flex items-center justify-center mx-auto mb-6">
+                    <i class="fas fa-business-time text-gold text-3xl"></i>
+                </div>
+                <h3 class="text-xl font-serif font-bold mb-3">Business Center</h3>
+                <p class="text-gray-600 dark:text-gray-300 mb-4">
+                    Computers, printer, fax, and meeting spaces for business travelers
+                </p>
+                <div class="text-sm text-gold font-semibold">
+                    <i class="fas fa-laptop mr-2"></i> 8:00 AM - 8:00 PM
+                </div>
+            </div>
+
+            <!-- Amenity 8 -->
+            <div class="amenity-card">
+                <div class="w-20 h-20 bg-gradient-to-br from-gold/20 to-gold/10 rounded-full flex items-center justify-center mx-auto mb-6">
+                    <i class="fas fa-shoe-prints text-gold text-3xl"></i>
+                </div>
+                <h3 class="text-xl font-serif font-bold mb-3">Fitness Classes</h3>
+                <p class="text-gray-600 dark:text-gray-300 mb-4">
+                    Daily group fitness sessions including yoga, pilates, and aerobics
+                </p>
+                <div class="text-sm text-gold font-semibold">
+                    <i class="fas fa-calendar-alt mr-2"></i> Daily Schedule
+                </div>
+            </div>
+        </div>
+        
+        <!-- CTA -->
+        <div class="mt-16 text-center">
+            <div class="inline-block p-8 bg-gradient-to-r from-gold/5 to-transparent dark:from-gold/10 rounded-2xl border border-gold/20 max-w-2xl mx-auto">
+                <h3 class="text-2xl font-bold mb-4">All Amenities Included</h3>
+                <p class="text-gray-600 dark:text-gray-300 mb-8">
+                    All listed amenities are complimentary for hotel guests. No additional charges apply during your stay.
+                </p>
+                {% if session.user_id %}
+                <a href="{{ url_for('book') }}" 
+                   class="cta-button inline-flex items-center">
+                    <i class="fas fa-bed mr-3"></i>
+                    <span>Book Your Stay Now</span>
+                </a>
+                {% else %}
+                <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                    <a href="{{ url_for('login') }}" 
+                       class="cta-button inline-flex items-center">
+                        <i class="fas fa-sign-in-alt mr-3"></i>
+                        <span>Login to Book</span>
+                    </a>
+                    <a href="{{ url_for('register') }}" 
+                       class="px-8 py-4 border-2 border-gold text-gold font-semibold rounded-full hover:bg-gold/10 transition-all duration-300 inline-flex items-center justify-center">
+                        <i class="fas fa-user-plus mr-3"></i>
+                        <span>Create Account</span>
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ===== CTA SECTION ===== -->
+<section class="py-20 bg-gradient-to-r from-navy via-navy/90 to-gray-900">
+    <div class="max-w-7xl mx-auto px-4 text-center">
+        <h2 class="text-3xl md:text-4xl font-serif font-bold text-white mb-6">
+            Ready to Experience Our Venues?
+        </h2>
+        <p class="text-gray-300 text-lg mb-8 max-w-2xl mx-auto">
+            Contact us for venue bookings or reserve your stay to enjoy all amenities
+        </p>
+        <div class="flex flex-col sm:flex-row gap-4 justify-center">
+            <a href="{{ url_for('contact') }}?subject=Venue Inquiry" 
+               class="px-8 py-4 bg-gold text-navy font-semibold rounded-full hover:bg-gold/90 hover:shadow-xl transition-all duration-300 inline-flex items-center justify-center">
+                <i class="fas fa-building mr-3"></i>
+                <span>Inquire About Venues</span>
+            </a>
+            {% if session.user_id %}
+            <a href="{{ url_for('book') }}" 
+               class="px-8 py-4 border-2 border-white text-white font-semibold rounded-full hover:bg-white hover:text-navy transition-all duration-300 inline-flex items-center justify-center">
+                <i class="fas fa-bed mr-3"></i>
+                <span>Book Hotel Stay</span>
+            </a>
+            {% else %}
+            <a href="{{ url_for('login') }}" 
+               class="px-8 py-4 border-2 border-white text-white font-semibold rounded-full hover:bg-white hover:text-navy transition-all duration-300 inline-flex items-center justify-center">
+                <i class="fas fa-sign-in-alt mr-3"></i>
+                <span>Login to Book</span>
+            </a>
+            {% endif %}
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Tab Switching Functionality
+        const tabBtns = document.querySelectorAll('.tab-btn');
+        const tabContents = document.querySelectorAll('.tab-content');
+        const tabContainer = document.querySelector('.tab-container');
+        
+        function switchTab(tabName) {
+            // Update button states
+            tabBtns.forEach(btn => {
+                const isActive = btn.dataset.tab === tabName;
+                btn.classList.toggle('active', isActive);
+                btn.classList.toggle('bg-gold', isActive);
+                btn.classList.toggle('text-navy', isActive);
+                
+                if (!isActive) {
+                    btn.classList.add('bg-gray-100', 'dark:bg-gray-800', 'text-gray-700', 'dark:text-gray-300');
+                } else {
+                    btn.classList.remove('bg-gray-100', 'dark:bg-gray-800', 'text-gray-700', 'dark:text-gray-300');
+                }
+            });
+            
+            // Show/hide tab contents with animation
+            tabContents.forEach(content => {
+                if (content.id === `${tabName}-section`) {
+                    content.classList.remove('hidden');
+                    // Add fade-in effect
+                    content.style.opacity = '0';
+                    content.style.transform = 'translateY(20px)';
+                    
+                    setTimeout(() => {
+                        content.style.transition = 'all 0.5s ease';
+                        content.style.opacity = '1';
+                        content.style.transform = 'translateY(0)';
+                        
+                        // Smooth scroll to section
+                        const offset = tabContainer.offsetHeight + 80;
+                        window.scrollTo({
+                            top: content.offsetTop - offset,
+                            behavior: 'smooth'
+                        });
+                    }, 50);
+                } else {
+                    content.classList.add('hidden');
+                    content.style.opacity = '1';
+                    content.style.transform = 'translateY(0)';
+                }
+            });
+            
+            // Update URL hash
+            window.history.pushState(null, null, `#${tabName}`);
+        }
+        
+        // Event listeners for tab buttons
+        tabBtns.forEach(btn => {
+            btn.addEventListener('click', function() {
+                const tabName = this.dataset.tab;
+                if (tabName) {
+                    switchTab(tabName);
+                }
+            });
+        });
+        
+        // Check URL hash for direct tab access
+        const hash = window.location.hash.substring(1);
+        const validTabs = ['meeting', 'facilities', 'dining', 'amenities'];
+        
+        if (hash && validTabs.includes(hash)) {
+            setTimeout(() => {
+                switchTab(hash);
+            }, 300);
+        } else {
+            // Set default tab jika tidak ada hash
+            const activeBtn = document.querySelector('.tab-btn.active');
+            if (activeBtn) {
+                switchTab(activeBtn.dataset.tab);
+            }
+        }
+        
+        // Handle browser back/forward buttons
+        window.addEventListener('popstate', function() {
+            const hash = window.location.hash.substring(1);
+            if (hash && validTabs.includes(hash)) {
+                switchTab(hash);
+            }
+        });
+        
+        // Intersection Observer for tab container sticky effect
+        const observer = new IntersectionObserver(
+            ([entry]) => {
+                if (!entry.isIntersecting) {
+                    tabContainer.classList.add('shadow-lg', 'bg-white/95', 'dark:bg-gray-800/95', 'backdrop-blur-sm');
+                } else {
+                    tabContainer.classList.remove('shadow-lg', 'bg-white/95', 'dark:bg-gray-800/95', 'backdrop-blur-sm');
+                }
+            },
+            {
+                root: null,
+                threshold: 0,
+                rootMargin: '-100px 0px 0px 0px'
+            }
+        );
+        
+        observer.observe(tabContainer);
+        
+        // Smooth scroll for CTA buttons
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                const href = this.getAttribute('href');
+                if (href === '#') return;
+                
+                const targetId = href.substring(1);
+                
+                // Check if it's a tab link
+                if (validTabs.includes(targetId)) {
+                    e.preventDefault();
+                    switchTab(targetId);
+                    return;
+                }
+                
+                const targetElement = document.getElementById(targetId);
+                
+                if (targetElement) {
+                    e.preventDefault();
+                    const offset = tabContainer.offsetHeight + 80;
+                    window.scrollTo({
+                        top: targetElement.offsetTop - offset,
+                        behavior: 'smooth'
+                    });
+                }
+            });
+        });
+    });
+</script>
+{% endblock %}

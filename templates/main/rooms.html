@@ -1,0 +1,355 @@
+{% extends "base.html" %}
+
+{% block title %}Rooms & Suites - Feizen Haven Luxury Hotel{% endblock %}
+
+{% block content %}
+<!-- ===== HERO SECTION ===== -->
+<section class="relative min-h-[60vh] flex items-center justify-center overflow-hidden">
+    <!-- Background Image with Overlay -->
+    <div class="absolute inset-0 z-0">
+        <img src="https://images.unsplash.com/photo-1631049307264-da0ec9d70304?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" 
+             alt="Feizen Haven Rooms" 
+             class="w-full h-full object-cover"
+             loading="lazy">
+        <div class="absolute inset-0 bg-gradient-to-r from-navy/90 to-navy/70"></div>
+    </div>
+    
+    <!-- Hero Content -->
+    <div class="relative z-10 max-w-7xl mx-auto px-4 w-full text-center">
+        <div class="mb-6">
+            <div class="inline-flex items-center bg-white/20 backdrop-blur-sm px-6 py-3 rounded-full">
+                <i class="fas fa-crown text-gold mr-3"></i>
+                <span class="text-white font-medium">5-Star Luxury Accommodations</span>
+            </div>
+        </div>
+        
+        <h1 class="text-4xl md:text-6xl lg:text-7xl font-serif font-bold text-white mb-6 leading-tight">
+            Rooms & <span class="text-gold">Suites</span>
+        </h1>
+        
+        <p class="text-xl text-gray-200 max-w-3xl mx-auto mb-8">
+            Experience unparalleled comfort with premium amenities and exceptional service
+        </p>
+    </div>
+</section>
+
+<!-- ===== ROOMS AVAILABILITY ===== -->
+<section class="py-8 bg-white dark:bg-gray-900 border-b">
+    <div class="max-w-7xl mx-auto px-4">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
+            <!-- Deluxe Rooms -->
+            <div class="p-4">
+                <div class="text-3xl font-bold text-gold mb-2">
+                    {% if deluxe_rooms and deluxe_rooms|length > 0 %}
+                        {% set total_available = deluxe_rooms|sum(attribute='available_count') %}
+                        {{ total_available }}
+                    {% else %}0{% endif %}
+                </div>
+                <div class="font-medium">Deluxe Rooms</div>
+                <div class="text-sm text-gray-500">From Rp 1.8 Million / Night</div>
+            </div>
+
+            <!-- Executive Suites -->
+            <div class="p-4 border-l border-r border-gray-200 dark:border-gray-700">
+                <div class="text-3xl font-bold text-gold mb-2">
+                    {% if executive_rooms and executive_rooms|length > 0 %}
+                        {% set total_available = executive_rooms|sum(attribute='available_count') %}
+                        {{ total_available }}
+                    {% else %}0{% endif %}
+                </div>
+                <div class="font-medium">Executive Suites</div>
+                <div class="text-sm text-gray-500">From Rp 3.5 Million / Night</div>
+            </div>
+
+            <!-- Presidential Suites -->
+            <div class="p-4">
+                <div class="text-3xl font-bold text-gold mb-2">
+                    {% if presidential_rooms and presidential_rooms|length > 0 %}
+                        {% set total_available = presidential_rooms|sum(attribute='available_count') %}
+                        {{ total_available }}
+                    {% else %}0{% endif %}
+                </div>
+                <div class="font-medium">Presidential Suites</div>
+                <div class="text-sm text-gray-500">From Rp 8.5 Million / Night</div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ===== ROOMS COMPARISON ===== -->
+<section class="py-12 bg-gray-50 dark:bg-gray-800">
+    <div class="max-w-7xl mx-auto px-4">
+        <div class="text-center mb-10">
+            <h2 class="text-3xl font-serif font-bold mb-4">Choose Your Perfect Stay</h2>
+            <p class="text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
+                All rooms include complimentary breakfast, high-speed WiFi, and 24-hour room service
+            </p>
+        </div>
+        
+        {% if rooms and rooms|length > 0 %}
+        <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {% for room in rooms %}
+            <div class="bg-white dark:bg-gray-900 rounded-xl overflow-hidden shadow-lg hover:shadow-xl transition-shadow">
+                <!-- Room Image -->
+                <div class="relative h-64 overflow-hidden">
+                    {% if room.main_image %}
+                        <img src="{{ room.main_image }}" 
+                            alt="{{ room.name }}" 
+                            class="w-full h-full object-cover hover:scale-105 transition-transform duration-500"
+                            loading="lazy">
+                    {% else %}
+                        <div class="w-full h-full bg-gradient-to-br from-gold/20 to-navy/20 flex items-center justify-center">
+                            <i class="fas fa-bed text-gray-400 text-5xl"></i>
+                        </div>
+                    {% endif %}
+                    
+                    <!-- Room Type Tag -->
+                    <div class="absolute top-4 left-4 bg-gold text-navy font-bold px-3 py-1.5 rounded text-sm">
+                        {{ room.view_type|default('City View') }}
+                    </div>
+                    
+                    <!-- Availability Status -->
+                    <div class="absolute top-4 right-4">
+                        {% if room.available_count > 0 %}
+                        <span class="bg-green-100 text-green-800 text-xs font-bold px-3 py-1.5 rounded-full">
+                            {{ room.available_count }} Available
+                        </span>
+                        {% else %}
+                        <span class="bg-red-100 text-red-800 text-xs font-bold px-3 py-1.5 rounded-full">
+                            Fully Booked
+                        </span>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <!-- Room Details -->
+                <div class="p-6">
+                    <!-- Room Name & Price -->
+                    <div class="flex justify-between items-start mb-4">
+                        <div>
+                            <h3 class="text-xl font-bold mb-1">{{ room.name }}</h3>
+                            <div class="flex items-center text-sm text-gray-500">
+                                <i class="fas fa-ruler-combined mr-1 text-gold"></i>
+                                <span class="mr-3">{{ room.size|default('35') }} sqm</span>
+                                <i class="fas fa-user-friends mr-1 text-gold"></i>
+                                <span>{{ room.capacity|default('2') }} Guests</span>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <div class="text-2xl font-bold text-gold">
+                                {% if room.price %}
+                                    Rp{{ "{:,.0f}".format(room.price|float) }}
+                                {% else %}
+                                    Contact Us
+                                {% endif %}
+                            </div>
+                            <div class="text-xs text-gray-500">per night</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Room Description -->
+                    <p class="text-gray-600 dark:text-gray-300 mb-5">
+                        {{ room.description|default("Experience luxury with premium amenities and stunning views. Perfect for both business and leisure travelers.") }}
+                    </p>
+                    
+                    <!-- Key Features -->
+                    <div class="mb-6">
+                        <h4 class="font-semibold mb-3 text-sm text-gray-700 dark:text-gray-300">WHAT'S INCLUDED:</h4>
+                        <div class="grid grid-cols-2 gap-2">
+                            {% set default_features = ['Free Breakfast', 'High-Speed WiFi', 'Smart TV', 'Mini Bar', 'Air Conditioning', '24/7 Room Service'] %}
+                            {% for feature in default_features %}
+                            <div class="flex items-center">
+                                <i class="fas fa-check text-green-500 mr-2 text-sm"></i>
+                                <span class="text-sm text-gray-600 dark:text-gray-400">{{ feature }}</span>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    
+                    <!-- Additional Amenities (if any) -->
+                    {% if room.amenities_list and room.amenities_list|length > 0 %}
+                    <div class="mb-6">
+                        <h4 class="font-semibold mb-2 text-sm text-gray-700 dark:text-gray-300">ADDITIONAL AMENITIES:</h4>
+                        <div class="flex flex-wrap gap-2">
+                            {% for amenity in room.amenities_list[:3] %}
+                            <span class="px-3 py-1 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-xs rounded-full">
+                                {{ amenity }}
+                            </span>
+                            {% endfor %}
+                            {% if room.amenities_list|length > 3 %}
+                            <span class="px-3 py-1 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-xs rounded-full">
+                                +{{ room.amenities_list|length - 3 }} more
+                            </span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    <!-- Booking Button -->
+                    <div>
+                        {% if room.available_count > 0 %}
+                            {% if session.user_id %}
+                            <a href="{{ url_for('book', room_id=room.id) if room.id else url_for('book') }}" 
+                               class="w-full py-3 bg-gold text-navy font-bold rounded-lg hover:bg-gold/90 transition-colors text-center block">
+                                <i class="fas fa-calendar-check mr-2"></i>
+                                BOOK THIS ROOM
+                            </a>
+                            {% else %}
+                            <a href="{{ url_for('login') }}" 
+                               class="w-full py-3 bg-gold text-navy font-bold rounded-lg hover:bg-gold/90 transition-colors text-center block">
+                                <i class="fas fa-sign-in-alt mr-2"></i>
+                                LOGIN TO BOOK
+                            </a>
+                            {% endif %}
+                        {% else %}
+                        <div class="w-full py-3 bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400 rounded-lg text-center">
+                            <i class="fas fa-times-circle mr-2"></i>
+                            SOLD OUT
+                        </div>
+                        {% endif %}
+                        
+                        <!-- Contact Option -->
+                        <div class="text-center mt-3">
+                            <a href="{{ url_for('contact') }}?subject=Room Inquiry: {{ room.name }}" 
+                               class="text-sm text-gold hover:underline">
+                                <i class="fas fa-question-circle mr-1"></i>
+                                Have questions? Contact us
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <!-- No Rooms Available -->
+        <div class="bg-white dark:bg-gray-900 rounded-xl p-12 text-center">
+            <i class="fas fa-bed text-gray-300 text-6xl mb-6"></i>
+            <h3 class="text-2xl font-bold mb-3">Currently Unavailable</h3>
+            <p class="text-gray-600 dark:text-gray-400 mb-6 max-w-md mx-auto">
+                All our rooms are currently fully booked. Please check back later or contact us for availability updates.
+            </p>
+            <a href="{{ url_for('contact') }}" class="px-6 py-3 bg-gold text-navy font-bold rounded-lg hover:bg-gold/90 transition-colors inline-flex items-center">
+                <i class="fas fa-phone-alt mr-2"></i>
+                Contact for Availability
+            </a>
+        </div>
+        {% endif %}
+        
+        <!-- Benefits Section -->
+        <div class="mt-16 bg-gradient-to-r from-gold/5 to-transparent dark:from-gold/10 rounded-2xl p-8">
+            <div class="text-center mb-8">
+                <h3 class="text-2xl font-bold mb-4">Why Choose Feizen Haven?</h3>
+                <p class="text-gray-600 dark:text-gray-300">Every stay includes these exclusive benefits</p>
+            </div>
+            
+            <div class="grid md:grid-cols-4 gap-6">
+                <div class="text-center p-4">
+                    <div class="w-12 h-12 bg-gold/20 rounded-full flex items-center justify-center mx-auto mb-3">
+                        <i class="fas fa-utensils text-gold text-xl"></i>
+                    </div>
+                    <h4 class="font-bold mb-1">Free Breakfast</h4>
+                    <p class="text-sm text-gray-600 dark:text-gray-400">Daily buffet breakfast included</p>
+                </div>
+                
+                <div class="text-center p-4">
+                    <div class="w-12 h-12 bg-gold/20 rounded-full flex items-center justify-center mx-auto mb-3">
+                        <i class="fas fa-wifi text-gold text-xl"></i>
+                    </div>
+                    <h4 class="font-bold mb-1">High-Speed WiFi</h4>
+                    <p class="text-sm text-gray-600 dark:text-gray-400">Unlimited internet access</p>
+                </div>
+                
+                <div class="text-center p-4">
+                    <div class="w-12 h-12 bg-gold/20 rounded-full flex items-center justify-center mx-auto mb-3">
+                        <i class="fas fa-swimming-pool text-gold text-xl"></i>
+                    </div>
+                    <h4 class="font-bold mb-1">Pool Access</h4>
+                    <p class="text-sm text-gray-600 dark:text-gray-400">Complimentary infinity pool</p>
+                </div>
+                
+                <div class="text-center p-4">
+                    <div class="w-12 h-12 bg-gold/20 rounded-full flex items-center justify-center mx-auto mb-3">
+                        <i class="fas fa-concierge-bell text-gold text-xl"></i>
+                    </div>
+                    <h4 class="font-bold mb-1">24/7 Service</h4>
+                    <p class="text-sm text-gray-600 dark:text-gray-400">Round-the-clock assistance</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ===== CTA SECTION ===== -->
+<section class="py-16 bg-gradient-to-r from-navy via-navy/90 to-gray-900">
+    <div class="max-w-4xl mx-auto px-4 text-center">
+        <h2 class="text-3xl md:text-4xl font-serif font-bold text-white mb-6">
+            Ready to Experience Luxury?
+        </h2>
+        <p class="text-gray-300 mb-8 text-lg">
+            Book your stay today and enjoy premium amenities, exceptional service, and unforgettable memories
+        </p>
+        
+        <div class="flex flex-col sm:flex-row gap-4 justify-center">
+            {% if session.user_id %}
+            <a href="{{ url_for('book') }}" 
+               class="px-10 py-4 bg-gold text-navy font-bold rounded-full hover:bg-gold/90 hover:shadow-xl transition-all inline-flex items-center justify-center text-lg">
+                <i class="fas fa-calendar-alt mr-3"></i>
+                Book Your Stay Now
+            </a>
+            {% else %}
+            <div class="space-y-4 sm:space-y-0 sm:space-x-4">
+                <a href="{{ url_for('login') }}" 
+                   class="px-10 py-4 bg-gold text-navy font-bold rounded-full hover:bg-gold/90 hover:shadow-xl transition-all inline-flex items-center justify-center text-lg">
+                    <i class="fas fa-sign-in-alt mr-3"></i>
+                    Login to Book
+                </a>
+                <a href="{{ url_for('register') }}" 
+                   class="px-10 py-4 border-2 border-white text-white font-bold rounded-full hover:bg-white hover:text-navy transition-all inline-flex items-center justify-center text-lg">
+                    <i class="fas fa-user-plus mr-3"></i>
+                    Create Account
+                </a>
+            </div>
+            {% endif %}
+        </div>
+        
+        <!-- Contact Information -->
+        <div class="mt-10 text-white/80">
+            <p class="mb-4">Need assistance? Our team is ready to help</p>
+            <div class="flex flex-col sm:flex-row gap-4 justify-center text-sm">
+                <div class="flex items-center justify-center">
+                    <i class="fas fa-phone-alt mr-2 text-gold"></i>
+                    <span>(0274) 714240</span>
+                </div>
+                <div class="flex items-center justify-center">
+                    <i class="fas fa-envelope mr-2 text-gold"></i>
+                    <span>reservations@feizenhaven.com</span>
+                </div>
+                <div class="flex items-center justify-center">
+                    <i class="fas fa-clock mr-2 text-gold"></i>
+                    <span>24/7 Reservations</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Simple hover effect for room cards
+        const roomCards = document.querySelectorAll('.bg-white, .dark\\:bg-gray-900');
+        
+        roomCards.forEach(card => {
+            card.addEventListener('mouseenter', () => {
+                card.style.transform = 'translateY(-4px)';
+            });
+            
+            card.addEventListener('mouseleave', () => {
+                card.style.transform = 'translateY(0)';
+            });
+        });
+    });
+</script>
+{% endblock %}

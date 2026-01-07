@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Feizen Haven | Luxury Hotel Yogyakarta{% endblock %}</title>
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    
+    <!-- ===== 1. MINIMAL CRITICAL CSS ===== -->
+    <style>
+        /* Prevent white flash - SIMPLE */
+        body:not(.initialized) {
+            opacity: 0 !important;
+            visibility: hidden !important;
+        }
+        
+        body.initialized {
+            opacity: 1 !important;
+            visibility: visible !important;
+            transition: opacity 0.3s ease !important;
+        }
+        
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #C5A145;
+            border-radius: 4px;
+        }
+        .dark ::-webkit-scrollbar-track {
+            background: #374151;
+        }
+        .dark ::-webkit-scrollbar-thumb {
+            background: #d4b86a;
+        }
+    </style>
+    
+    <!-- ===== 2. DARK MODE INIT ===== -->
+    <script>
+        (function() {
+            // 1. SET INITIAL MODE
+            const savedMode = localStorage.getItem('darkMode');
+            const html = document.documentElement;
+            
+            if (savedMode === 'true') {
+                html.classList.add('dark');
+            } else if (savedMode === 'false') {
+                html.classList.remove('dark');
+            } else {
+                // First visit - use system preference
+                if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+                    html.classList.add('dark');
+                    localStorage.setItem('darkMode', 'true');
+                } else {
+                    localStorage.setItem('darkMode', 'false');
+                }
+            }
+            
+            // 2. SETUP TOGGLE FUNCTION
+            window.toggleDarkMode = function() {
+                const html = document.documentElement;
+                const currentMode = localStorage.getItem('darkMode');
+                
+                if (currentMode === 'true') {
+                    // Switch to LIGHT
+                    html.classList.remove('dark');
+                    localStorage.setItem('darkMode', 'false');
+                    
+                    // Update ALL icons
+                    document.querySelectorAll('.fa-sun').forEach(icon => {
+                        icon.className = 'fas fa-moon';
+                    });
+                } else {
+                    // Switch to DARK
+                    html.classList.add('dark');
+                    localStorage.setItem('darkMode', 'true');
+                    
+                    // Update ALL icons
+                    document.querySelectorAll('.fa-moon').forEach(icon => {
+                        icon.className = 'fas fa-sun';
+                    });
+                }
+            };
+            
+            // 3. SETUP WHEN DOM IS READY
+            document.addEventListener('DOMContentLoaded', function() {
+                // Update initial icons
+                if (html.classList.contains('dark')) {
+                    document.querySelectorAll('.fa-moon').forEach(icon => {
+                        icon.className = 'fas fa-sun';
+                    });
+                }
+                
+                // Attach click handlers
+                document.querySelectorAll('[data-dark-toggle]').forEach(btn => {
+                    btn.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        window.toggleDarkMode();
+                    });
+                });
+                
+                // Show content
+                setTimeout(() => {
+                    document.body.classList.add('initialized');
+                }, 50);
+            });
+        })();
+    </script>
+    
+    <!-- ===== 3. TAILWIND CSS ===== -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        'serif': ['Playfair Display', 'serif'],
+                        'sans': ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        'gold': '#C5A145',
+                        'navy': '#1A2B3C',
+                        'cream': '#F8F5F0',
+                        'gold-light': '#d4b86a',
+                    },
+                    animation: {
+                        'fade-in': 'fadeIn 0.5s ease-in-out',
+                        'slide-up': 'slideUp 0.3s ease-out',
+                    },
+                    keyframes: {
+                        fadeIn: {
+                            '0%': { opacity: '0' },
+                            '100%': { opacity: '1' },
+                        },
+                        slideUp: {
+                            '0%': { transform: 'translateY(10px)', opacity: '0' },
+                            '100%': { transform: 'translateY(0)', opacity: '1' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- ===== 4. CSS & FONTS ===== -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    
+    {% block extra_css %}{% endblock %}
+</head>
+
+<body class="bg-cream text-gray-800 dark:bg-gray-900 dark:text-gray-100 font-sans min-h-screen flex flex-col">
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="fixed top-20 right-4 z-50 space-y-2 animate-slide-up">
+                {% for category, message in messages %}
+                    <div class="flash-message flash-{{ category }} bg-white dark:bg-gray-800 border-l-4 px-4 py-3 shadow-lg rounded-r-lg min-w-[300px] max-w-md">
+                        <div class="flex items-center">
+                            {% if category == 'success' %}
+                                <i class="fas fa-check-circle text-green-500 mr-3"></i>
+                            {% elif category == 'danger' %}
+                                <i class="fas fa-exclamation-circle text-red-500 mr-3"></i>
+                            {% elif category == 'warning' %}
+                                <i class="fas fa-exclamation-triangle text-yellow-500 mr-3"></i>
+                            {% else %}
+                                <i class="fas fa-info-circle text-blue-500 mr-3"></i>
+                            {% endif %}
+                            <span class="text-sm">{{ message }}</span>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+
+    <!-- Navbar Fixed -->
+    <nav class="fixed top-0 left-0 w-full z-50 bg-white/90 dark:bg-gray-900/90 backdrop-blur-sm py-4 border-b border-gray-200 dark:border-gray-800">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center">
+                <!-- Logo -->
+                <a href="{{ url_for('index') }}" class="text-xl font-serif font-bold text-navy dark:text-white hover:text-gold transition-colors duration-300">
+                    Feizen <span class="text-gold">Haven</span>
+                </a>
+
+                <!-- Desktop Navigation -->
+                <div class="hidden lg:flex items-center space-x-8">
+                    <!-- Menu Links -->
+                    <div class="flex items-center space-x-8">
+                        <a href="{{ url_for('index') }}" class="nav-link text-navy dark:text-gray-200 font-medium text-sm hover:text-gold transition-colors duration-200">
+                            Home
+                        </a>
+                        <a href="{{ url_for('about') }}" class="nav-link text-navy dark:text-gray-200 font-medium text-sm hover:text-gold transition-colors duration-200">
+                            About
+                        </a>
+                        <a href="{{ url_for('venues') }}" class="nav-link text-navy dark:text-gray-200 font-medium text-sm hover:text-gold transition-colors duration-200">
+                            Venues
+                        </a>
+                        <a href="{{ url_for('rooms') }}" class="nav-link text-navy dark:text-gray-200 font-medium text-sm hover:text-gold transition-colors duration-200">
+                            Rooms
+                        </a>
+                        <a href="{{ url_for('contact') }}" class="nav-link text-navy dark:text-gray-200 font-medium text-sm hover:text-gold transition-colors duration-200">
+                            Contact
+                        </a>
+                    </div>
+
+                    <!-- Divider -->
+                    <div class="h-6 w-px bg-gray-300 dark:bg-gray-700"></div>
+                    
+                    <!-- Dark Mode Toggle - UNIQUE ID -->
+                    <button data-dark-toggle class="text-navy dark:text-gray-200 hover:text-gold transition-colors duration-200 focus:outline-none">
+                        <i class="fas fa-moon"></i>
+                    </button>
+                    
+                    <!-- User Actions -->
+                    <div class="flex items-center space-x-6">
+                        {% if session.user_id %}
+                            <!-- User Dropdown -->
+                            <div class="relative group">
+                                <button class="flex items-center space-x-2 text-navy dark:text-gray-200 hover:text-gold focus:outline-none transition-colors duration-200">
+                                    <i class="fas fa-user-circle text-lg"></i>
+                                    <span class="text-sm font-medium">
+                                        {% if session.name %}
+                                            {{ session.name.split()[0] }}
+                                        {% else %}
+                                            Account
+                                        {% endif %}
+                                    </span>
+                                    <i class="fas fa-chevron-down text-xs transition-transform duration-200 group-hover:rotate-180"></i>
+                                </button>
+                                
+                                <!-- Dropdown Menu -->
+                                <div class="absolute right-0 mt-2 w-56 bg-white dark:bg-gray-800 rounded-xl shadow-xl py-2 border dark:border-gray-700 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 origin-top-right z-50">
+                                    <!-- User Info -->
+                                    <div class="px-4 py-3 border-b dark:border-gray-700">
+                                        <p class="text-sm font-semibold text-gray-900 dark:text-white truncate">
+                                            {{ session.name or 'Welcome!' }}
+                                        </p>
+                                        <p class="text-xs text-gray-500 dark:text-gray-400 truncate mt-1">{{ session.email }}</p>
+                                    </div>
+                                    
+                                    <!-- Menu Items -->
+                                    <div class="py-2">
+                                        {% if session.role != 'admin' %}
+                                            <a href="{{ url_for('profile') }}" class="flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                                                <i class="fas fa-user mr-3 text-gold"></i>
+                                                My Profile
+                                            </a>
+                                            <a href="{{ url_for('my_bookings') }}" class="flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                                                <i class="fas fa-calendar-alt mr-3 text-blue-500"></i>
+                                                My Bookings
+                                            </a>
+                                            <div class="border-t dark:border-gray-700 my-2"></div>
+                                            <a href="{{ url_for('book') }}" class="flex items-center px-4 py-2 text-sm text-white bg-gold hover:bg-gold/90 transition-colors mx-2 rounded-lg">
+                                                <i class="fas fa-calendar-plus mr-3"></i>
+                                                Book Now
+                                            </a>
+                                        {% else %}
+                                            <a href="{{ url_for('admin_dashboard') }}" class="flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                                                <i class="fas fa-tachometer-alt mr-3 text-purple-500"></i>
+                                                Dashboard
+                                            </a>
+                                            <a href="{{ url_for('admin_bookings') }}" class="flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                                                <i class="fas fa-calendar-alt mr-3 text-blue-500"></i>
+                                                Manage Bookings
+                                            </a>
+                                            <a href="{{ url_for('admin_users') }}" class="flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                                                <i class="fas fa-users mr-3 text-green-500"></i>
+                                                Manage Users
+                                            </a>
+                                            <a href="{{ url_for('admin_payments') }}" class="flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                                                <i class="fas fa-credit-card mr-3 text-yellow-500"></i>
+                                                Payments
+                                            </a>
+                                        {% endif %}
+                                        
+                                        <div class="border-t dark:border-gray-700 my-2"></div>
+                                        
+                                        <!-- Logout -->
+                                        <form method="POST" action="{{ url_for('logout') }}">
+                                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                            <button type="submit" class="flex items-center px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors w-full">
+                                                <i class="fas fa-sign-out-alt mr-3"></i>
+                                                Logout
+                                            </button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        {% else %}
+                            <!-- Guest User -->
+                            <a href="{{ url_for('login') }}" class="text-navy dark:text-gray-200 font-medium text-sm hover:text-gold transition-colors">
+                                Login
+                            </a>
+                            <a href="{{ url_for('login') }}" class="px-4 py-2 bg-gold text-navy font-semibold rounded-full text-sm hover:bg-gold/90 hover:shadow-lg transition-all">
+                                Book Now
+                            </a>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Mobile Menu Button -->
+                <div class="lg:hidden flex items-center space-x-4">
+                    <!-- Dark Mode Toggle Mobile - DIFFERENT ID -->
+                    <button data-dark-toggle class="text-navy dark:text-gray-200 hover:text-gold transition-colors">
+                        <i class="fas fa-moon"></i>
+                    </button>
+                    
+                    {% if session.user_id %}
+                        <a href="{% if session.role == 'admin' %}{{ url_for('admin_dashboard') }}{% else %}{{ url_for('profile') }}{% endif %}" 
+                           class="text-navy dark:text-gray-200 hover:text-gold transition-colors">
+                            <i class="fas fa-user-circle text-lg"></i>
+                        </a>
+                    {% else %}
+                        <a href="{{ url_for('login') }}" class="text-navy dark:text-gray-200 hover:text-gold transition-colors">
+                            <i class="fas fa-sign-in-alt text-lg"></i>
+                        </a>
+                    {% endif %}
+                    
+                    <button id="menuToggle" class="text-navy dark:text-gray-200 hover:text-gold transition-colors">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <path d="M4 6h16M4 12h16M4 18h16"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mobile Menu -->
+        <div id="mobileMenu" class="lg:hidden hidden bg-white dark:bg-gray-800 shadow-xl border-t border-gray-200 dark:border-gray-700 animate-slide-up">
+            <div class="px-4 py-6 space-y-1">
+                <a href="{{ url_for('index') }}" class="block py-3 px-3 text-navy dark:text-gray-200 font-medium hover:text-gold hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors">
+                    Home
+                </a>
+                <a href="{{ url_for('about') }}" class="block py-3 px-3 text-navy dark:text-gray-200 font-medium hover:text-gold hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors">
+                    About
+                </a>
+                <a href="{{ url_for('venues') }}" class="block py-3 px-3 text-navy dark:text-gray-200 font-medium hover:text-gold hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors">
+                    Venues
+                </a>
+                <a href="{{ url_for('rooms') }}" class="block py-3 px-3 text-navy dark:text-gray-200 font-medium hover:text-gold hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors">
+                    Rooms
+                </a>
+                <a href="{{ url_for('contact') }}" class="block py-3 px-3 text-navy dark:text-gray-200 font-medium hover:text-gold hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors">
+                    Contact
+                </a>
+                
+                {% if session.user_id %}
+                    <div class="border-t dark:border-gray-700 pt-4 mt-4">
+                        {% if session.role != 'admin' %}
+                            <a href="{{ url_for('profile') }}" class="block py-3 px-3 text-navy dark:text-gray-200 font-medium hover:text-gold hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors">
+                                <i class="fas fa-user mr-3"></i>My Profile
+                            </a>
+                            <a href="{{ url_for('my_bookings') }}" class="block py-3 px-3 text-navy dark:text-gray-200 font-medium hover:text-gold hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors">
+                                <i class="fas fa-calendar-alt mr-3"></i>My Bookings
+                            </a>
+                            <a href="{{ url_for('book') }}" class="block py-3 px-3 mt-2 text-white bg-gold hover:bg-gold/90 rounded-lg transition-colors">
+                                <i class="fas fa-calendar-plus mr-3"></i>Book Now
+                            </a>
+                        {% else %}
+                            <a href="{{ url_for('admin_dashboard') }}" class="block py-3 px-3 text-navy dark:text-gray-200 font-medium hover:text-gold hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors">
+                                <i class="fas fa-tachometer-alt mr-3"></i>Dashboard
+                            </a>
+                            <a href="{{ url_for('admin_bookings') }}" class="block py-3 px-3 text-navy dark:text-gray-200 font-medium hover:text-gold hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors">
+                                <i class="fas fa-calendar-alt mr-3"></i>Manage Bookings
+                            </a>
+                            <a href="{{ url_for('admin_users') }}" class="block py-3 px-3 text-navy dark:text-gray-200 font-medium hover:text-gold hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors">
+                                <i class="fas fa-users mr-3"></i>Manage Users
+                            </a>
+                            <a href="{{ url_for('admin_payments') }}" class="block py-3 px-3 text-navy dark:text-gray-200 font-medium hover:text-gold hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors">
+                                <i class="fas fa-credit-card mr-3"></i>Payments
+                            </a>
+                        {% endif %}
+                        
+                        <form method="POST" action="{{ url_for('logout') }}" class="mt-4">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <button type="submit" class="block py-3 px-3 w-full text-left text-red-600 dark:text-red-400 font-medium hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors">
+                                <i class="fas fa-sign-out-alt mr-3"></i>Logout
+                            </button>
+                        </form>
+                    </div>
+                {% else %}
+                    <div class="border-t dark:border-gray-700 pt-4 mt-4">
+                        <a href="{{ url_for('login') }}" class="block py-3 px-3 mt-2 text-center text-white bg-gold hover:bg-gold/90 rounded-lg transition-colors">
+                            Login
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="pt-16 flex-grow">
+        {% block content %}{% endblock %}
+    </main>
+    
+    <!-- Footer -->
+    <footer class="bg-navy text-gray-300 py-12 mt-auto">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid md:grid-cols-3 gap-8">
+                <!-- Hotel Info -->
+                <div>
+                    <h3 class="text-white text-xl font-serif font-bold mb-4">Feizen <span class="text-gold">Haven</span></h3>
+                    <p class="text-sm mb-6 leading-relaxed">
+                        Luxury hotel in Yogyakarta offering exceptional comfort, service, and authentic Javanese hospitality.
+                    </p>
+                </div>
+
+                <!-- Quick Links -->
+                <div>
+                    <h4 class="text-white font-bold mb-4">Quick Links</h4>
+                    <ul class="space-y-2">
+                        <li><a href="{{ url_for('index') }}" class="hover:text-gold transition-colors duration-200">Home</a></li>
+                        <li><a href="{{ url_for('about') }}" class="hover:text-gold transition-colors duration-200">About</a></li>
+                        <li><a href="{{ url_for('venues') }}" class="hover:text-gold transition-colors duration-200">Venues</a></li>
+                        <li><a href="{{ url_for('rooms') }}" class="hover:text-gold transition-colors duration-200">Rooms & Suites</a></li>
+                        <li><a href="{{ url_for('contact') }}" class="hover:text-gold transition-colors duration-200">Contact</a></li>
+                    </ul>
+                </div>
+
+                <!-- Contact -->
+                <div>
+                    <h4 class="text-white font-bold mb-4">Contact Info</h4>
+                    <ul class="space-y-3 text-sm">
+                        <li class="flex items-start">
+                            <i class="fas fa-map-marker-alt text-gold mr-3 mt-1 flex-shrink-0"></i>
+                            <span>Jl. Malioboro 21, Sleman, Yogyakarta</span>
+                        </li>
+                        <li class="flex items-center">
+                            <i class="fas fa-phone text-gold mr-3 flex-shrink-0"></i>
+                            <span>(0274) 714240</span>
+                        </li>
+                        <li class="flex items-center">
+                            <i class="fas fa-envelope text-gold mr-3 flex-shrink-0"></i>
+                            <span>feizenhaven@gmail.com</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Copyright -->
+            <div class="mt-12 pt-8 border-t border-gray-700 text-center">
+                <p class="text-sm">&copy; 2025 Feizen Haven Luxury Hotel. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- JavaScript -->
+    {% block extra_js %}{% endblock %}
+    
+    <!-- Main JavaScript -->
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    
+    <!-- Simple Mobile Menu Toggle -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const menuToggle = document.getElementById('menuToggle');
+            const mobileMenu = document.getElementById('mobileMenu');
+            
+            if (menuToggle && mobileMenu) {
+                menuToggle.addEventListener('click', function() {
+                    mobileMenu.classList.toggle('hidden');
+                });
+                
+                // Close menu when clicking outside
+                document.addEventListener('click', function(event) {
+                    if (!menuToggle.contains(event.target) && !mobileMenu.contains(event.target)) {
+                        mobileMenu.classList.add('hidden');
+                    }
+                });
+            }
+            
+            // Auto-hide flash messages after 5 seconds
+            setTimeout(() => {
+                document.querySelectorAll('.flash-message').forEach(msg => {
+                    msg.style.opacity = '0';
+                    msg.style.transform = 'translateX(20px)';
+                    setTimeout(() => msg.remove(), 300);
+                });
+            }, 5000);
+        });
+    </script>
+</body>
+</html>

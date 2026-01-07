@@ -1,0 +1,101 @@
+# Python
+__pycache__/
+*.py[cod]
+*.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# Flask
+instance/
+*.log
+*.pot
+*.pyc
+
+# Database
+*.db
+*.sqlite3
+*.sqlite
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Logs
+logs/
+*.log
+
+# Testing
+.coverage
+htmlcov/
+.pytest_cache/
+.tox/
+nosetests.xml
+coverage.xml
+*.cover
+.hypothesis/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# Uploads (tidak include di git kecuali placeholder)
+uploads/
+!static/uploads/  # keep the placeholder folder structure
+!static/uploads/payments/
+!static/uploads/rooms/
+
+# Sensitive data
+config.py
+secrets.py
+*.pem
+*.key
+*.crt
+
+# Temporary files
+temp/
+tmp/
+
+# Environment files
+.env
+.env.backup
+*.env

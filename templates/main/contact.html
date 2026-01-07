@@ -1,0 +1,449 @@
+{% extends "base.html" %}
+
+{% block title %}Contact Us - Feizen Haven{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<section class="relative py-20 bg-gradient-to-br from-navy to-gray-900 text-white overflow-hidden">
+    <div class="absolute inset-0 z-0">
+        <div class="absolute inset-0 bg-gradient-to-r from-navy/90 to-navy/70"></div>
+        <img src="https://images.unsplash.com/photo-1584132967334-10e028bd69f7?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80" 
+             alt="Feizen Haven Hotel Lobby" 
+             class="w-full h-full object-cover">
+    </div>
+    
+    <div class="relative z-10 max-w-7xl mx-auto px-4">
+        <div class="text-center max-w-3xl mx-auto">
+            <div class="mb-6">
+            </div>
+            
+            <h1 class="text-4xl md:text-5xl lg:text-6xl font-serif font-bold mb-6">Contact Us</h1>
+            <p class="text-xl text-gray-300 mb-8">
+                Get in touch with us for reservations, inquiries, or special requests
+            </p>
+            
+            <div class="flex flex-wrap justify-center gap-4 mt-8">
+                <a href="#contact-form" 
+                   class="px-6 py-3 bg-gold text-navy font-semibold rounded-full hover:bg-gold-light hover:shadow-xl transition-all duration-300">
+                    <i class="fas fa-envelope mr-2"></i>Send Message
+                </a>
+                <a href="tel:+622741234567" 
+                   class="px-6 py-3 bg-white/20 text-white font-semibold rounded-full hover:bg-white/30 hover:shadow-xl transition-all duration-300">
+                    <i class="fas fa-phone-alt mr-2"></i>Call Now
+                </a>
+                <a href="https://wa.me/6281216379876?text=Hello%20Feizen%20Haven%2C%20I%20have%20a%20question" 
+                   target="_blank"
+                   rel="noopener noreferrer"
+                   class="px-6 py-3 bg-green-600 text-white font-semibold rounded-full hover:bg-green-700 hover:shadow-xl transition-all duration-300">
+                    <i class="fab fa-whatsapp mr-2"></i>WhatsApp
+                </a>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Contact Information -->
+<section class="py-20 bg-white dark:bg-gray-900">
+    <div class="max-w-7xl mx-auto px-4">
+        <div class="grid md:grid-cols-3 gap-8 mb-16">
+            <div class="text-center p-8 bg-white dark:bg-gray-800 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300">
+                <div class="w-16 h-16 bg-gold/10 rounded-full flex items-center justify-center mx-auto mb-6">
+                    <i class="fas fa-map-marker-alt text-gold text-2xl"></i>
+                </div>
+                <h3 class="text-xl font-semibold mb-4">Address</h3>
+                <p class="text-gray-600 dark:text-gray-300 mb-4">
+                    Jl. Malioboro 21, Sleman<br>
+                    Yogyakarta 55281<br>
+                    Indonesia
+                </p>
+                <a href="https://maps.google.com/?q=Feizen+Haven+Hotel+Yogyakarta" 
+                   target="_blank"
+                   rel="noopener noreferrer"
+                   class="inline-flex items-center text-gold hover:text-gold-light font-medium">
+                    <i class="fas fa-directions mr-2"></i>Get Directions
+                </a>
+            </div>
+
+            <div class="text-center p-8 bg-white dark:bg-gray-800 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300">
+                <div class="w-16 h-16 bg-gold/10 rounded-full flex items-center justify-center mx-auto mb-6">
+                    <i class="fas fa-phone text-gold text-2xl"></i>
+                </div>
+                <h3 class="text-xl font-semibold mb-4">Phone</h3>
+                <p class="text-gray-600 dark:text-gray-300 mb-4">
+                    <span class="block font-medium">(0274) 714240</span>
+                    <span class="block font-medium">+62 812-6012-9876</span>
+                </p>
+                <a href="tel:+622741234567" 
+                   class="inline-flex items-center text-gold hover:text-gold-light font-medium">
+                    <i class="fas fa-phone-volume mr-2"></i>Call Now
+                </a>
+            </div>
+
+            <div class="text-center p-8 bg-white dark:bg-gray-800 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300">
+                <div class="w-16 h-16 bg-gold/10 rounded-full flex items-center justify-center mx-auto mb-6">
+                    <i class="fas fa-envelope text-gold text-2xl"></i>
+                </div>
+                <h3 class="text-xl font-semibold mb-4">Email</h3>
+                <p class="text-gray-600 dark:text-gray-300 mb-4">
+                    <span class="block font-medium">feizenhaven@gmail.com</span>
+                    <span class="block font-medium">reservations@feizenhaven.com</span>
+                </p>
+                <a href="mailto:info@feizenhaven.com" 
+                   class="inline-flex items-center text-gold hover:text-gold-light font-medium">
+                    <i class="fas fa-paper-plane mr-2"></i>Send Email
+                </a>
+            </div>
+        </div>
+
+        <div class="grid md:grid-cols-2 gap-12">
+            <!-- Contact Form -->
+            <div id="contact-form">
+                <div class="mb-8">
+                    <h2 class="text-3xl font-serif font-bold mb-4">Send Us a Message</h2>
+                    <p class="text-gray-600 dark:text-gray-300">
+                        Fill out the form below and we'll get back to you within 24 hours
+                    </p>
+                </div>
+                
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                            <div class="mb-6 p-4 rounded-lg {% if category == 'success' %}bg-green-100 text-green-700{% else %}bg-red-100 text-red-700{% endif %}">
+                                {{ message }}
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+                
+                <form method="POST" action="{{ url_for('contact') }}" class="space-y-6" id="contactForm">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    
+                    <div class="grid md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-sm font-medium mb-2">First Name *</label>
+                            <input type="text" name="first_name" required 
+                                   class="w-full px-4 py-3 rounded-lg border dark:bg-gray-800 focus:border-gold focus:ring-2 focus:ring-gold/20 transition-all duration-300"
+                                   placeholder="John">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Last Name *</label>
+                            <input type="text" name="last_name" required 
+                                   class="w-full px-4 py-3 rounded-lg border dark:bg-gray-800 focus:border-gold focus:ring-2 focus:ring-gold/20 transition-all duration-300"
+                                   placeholder="Doe">
+                        </div>
+                    </div>
+                    
+                    <div class="grid md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Email *</label>
+                            <input type="email" name="email" required 
+                                   class="w-full px-4 py-3 rounded-lg border dark:bg-gray-800 focus:border-gold focus:ring-2 focus:ring-gold/20 transition-all duration-300"
+                                   placeholder="john@example.com">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-2">Phone</label>
+                            <input type="tel" name="phone" 
+                                   class="w-full px-4 py-3 rounded-lg border dark:bg-gray-800 focus:border-gold focus:ring-2 focus:ring-gold/20 transition-all duration-300"
+                                   placeholder="+62 812-3456-7890">
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Subject *</label>
+                        <select name="subject" class="w-full px-4 py-3 rounded-lg border dark:bg-gray-800 focus:border-gold focus:ring-2 focus:ring-gold/20 transition-all duration-300">
+                            <option value="">Select a subject</option>
+                            <option value="reservation">Reservation Inquiry</option>
+                            <option value="general">General Question</option>
+                            <option value="feedback">Feedback & Suggestions</option>
+                            <option value="group">Group Booking</option>
+                            <option value="event">Event Planning</option>
+                            <option value="corporate">Corporate Rates</option>
+                            <option value="other">Other</option>
+                        </select>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium mb-2">Message *</label>
+                        <textarea name="message" rows="5" required 
+                                  class="w-full px-4 py-3 rounded-lg border dark:bg-gray-800 focus:border-gold focus:ring-2 focus:ring-gold/20 transition-all duration-300"
+                                  placeholder="Tell us how we can help you..."></textarea>
+                    </div>
+                    
+                    <div class="flex items-center">
+                        <input type="checkbox" name="newsletter" id="newsletter" 
+                               class="w-4 h-4 text-gold rounded focus:ring-gold focus:ring-2">
+                        <label for="newsletter" class="ml-2 text-sm text-gray-600 dark:text-gray-300">
+                            Subscribe to our newsletter for updates and special offers
+                        </label>
+                    </div>
+                    
+                    <button type="submit" 
+                            class="w-full py-4 bg-gold text-navy font-semibold rounded-lg hover:bg-gold-light hover:shadow-lg transition-all duration-300">
+                        <i class="fas fa-paper-plane mr-3"></i>Send Message
+                    </button>
+                </form>
+            </div>
+
+            <!-- Map & Business Hours -->
+            <div>
+                <div class="mb-12">
+                    <h2 class="text-3xl font-serif font-bold mb-6">Find Us</h2>
+                    
+                    <div class="rounded-2xl overflow-hidden shadow-lg mb-8">
+                        <div id="map" class="h-96 w-full bg-gray-200 dark:bg-gray-800"></div>
+                    </div>
+                    
+                    <div class="grid grid-cols-2 gap-4 mb-6">
+                        <div class="bg-gray-50 dark:bg-gray-800 p-4 rounded-xl">
+                            <div class="flex items-center">
+                                <div class="w-10 h-10 bg-blue-100 dark:bg-blue-900/20 rounded-lg flex items-center justify-center mr-3">
+                                    <i class="fas fa-plane text-blue-600 dark:text-blue-400"></i>
+                                </div>
+                                <div>
+                                    <div class="font-medium">YIA Airport</div>
+                                    <div class="text-sm text-gray-500">15 min drive</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="bg-gray-50 dark:bg-gray-800 p-4 rounded-xl">
+                            <div class="flex items-center">
+                                <div class="w-10 h-10 bg-green-100 dark:bg-green-900/20 rounded-lg flex items-center justify-center mr-3">
+                                    <i class="fas fa-train text-green-600 dark:text-green-400"></i>
+                                </div>
+                                <div>
+                                    <div class="font-medium">Tugu Station</div>
+                                    <div class="text-sm text-gray-500">5 min drive</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-6">
+                    <h3 class="text-xl font-semibold mb-6 pb-4 border-b dark:border-gray-700">Business Hours</h3>
+                    <div class="space-y-4">
+                        <div class="flex justify-between items-center py-2">
+                            <div class="flex items-center">
+                                <i class="fas fa-calendar-day text-gold mr-3"></i>
+                                <span class="text-gray-600 dark:text-gray-300">Monday - Friday</span>
+                            </div>
+                            <span class="font-medium">8:00 AM - 10:00 PM</span>
+                        </div>
+                        <div class="flex justify-between items-center py-2">
+                            <div class="flex items-center">
+                                <i class="fas fa-calendar-weekend text-gold mr-3"></i>
+                                <span class="text-gray-600 dark:text-gray-300">Saturday - Sunday</span>
+                            </div>
+                            <span class="font-medium">9:00 AM - 11:00 PM</span>
+                        </div>
+                        <div class="flex justify-between items-center py-2">
+                            <div class="flex items-center">
+                                <i class="fas fa-clock text-gold mr-3"></i>
+                                <span class="text-gray-600 dark:text-gray-300">Reception</span>
+                            </div>
+                            <span class="font-medium text-green-600">24 Hours</span>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-8 pt-6 border-t dark:border-gray-700">
+                        <div class="flex items-start">
+                            <div class="w-10 h-10 bg-red-100 dark:bg-red-900/20 rounded-lg flex items-center justify-center mr-3">
+                                <i class="fas fa-ambulance text-red-600 dark:text-red-400"></i>
+                            </div>
+                            <div>
+                                <h4 class="font-semibold mb-2">Emergency Contact</h4>
+                                <p class="text-sm text-gray-600 dark:text-gray-300 mb-3">
+                                    For after-hours emergencies or urgent matters
+                                </p>
+                                <a href="tel:+6281216379876" 
+                                   class="inline-flex items-center text-red-600 dark:text-red-400 font-medium hover:underline">
+                                    <i class="fas fa-phone mr-2"></i>+62 812-1637-9876
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- FAQ Section -->
+<section class="py-20 bg-cream dark:bg-gray-800">
+    <div class="max-w-4xl mx-auto px-4">
+        <div class="text-center mb-12">
+            <h2 class="text-3xl md:text-4xl font-serif font-bold mb-4">Frequently Asked Questions</h2>
+            <p class="text-gray-600 dark:text-gray-300">
+                Quick answers to common questions
+            </p>
+        </div>
+        
+        <div class="space-y-4">
+            <div class="faq-item bg-white dark:bg-gray-900 rounded-xl shadow-sm">
+                <button class="faq-question w-full text-left p-6 flex justify-between items-center hover:bg-gray-50 dark:hover:bg-gray-800 rounded-xl">
+                    <span class="font-medium">What are your check-in and check-out times?</span>
+                    <i class="fas fa-chevron-down text-gold transition-transform duration-300"></i>
+                </button>
+                <div class="faq-answer px-6 pb-6 hidden">
+                    <p class="text-gray-600 dark:text-gray-300">
+                        Check-in time is from 2:00 PM onwards, and check-out time is until 12:00 PM. 
+                        Early check-in and late check-out are available upon request and subject to availability.
+                    </p>
+                </div>
+            </div>
+            
+            <div class="faq-item bg-white dark:bg-gray-900 rounded-xl shadow-sm">
+                <button class="faq-question w-full text-left p-6 flex justify-between items-center hover:bg-gray-50 dark:hover:bg-gray-800 rounded-xl">
+                    <span class="font-medium">Do you offer airport transportation?</span>
+                    <i class="fas fa-chevron-down text-gold transition-transform duration-300"></i>
+                </button>
+                <div class="faq-answer px-6 pb-6 hidden">
+                    <p class="text-gray-600 dark:text-gray-300">
+                        Yes, we provide airport transportation service from Yogyakarta International Airport (YIA). 
+                        Please inform us of your flight details at least 24 hours in advance. Additional charges may apply.
+                    </p>
+                </div>
+            </div>
+            
+            <div class="faq-item bg-white dark:bg-gray-900 rounded-xl shadow-sm">
+                <button class="faq-question w-full text-left p-6 flex justify-between items-center hover:bg-gray-50 dark:hover:bg-gray-800 rounded-xl">
+                    <span class="font-medium">Are pets allowed?</span>
+                    <i class="fas fa-chevron-down text-gold transition-transform duration-300"></i>
+                </button>
+                <div class="faq-answer px-6 pb-6 hidden">
+                    <p class="text-gray-600 dark:text-gray-300">
+                        We welcome pets in our designated pet-friendly rooms. Please inform us in advance 
+                        as additional cleaning fees apply. Certain restrictions and weight limits may apply.
+                    </p>
+                </div>
+            </div>
+            
+            <div class="faq-item bg-white dark:bg-gray-900 rounded-xl shadow-sm">
+                <button class="faq-question w-full text-left p-6 flex justify-between items-center hover:bg-gray-50 dark:hover:bg-gray-800 rounded-xl">
+                    <span class="font-medium">What is your cancellation policy?</span>
+                    <i class="fas fa-chevron-down text-gold transition-transform duration-300"></i>
+                </button>
+                <div class="faq-answer px-6 pb-6 hidden">
+                    <p class="text-gray-600 dark:text-gray-300">
+                        Free cancellation is available up to 48 hours before check-in. 
+                        For non-refundable rates, cancellation charges may apply. 
+                        Please refer to your booking confirmation for specific terms.
+                    </p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="text-center mt-12">
+            <p class="text-gray-600 dark:text-gray-300 mb-6">
+                Still have questions?
+            </p>
+            <a href="mailto:info@feizenhaven.com" 
+               class="inline-flex items-center px-6 py-3 border-2 border-gold text-gold font-semibold rounded-full hover:bg-gold hover:text-navy transition-all duration-300">
+                <i class="fas fa-envelope mr-2"></i>Email Us
+            </a>
+        </div>
+    </div>
+</section>
+
+<!-- Contact Banner -->
+<section class="py-20 bg-gradient-to-r from-navy to-gray-900">
+    <div class="max-w-7xl mx-auto px-4 text-center">
+        <h2 class="text-3xl md:text-4xl font-serif font-bold text-white mb-6">
+            Ready to Experience Luxury?
+        </h2>
+        <p class="text-gray-300 text-lg mb-8 max-w-2xl mx-auto">
+            Contact our reservation team today to plan your perfect stay at Feizen Haven
+        </p>
+        <div class="flex flex-col sm:flex-row gap-4 justify-center">
+            <a href="tel:+622741234567" 
+               class="px-8 py-4 bg-gold text-navy font-semibold rounded-full hover:bg-gold-light hover:shadow-xl transition-all duration-300 inline-flex items-center justify-center">
+                <i class="fas fa-phone-alt mr-3"></i>
+                <span>Call Reservations</span>
+            </a>
+            <a href="mailto:reservations@feizenhaven.com" 
+               class="px-8 py-4 bg-transparent border-2 border-white text-white rounded-full hover:bg-white hover:text-navy transition-all duration-300 inline-flex items-center justify-center">
+                <i class="fas fa-envelope mr-3"></i>
+                <span>Email Reservations</span>
+            </a>
+            <a href="{{ url_for('book') }}" 
+               class="px-8 py-4 bg-white text-navy font-semibold rounded-full hover:bg-gray-100 hover:shadow-xl transition-all duration-300 inline-flex items-center justify-center">
+                <i class="fas fa-calendar-check mr-3"></i>
+                <span>Book Online</span>
+            </a>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize map
+        const mapElement = document.getElementById('map');
+        if (mapElement) {
+            const mapUrl = `https://maps.google.com/maps?q=Jl.%20Malioboro%2021%2C%20Sleman%2C%20Yogyakarta%2C%20Indonesia&t=&z=15&output=embed`;
+            
+            mapElement.innerHTML = `
+                <iframe src="${mapUrl}" 
+                        width="100%" 
+                        height="100%" 
+                        style="border:0;" 
+                        allowfullscreen="" 
+                        loading="lazy"
+                        referrerpolicy="no-referrer-when-downgrade">
+                </iframe>
+            `;
+        }
+        
+        // FAQ functionality
+        const faqQuestions = document.querySelectorAll('.faq-question');
+        faqQuestions.forEach(question => {
+            question.addEventListener('click', function() {
+                const answer = this.nextElementSibling;
+                const icon = this.querySelector('i');
+                
+                answer.classList.toggle('hidden');
+                icon.classList.toggle('fa-chevron-down');
+                icon.classList.toggle('fa-chevron-up');
+            });
+        });
+        
+        // Smooth scroll to form
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function(e) {
+                const href = this.getAttribute('href');
+                if (href === '#') return;
+                
+                e.preventDefault();
+                const target = document.querySelector(href);
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+    });
+</script>
+
+<style>
+    .faq-item {
+        transition: all 0.3s ease;
+    }
+    
+    .faq-item:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+    }
+    
+    .faq-answer {
+        animation: fadeIn 0.3s ease-in-out;
+    }
+    
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(-10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+</style>
+{% endblock %}

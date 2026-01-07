@@ -1,0 +1,694 @@
+{% extends "base.html" %}
+
+{% block title %}Feizen Haven | Luxury Hotel Yogyakarta{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://unpkg.com/aos@next/dist/aos.css" />
+<style>
+    .hero-section {
+        background-image: 
+            linear-gradient(rgba(0,0,0,0.45), rgba(0,0,0,0.65)),
+            url("https://images.unsplash.com/photo-1542314831-068cd1dbfeeb");
+        background-size: cover;
+        background-position: center;
+        background-repeat: no-repeat;
+    }
+
+    /* Gallery Horizontal Styles */
+    .gallery-section {
+        overflow: hidden;
+        background: #f8f9fa;
+    }
+    
+    .gallery-scroll {
+        display: flex;
+        overflow-x: auto;
+        gap: 20px;
+        padding: 20px 0;
+        scroll-snap-type: x mandatory;
+        -webkit-overflow-scrolling: touch;
+    }
+    
+    .gallery-scroll::-webkit-scrollbar {
+        height: 6px;
+    }
+    
+    .gallery-scroll::-webkit-scrollbar-track {
+        background: #e9ecef;
+        border-radius: 10px;
+    }
+    
+    .gallery-scroll::-webkit-scrollbar-thumb {
+        background: #C5A145;
+        border-radius: 10px;
+    }
+    
+    .gallery-item {
+        flex: 0 0 300px;
+        scroll-snap-align: start;
+        border-radius: 12px;
+        overflow: hidden;
+        background: white;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    }
+    
+    .gallery-image {
+        width: 100%;
+        height: 180px;
+        object-fit: cover;
+    }
+    
+    .gallery-content {
+        padding: 16px;
+    }
+    
+    .gallery-badge {
+        display: inline-block;
+        background: #C5A145;
+        color: #1A2B3C;
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: 600;
+        margin-bottom: 8px;
+    }
+    
+    /* Venues Grid */
+    .venues-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 24px;
+    }
+    
+    .venue-card {
+        background: white;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        transition: transform 0.3s ease;
+    }
+    
+    .venue-card:hover {
+        transform: translateY(-4px);
+    }
+    
+    .venue-image {
+        width: 100%;
+        height: 200px;
+        object-fit: cover;
+    }
+    
+    .venue-content {
+        padding: 20px;
+    }
+    
+    .venue-icon {
+        width: 48px;
+        height: 48px;
+        background: rgba(197, 161, 69, 0.1);
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 16px;
+    }
+    
+    /* Hero Section Adjustments */
+    .hero-section {
+        min-height: 90vh;
+    }
+    
+    /* Media Queries */
+    @media (max-width: 768px) {
+        .gallery-item {
+            flex: 0 0 280px;
+        }
+        
+        .gallery-image {
+            height: 160px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- ===== HERO SECTION ===== -->
+<section class="hero-section min-h-screen flex items-center relative overflow-hidden">
+    <!-- Animated Background Elements -->
+    <div class="absolute inset-0">
+        <div class="absolute top-1/4 left-10 w-72 h-72 bg-gold/10 rounded-full blur-3xl"></div>
+        <div class="absolute bottom-1/4 right-10 w-96 h-96 bg-navy/20 rounded-full blur-3xl"></div>
+    </div>
+    
+    <div class="max-w-7xl mx-auto px-4 w-full relative z-10">
+        <div class="max-w-2xl" data-aos="fade-right" data-aos-duration="1000">
+            <!-- Hotel Badge -->
+            <div class="inline-flex items-center space-x-2 bg-white/20 backdrop-blur-sm px-4 py-2 rounded-full mb-6">
+                <i class="fas fa-star text-gold"></i>
+                <span class="text-white text-sm font-medium">5-Star Luxury Resort</span>
+            </div>
+            
+            <!-- Main Heading -->
+            <h1 class="text-4xl md:text-5xl lg:text-6xl font-serif font-bold text-white leading-tight mb-6">
+                Where Heritage Meets<br>
+                <span class="text-gold">Modern Luxury</span>
+            </h1>
+            
+            <!-- Description -->
+            <p class="text-xl text-gray-200 mb-8 max-w-lg">
+                Experience unparalleled Javanese hospitality with world-class amenities in the heart of Yogyakarta.
+            </p>
+            
+            <!-- CTA Buttons -->
+            <div class="flex flex-col sm:flex-row gap-4">
+                <a href="{{ url_for('book') }}" 
+                   class="px-8 py-4 bg-gold text-navy font-semibold rounded-full hover:bg-gold-light hover:shadow-xl transition-all duration-300 inline-flex items-center justify-center"
+                   data-aos="fade-up" data-aos-delay="200">
+                    <i class="fas fa-calendar-check mr-3"></i>
+                    <span>Book Your Stay</span>
+                </a>
+                <a href="#gallery" 
+                   class="px-8 py-4 border-2 border-white text-white rounded-full hover:bg-white hover:text-navy transition-all duration-300 inline-flex items-center justify-center"
+                   data-aos="fade-up" data-aos-delay="300">
+                    <i class="fas fa-images mr-3"></i>
+                    <span>View Gallery</span>
+                </a>
+            </div>
+            
+            <!-- Quick Stats -->
+            <div class="mt-12 grid grid-cols-3 gap-4 max-w-md" data-aos="fade-up" data-aos-delay="400">
+                <div class="text-center p-4 bg-white/10 backdrop-blur-sm rounded-xl">
+                    <div class="text-2xl font-bold text-gold">15</div>
+                    <div class="text-sm text-white/80">Luxury Rooms</div>
+                </div>
+                <div class="text-center p-4 bg-white/10 backdrop-blur-sm rounded-xl">
+                    <div class="text-2xl font-bold text-gold">8</div>
+                    <div class="text-sm text-white/80">Venues</div>
+                </div>
+                <div class="text-center p-4 bg-white/10 backdrop-blur-sm rounded-xl">
+                    <div class="text-2xl font-bold text-gold">24/7</div>
+                    <div class="text-sm text-white/80">Concierge</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Scroll Indicator -->
+    <div class="absolute bottom-8 left-1/2 transform -translate-x-1/2">
+        <a href="#explore" class="text-white">
+            <i class="fas fa-chevron-down text-2xl animate-bounce"></i>
+        </a>
+    </div>
+</section>
+
+<!-- ===== ABOUT SECTION ===== -->
+<section id="explore" class="py-20 bg-white dark:bg-gray-900">
+    <div class="max-w-7xl mx-auto px-4">
+        <div class="grid lg:grid-cols-2 gap-12 items-center">
+            <!-- Image -->
+            <div class="relative" data-aos="fade-right" data-aos-duration="800">
+                <div class="rounded-2xl overflow-hidden shadow-2xl">
+                    <img src="https://images.unsplash.com/photo-1582719508461-905c673771fd?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80" 
+                         alt="Feizen Haven Lobby" 
+                         class="w-full h-[500px] object-cover">
+                </div>
+                <div class="absolute -bottom-6 -right-6 bg-gold text-navy p-6 rounded-2xl shadow-xl"
+                     data-aos="zoom-in" data-aos-delay="400">
+                    <div class="text-3xl font-serif font-bold">Since 2015</div>
+                    <div class="text-sm">Years of Excellence</div>
+                </div>
+            </div>
+            
+            <!-- Content -->
+            <div data-aos="fade-left" data-aos-duration="800">
+                <h2 class="text-3xl md:text-4xl font-serif font-bold mb-6">
+                    Welcome to <span class="text-gold">Feizen Haven</span>
+                </h2>
+                <p class="text-gray-600 dark:text-gray-300 mb-6 text-lg">
+                    Nestled in the cultural heart of Yogyakarta, Feizen Haven offers a sanctuary where traditional 
+                    Javanese architecture meets contemporary luxury.
+                </p>
+                <div class="space-y-4 mb-8">
+                    <div class="flex items-start" data-aos="fade-up" data-aos-delay="100">
+                        <div class="w-10 h-10 bg-gold/20 rounded-full flex items-center justify-center mr-4 mt-1">
+                            <i class="fas fa-check text-gold"></i>
+                        </div>
+                        <div>
+                            <h4 class="font-semibold mb-1">Cultural Heritage</h4>
+                            <p class="text-gray-600 dark:text-gray-300 text-sm">
+                                Experience authentic Javanese hospitality and traditional arts
+                            </p>
+                        </div>
+                    </div>
+                    <div class="flex items-start" data-aos="fade-up" data-aos-delay="200">
+                        <div class="w-10 h-10 bg-gold/20 rounded-full flex items-center justify-center mr-4 mt-1">
+                            <i class="fas fa-check text-gold"></i>
+                        </div>
+                        <div>
+                            <h4 class="font-semibold mb-1">Modern Comfort</h4>
+                            <p class="text-gray-600 dark:text-gray-300 text-sm">
+                                State-of-the-art amenities with sustainable practices
+                            </p>
+                        </div>
+                    </div>
+                    <div class="flex items-start" data-aos="fade-up" data-aos-delay="300">
+                        <div class="w-10 h-10 bg-gold/20 rounded-full flex items-center justify-center mr-4 mt-1">
+                            <i class="fas fa-check text-gold"></i>
+                        </div>
+                        <div>
+                            <h4 class="font-semibold mb-1">Prime Location</h4>
+                            <p class="text-gray-600 dark:text-gray-300 text-sm">
+                                Walking distance to Malioboro Street and cultural landmarks
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <a href="{{ url_for('about') }}" 
+                   class="inline-flex items-center px-6 py-3 border-2 border-gold text-gold font-semibold rounded-full hover:bg-gold hover:text-navy transition-all duration-300"
+                   data-aos="fade-up" data-aos-delay="400">
+                    <span>Discover Our Story</span>
+                    <i class="fas fa-arrow-right ml-2"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ===== GALLERY SECTION ===== -->
+<section id="gallery" class="py-20 bg-gray-50 dark:bg-gray-800">
+    <div class="max-w-7xl mx-auto px-4">
+        <!-- Section Header -->
+        <div class="text-center mb-12" data-aos="fade-up">
+            <h2 class="text-3xl md:text-4xl font-serif font-bold mb-4">Resort Gallery</h2>
+            <p class="text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
+                Preview of our luxury accommodations and facilities
+            </p>
+        </div>
+
+        <!-- Horizontal Gallery -->
+        <div class="gallery-scroll" data-aos="fade-up">
+            <!-- Presidential Suite -->
+            <div class="gallery-item">
+                <img src="https://images.unsplash.com/photo-1611892440504-42a792e24d32?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" 
+                     alt="Presidential Suite" 
+                     class="gallery-image">
+                <div class="gallery-content">
+                    <span class="gallery-badge">Presidential Suite</span>
+                    <h3 class="font-serif font-bold text-lg mb-2">Luxury Living</h3>
+                    <p class="text-gray-600 text-sm mb-3">
+                        Spacious suite with panoramic city views
+                    </p>
+                    <div class="flex justify-between items-center">
+                        <span class="text-gold font-semibold">Rp 4,500,000</span>
+                        <a href="{{ url_for('rooms') }}" class="text-navy hover:text-gold text-sm">View →</a>
+                    </div>
+                </div>
+            </div>
+            <!-- Deluxe Room -->
+            <div class="gallery-item">
+                <img src="https://images.unsplash.com/photo-1631049307264-da0ec9d70304?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" 
+                     alt="Deluxe Room" 
+                     class="gallery-image">
+                <div class="gallery-content">
+                    <span class="gallery-badge">Deluxe Room</span>
+                    <h3 class="font-serif font-bold text-lg mb-2">City View</h3>
+                    <p class="text-gray-600 text-sm mb-3">
+                        Modern comfort with beautiful cityscape
+                    </p>
+                    <div class="flex justify-between items-center">
+                        <span class="text-gold font-semibold">Rp 1,800,000</span>
+                        <a href="{{ url_for('rooms') }}" class="text-navy hover:text-gold text-sm">View →</a>
+                    </div>
+                </div>
+            </div>
+            
+            
+            <!-- Infinity Pool -->
+            <div class="gallery-item">
+                <img src="https://images.unsplash.com/photo-1440558953273-969c107f78a4?q=80&w=1924&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" 
+                     alt="Infinity Pool" 
+                     class="gallery-image">
+                <div class="gallery-content">
+                    <span class="gallery-badge">Facility</span>
+                    <h3 class="font-serif font-bold text-lg mb-2">Infinity Pool</h3>
+                    <p class="text-gray-600 text-sm mb-3">
+                        Rooftop pool with sunset views
+                    </p>
+                    <div class="flex justify-between items-center">
+                        <span class="text-gold font-semibold">24/7 Access</span>
+                        <a href="{{ url_for('venues') }}" class="text-navy hover:text-gold text-sm">View →</a>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Luxury Spa -->
+            <div class="gallery-item">
+                <img src="https://images.unsplash.com/photo-1583417657209-d3dd44dc9c09?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" 
+                     alt="Luxury Spa" 
+                     class="gallery-image">
+                <div class="gallery-content">
+                    <span class="gallery-badge">Wellness</span>
+                    <h3 class="font-serif font-bold text-lg mb-2">Luxury Spa</h3>
+                    <p class="text-gray-600 text-sm mb-3">
+                        Traditional Javanese treatments
+                    </p>
+                    <div class="flex justify-between items-center">
+                        <span class="text-gold font-semibold">Wellness Center</span>
+                        <a href="{{ url_for('venues') }}" class="text-navy hover:text-gold text-sm">View →</a>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Fine Dining -->
+            <div class="gallery-item">
+                <img src="https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" 
+                     alt="Fine Dining" 
+                     class="gallery-image">
+                <div class="gallery-content">
+                    <span class="gallery-badge">Restaurant</span>
+                    <h3 class="font-serif font-bold text-lg mb-2">Fine Dining</h3>
+                    <p class="text-gray-600 text-sm mb-3">
+                        Exquisite culinary experiences
+                    </p>
+                    <div class="flex justify-between items-center">
+                        <span class="text-gold font-semibold">International</span>
+                        <a href="{{ url_for('venues') }}" class="text-navy hover:text-gold text-sm">View →</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Gallery Hint -->
+        <div class="text-center mt-6 text-gray-500 text-sm" data-aos="fade-up">
+            <i class="fas fa-arrows-alt-h mr-2"></i>
+            <span>Scroll Horizontal</span>
+        </div>
+    </div>
+</section>
+
+<!-- ===== VENUES SECTION ===== -->
+<section class="py-20 bg-white dark:bg-gray-900">
+    <div class="max-w-7xl mx-auto px-4">
+        <!-- Section Header -->
+        <div class="text-center mb-16" data-aos="fade-up">
+            <h2 class="text-3xl md:text-4xl font-serif font-bold mb-4">Premium Venues</h2>
+            <p class="text-gray-600 dark:text-gray-300 max-w-2xl mx-auto text-lg">
+                Discover our world-class facilities for every occasion
+            </p>
+        </div>
+
+        <div class="venues-grid">
+            <!-- Conference Center -->
+            <div class="venue-card" data-aos="fade-up" data-aos-delay="100">
+                <img src="https://images.unsplash.com/photo-1497366216548-37526070297c?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" 
+                     alt="Conference Center" 
+                     class="venue-image">
+                <div class="venue-content">
+                    <div class="venue-icon">
+                        <i class="fas fa-briefcase text-gold text-xl"></i>
+                    </div>
+                    <h3 class="text-xl font-serif font-bold mb-3">Conference Center</h3>
+                    <p class="text-gray-600 mb-4">
+                        State-of-the-art meeting rooms equipped with modern technology for business events.
+                    </p>
+                    <div class="flex items-center text-gold">
+                        <span class="text-sm font-medium">Capacity: 200 Guests</span>
+                        <i class="fas fa-arrow-right ml-2 text-xs"></i>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Wedding Venue -->
+            <div class="venue-card" data-aos="fade-up" data-aos-delay="200">
+                <img src="https://images.unsplash.com/photo-1511795409834-ef04bbd61622?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" 
+                     alt="Wedding Venue" 
+                     class="venue-image">
+                <div class="venue-content">
+                    <div class="venue-icon">
+                        <i class="fas fa-glass-cheers text-gold text-xl"></i>
+                    </div>
+                    <h3 class="text-xl font-serif font-bold mb-3">Wedding Venue</h3>
+                    <p class="text-gray-600 mb-4">
+                        Elegant ballroom with stunning decor for memorable wedding celebrations.
+                    </p>
+                    <div class="flex items-center text-gold">
+                        <span class="text-sm font-medium">Perfect for Celebrations</span>
+                        <i class="fas fa-arrow-right ml-2 text-xs"></i>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Wellness Spa -->
+            <div class="venue-card" data-aos="fade-up" data-aos-delay="300">
+                <img src="https://images.unsplash.com/photo-1583417657209-d3dd44dc9c09?q=80&w=2070&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" 
+                     alt="Wellness Spa" 
+                     class="venue-image">
+                <div class="venue-content">
+                    <div class="venue-icon">
+                        <i class="fas fa-spa text-gold text-xl"></i>
+                    </div>
+                    <h3 class="text-xl font-serif font-bold mb-3">Wellness Spa</h3>
+                    <p class="text-gray-600 mb-4">
+                        Rejuvenate with traditional Javanese treatments and modern wellness therapies.
+                    </p>
+                    <div class="flex items-center text-gold">
+                        <span class="text-sm font-medium">Holistic Treatments</span>
+                        <i class="fas fa-arrow-right ml-2 text-xs"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- View All Venues Button -->
+        <div class="text-center mt-12" data-aos="fade-up">
+            <a href="{{ url_for('venues') }}" 
+               class="inline-flex items-center px-8 py-4 bg-gold text-navy font-semibold rounded-full hover:bg-gold-light hover:shadow-xl transition-all duration-300">
+                <i class="fas fa-building mr-3"></i>
+                <span>Explore All Venues</span>
+                <i class="fas fa-arrow-right ml-3"></i>
+            </a>
+        </div>
+    </div>
+</section>
+
+<!-- ===== FEATURED ROOMS SECTION ===== -->
+<section class="py-20 bg-gray-50 dark:bg-gray-800">
+    <div class="max-w-7xl mx-auto px-4">
+        <div class="text-center mb-16" data-aos="fade-up">
+            <h2 class="text-3xl md:text-4xl font-serif font-bold mb-4">Featured Accommodations</h2>
+            <p class="text-gray-600 dark:text-gray-300 max-w-2xl mx-auto text-lg">
+                Select from our curated collection of rooms and suites
+            </p>
+        </div>
+
+        <div class="grid md:grid-cols-3 gap-8">
+            {% for room in featured_rooms %}
+            <div class="bg-white dark:bg-gray-900 rounded-2xl overflow-hidden shadow-lg" 
+                 data-aos="fade-up" data-aos-delay="{{ loop.index * 100 }}">
+                <!-- Room Image -->
+                <div class="h-64 overflow-hidden relative">
+                    {% if room.images_list and room.images_list|length > 0 %}
+                        {% set display_image = room.images_list[0] %}
+                        {% if display_image is string %}
+                            <img src="{{ display_image }}" 
+                                 alt="{{ room.name }}" 
+                                 class="w-full h-full object-cover">
+                        {% else %}
+                            <div class="w-full h-full bg-gradient-to-br from-gold/20 to-navy/20 flex items-center justify-center">
+                                <i class="fas fa-bed text-gray-400 text-4xl"></i>
+                            </div>
+                        {% endif %}
+                    {% else %}
+                        <div class="w-full h-full bg-gradient-to-br from-gold/20 to-navy/20 flex items-center justify-center">
+                            <i class="fas fa-bed text-gray-400 text-4xl"></i>
+                        </div>
+                    {% endif %}
+                    
+                    <!-- Room Type Badge -->
+                    <div class="absolute top-4 left-4 bg-gold text-navy px-3 py-1 rounded-full text-xs font-semibold z-10">
+                        {{ room.view_type|default('Standard') }}
+                    </div>
+                    
+                    <!-- Price Badge -->
+                    <div class="absolute top-4 right-4 bg-white/90 dark:bg-gray-900/90 px-3 py-2 rounded-lg z-10">
+                        <div class="text-lg font-bold text-gold">Rp{{ "{:,.0f}".format(room.price|default(1500000)) }}</div>
+                        <div class="text-xs text-gray-500 dark:text-gray-400">per night</div>
+                    </div>
+                </div>
+                
+                <!-- Room Details -->
+                <div class="p-6">
+                    <h3 class="text-xl font-serif font-bold mb-2">{{ room.name }}</h3>
+                    <p class="text-gray-600 dark:text-gray-300 text-sm mb-4">
+                        <i class="fas fa-expand-arrows-alt mr-2"></i>{{ room.size|default('35') }} sqm
+                        <span class="mx-2">•</span>
+                        <i class="fas fa-user-friends mr-2"></i>{{ room.capacity|default('2') }} Guests
+                    </p>
+                    
+                    <!-- Amenities -->
+                    <div class="flex flex-wrap gap-2 mb-6">
+                        {% if room.amenities_list and room.amenities_list|length > 0 %}
+                            {% for amenity in room.amenities_list[:3] %}
+                            <span class="px-3 py-1 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-full text-xs">
+                                {{ amenity }}
+                            </span>
+                            {% endfor %}
+                        {% else %}
+                            <span class="px-3 py-1 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-full text-xs">
+                                Free Wi-Fi
+                            </span>
+                            <span class="px-3 py-1 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-full text-xs">
+                                Smart TV
+                            </span>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Action Buttons -->
+                    <div class="flex space-x-3">
+                        <a href="{{ url_for('book', room_id=room.id) if room.id else url_for('book') }}" 
+                           class="flex-1 py-3 bg-gold text-navy font-semibold rounded-lg hover:bg-gold-light transition-colors text-center">
+                            <i class="fas fa-calendar-check mr-2"></i>
+                            Book Now
+                        </a>
+                        <a href="{{ url_for('rooms') }}" 
+                           class="py-3 px-4 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                            <i class="fas fa-info"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        
+        <!-- View All Rooms -->
+        <div class="text-center mt-12" data-aos="fade-up">
+            <a href="{{ url_for('rooms') }}" 
+               class="inline-flex items-center px-8 py-4 border-2 border-gold text-gold font-semibold rounded-full hover:bg-gold hover:text-navy transition-all duration-300">
+                <i class="fas fa-door-open mr-3"></i>
+                <span>View All Rooms & Suites</span>
+                <i class="fas fa-arrow-right ml-3"></i>
+            </a>
+        </div>
+    </div>
+</section>
+
+<!-- ===== TESTIMONIALS SECTION ===== -->
+<section class="py-20 bg-white dark:bg-gray-900">
+    <div class="max-w-7xl mx-auto px-4">
+        <div class="text-center mb-16" data-aos="fade-up">
+            <h2 class="text-3xl md:text-4xl font-serif font-bold mb-4">Guest Experiences</h2>
+            <p class="text-gray-600 dark:text-gray-300 max-w-2xl mx-auto text-lg">
+                What our guests say about their stay at Feizen Haven
+            </p>
+        </div>
+
+        <div class="grid md:grid-cols-3 gap-6">
+            
+            <!-- Testimonial 1 -->
+            <div class="bg-gray-50 dark:bg-gray-800 rounded-xl p-6">
+                <div class="flex items-center mb-4">
+                    <div class="w-10 h-10 rounded-full bg-gold flex items-center justify-center mr-3">
+                        <span class="text-navy font-bold">AJ</span>
+                    </div>
+                    <div>
+                        <h4 class="font-semibold">Ajizz Rakabuming</h4>
+                        <p class="text-sm text-gray-500">Business Traveler</p>
+                    </div>
+                </div>
+                <p class="text-gray-600 dark:text-gray-300 italic">
+                    "Perfect for business meetings. The facilities are excellent and the staff is very professional."
+                </p>
+            </div>
+
+            <!-- Testimonial 2 -->
+            <div class="bg-gray-50 dark:bg-gray-800 rounded-xl p-6">
+                <div class="flex items-center mb-4">
+                    <div class="w-10 h-10 rounded-full bg-gold flex items-center justify-center mr-3">
+                        <span class="text-navy font-bold">RS</span>
+                    </div>
+                    <div>
+                        <h4 class="font-semibold">Ridho Suryo</h4>
+                        <p class="text-sm text-gray-500">Family Guest</p>
+                    </div>
+                </div>
+                <p class="text-gray-600 dark:text-gray-300 italic">
+                    "Our family really enjoyed the stay. The room was clean, spacious, and very comfortable."
+                </p>
+            </div>
+
+            <!-- Testimonial 3 -->
+            <div class="bg-gray-50 dark:bg-gray-800 rounded-xl p-6">
+                <div class="flex items-center mb-4">
+                    <div class="w-10 h-10 rounded-full bg-gold flex items-center justify-center mr-3">
+                        <span class="text-navy font-bold">RY</span>
+                    </div>
+                    <div>
+                        <h4 class="font-semibold">Restu Yudhoyono</h4>
+                        <p class="text-sm text-gray-500">Tourist</p>
+                    </div>
+                </div>
+                <p class="text-gray-600 dark:text-gray-300 italic">
+                    "Great location and friendly staff. Perfect place to stay while exploring the city."
+                </p>
+            </div>
+
+        </div>
+
+    </div>
+</section>
+
+<!-- ===== CTA BOOKING SECTION ===== -->
+<section class="py-20 bg-gradient-to-r from-navy via-navy/90 to-gray-900">
+    <div class="max-w-7xl mx-auto px-4 text-center">
+        <div data-aos="zoom-in">
+            <h2 class="text-3xl md:text-4xl font-serif font-bold text-white mb-6">
+                Ready for an Unforgettable Stay?
+            </h2>
+            <p class="text-gray-300 text-lg mb-8 max-w-2xl mx-auto">
+                Book your luxury experience today and discover why Feizen Haven is Yogyakarta's premier destination
+            </p>
+            <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                <a href="{{ url_for('book') }}" 
+                   class="px-8 py-4 bg-gold text-navy font-semibold rounded-full hover:bg-gold-light hover:shadow-xl transition-all duration-300">
+                    <i class="fas fa-phone-alt mr-3"></i>
+                    <span>Book by Phone: (0274) 714240</span>
+                </a>
+                <a href="{{ url_for('book') }}" 
+                   class="px-8 py-4 bg-transparent border-2 border-white text-white rounded-full hover:bg-white hover:text-navy transition-all duration-300">
+                    <i class="fas fa-calendar-alt mr-3"></i>
+                    <span>Book Online Now</span>
+                </a>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://unpkg.com/aos@next/dist/aos.js"></script>
+<script>
+    // Initialize AOS
+    AOS.init({
+        duration: 600,
+        once: true,
+        offset: 100,
+    });
+    
+    // Smooth scroll
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener('click', function (e) {
+            e.preventDefault();
+            const targetId = this.getAttribute('href');
+            if(targetId === '#') return;
+            
+            const targetElement = document.querySelector(targetId);
+            if(targetElement) {
+                targetElement.scrollIntoView({ 
+                    behavior: 'smooth',
+                    block: 'start'
+                });
+            }
+        });
+    });
+</script>
+{% endblock %}

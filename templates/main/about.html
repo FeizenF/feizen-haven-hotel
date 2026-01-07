@@ -1,0 +1,581 @@
+{% extends "base.html" %}
+
+{% block title %}About Us - Feizen Haven Luxury Hotel Yogyakarta{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Gallery Grid Styles (return to original) */
+    .gallery-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 20px;
+    }
+    
+    .gallery-item {
+        position: relative;
+        border-radius: 12px;
+        overflow: hidden;
+        height: 250px;
+    }
+    
+    .gallery-item img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform 0.5s ease;
+    }
+    
+    .gallery-item:hover img {
+        transform: scale(1.05);
+    }
+    
+    .gallery-overlay {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: linear-gradient(to top, rgba(0,0,0,0.8), transparent);
+        padding: 20px;
+        color: white;
+        transform: translateY(100%);
+        transition: transform 0.3s ease;
+    }
+    
+    .gallery-item:hover .gallery-overlay {
+        transform: translateY(0);
+    }
+    
+    /* Team Section (return to original size) */
+    .team-section {
+        margin-top: 40px;
+    }
+    
+    .team-member {
+        text-align: center;
+        margin-bottom: 30px;
+    }
+    
+    .team-member-img {
+        width: 180px;
+        height: 180px;
+        margin: 0 auto 20px;
+        border-radius: 50%;
+        overflow: hidden;
+        border: 4px solid #C5A145;
+    }
+    
+    .team-member-img img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+    
+    .team-member-info h3 {
+        font-size: 1.25rem;
+        margin-bottom: 5px;
+    }
+    
+    .team-member-info p {
+        color: #C5A145;
+        font-weight: 500;
+        margin-bottom: 10px;
+    }
+    
+    /* Timeline (keep improved version) */
+    .timeline-container {
+        position: relative;
+        padding: 20px 0;
+    }
+    
+    .timeline-line {
+        position: absolute;
+        left: 25px;
+        top: 0;
+        bottom: 0;
+        width: 3px;
+        background: linear-gradient(to bottom, #C5A145, transparent);
+    }
+    
+    .timeline-item {
+        display: flex;
+        margin-bottom: 40px;
+        position: relative;
+    }
+    
+    .timeline-year {
+        width: 50px;
+        height: 50px;
+        background: #C5A145;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #1A2B3C;
+        font-weight: bold;
+        z-index: 2;
+    }
+    
+    .timeline-content {
+        margin-left: 30px;
+        padding: 15px;
+        background: #f8f9fa;
+        border-radius: 10px;
+        flex: 1;
+    }
+    
+    /* Values Cards */
+    .values-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 25px;
+    }
+    
+    .value-card {
+        background: white;
+        border-radius: 15px;
+        padding: 30px;
+        text-align: center;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+        transition: all 0.3s ease;
+    }
+    
+    .value-card:hover {
+        transform: translateY(-10px);
+        box-shadow: 0 15px 30px rgba(0,0,0,0.12);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- ===== HERO SECTION ===== -->
+<section class="relative min-h-[70vh] flex items-center justify-center overflow-hidden">
+    <!-- Background Image with Overlay -->
+    <div class="absolute inset-0 z-0">
+        <img src="https://images.unsplash.com/photo-1582719508461-905c673771fd?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80" 
+             alt="Feizen Haven Hotel" 
+             class="w-full h-full object-cover">
+        <div class="absolute inset-0 bg-gradient-to-r from-navy/90 to-navy/70"></div>
+    </div>
+    
+    <!-- Hero Content -->
+    <div class="relative z-10 max-w-7xl mx-auto px-4 w-full text-center">
+        <div class="mb-6">
+            <div class="inline-flex items-center bg-white/20 backdrop-blur-sm px-6 py-3 rounded-full">
+                <i class="fas fa-crown text-gold mr-3"></i>
+                <span class="text-white font-medium">5-Star Luxury Resort</span>
+            </div>
+        </div>
+        
+        <h1 class="text-4xl md:text-6xl lg:text-7xl font-serif font-bold text-white mb-6 leading-tight">
+            Our <span class="text-gold">Story</span>
+        </h1>
+        
+        <p class="text-xl text-gray-200 max-w-3xl mx-auto mb-8">
+            Where Javanese heritage meets world-class luxury in the heart of Yogyakarta
+        </p>
+        
+        <div class="flex flex-wrap justify-center gap-4">
+            <a href="#our-story" 
+               class="px-6 py-3 bg-gold text-navy font-semibold rounded-full hover:bg-gold-light hover:shadow-lg transition-all">
+                <i class="fas fa-history mr-2"></i> Our Journey
+            </a>
+            <a href="#our-team" 
+               class="px-6 py-3 border-2 border-gold text-gold rounded-full hover:bg-gold hover:text-navy transition-all">
+                <i class="fas fa-users mr-2"></i> Meet Our Team
+            </a>
+        </div>
+    </div>
+    
+    <!-- Scroll Indicator -->
+    <div class="absolute bottom-8 left-1/2 transform -translate-x-1/2 z-10">
+        <a href="#our-story" class="text-white animate-bounce">
+            <i class="fas fa-chevron-down text-2xl"></i>
+        </a>
+    </div>
+</section>
+
+<!-- ===== OUR STORY SECTION ===== -->
+<section id="our-story" class="py-20 bg-white dark:bg-gray-900">
+    <div class="max-w-7xl mx-auto px-4">
+        <div class="text-center mb-16">
+            <h2 class="text-3xl md:text-4xl font-serif font-bold mb-4">Our Heritage</h2>
+            <p class="text-gray-600 dark:text-gray-300 max-w-3xl mx-auto text-lg">
+                A legacy of excellence spanning nearly a decade of unparalleled hospitality
+            </p>
+        </div>
+
+        <div class="grid lg:grid-cols-2 gap-12 items-center mb-20">
+            <!-- Story Content -->
+            <div>
+                  <h3 class="text-2xl font-bold mb-4 text-gold">Our Story</h3>
+        <div class="space-y-4 text-gray-600 dark:text-gray-300">
+            <p>
+                Founded in 2015, Feizen Haven was created to combine the cultural beauty of Yogyakarta
+                with modern comfort and luxury.
+            </p>
+            <p>
+                Inspired by Javanese hospitality, our hotel offers a warm, peaceful, and elegant
+                experience for every guest.
+            </p>
+            <p>
+                Built by local hospitality experts, Feizen Haven continues to grow while staying
+                true to its cultural roots.
+            </p>
+        </div>
+
+                <!-- Milestone Stats -->
+                <div class="grid grid-cols-3 gap-6 mt-10">
+                    <div class="text-center">
+                        <div class="text-3xl font-bold text-gold">9+</div>
+                        <div class="text-sm text-gray-600 dark:text-gray-400">Years of Excellence</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-3xl font-bold text-gold">50K+</div>
+                        <div class="text-sm text-gray-600 dark:text-gray-400">Happy Guests</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-3xl font-bold text-gold">150+</div>
+                        <div class="text-sm text-gray-600 dark:text-gray-400">Team Members</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Timeline -->
+            <div class="bg-cream dark:bg-gray-800 p-8 rounded-2xl">
+                <h3 class="text-2xl font-serif font-bold mb-8 text-center">Our Journey</h3>
+                
+                <div class="timeline-container">
+                    <div class="timeline-line"></div>
+                    
+                    <!-- 2015 -->
+                    <div class="timeline-item">
+                        <div class="timeline-year">2015</div>
+                        <div class="timeline-content">
+                            <h4 class="font-bold text-lg mb-2">Grand Opening</h4>
+                            <p class="text-gray-600 dark:text-gray-300">
+                                Hotel officially opened with 50 rooms.
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <!-- 2017 -->
+                    <div class="timeline-item">
+                        <div class="timeline-year">2017</div>
+                        <div class="timeline-content">
+                            <h4 class="font-bold text-lg mb-2">First Award</h4>
+                            <p class="text-gray-600 dark:text-gray-300">
+                                Won Best Luxury Hotel in Yogyakarta.
+
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <!-- 2020 -->
+                    <div class="timeline-item">
+                        <div class="timeline-year">2020</div>
+                        <div class="timeline-content">
+                            <h4 class="font-bold text-lg mb-2">Major Expansion</h4>
+                            <p class="text-gray-600 dark:text-gray-300">
+                                Expanded with new suites and spa.
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <!-- 2023 -->
+                    <div class="timeline-item">
+                        <div class="timeline-year">2023</div>
+                        <div class="timeline-content">
+                            <h4 class="font-bold text-lg mb-2">Sustainability Award</h4>
+                            <p class="text-gray-600 dark:text-gray-300">
+                                Awarded for sustainability efforts.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ===== GALLERY SECTION ===== -->
+<section id="gallery" class="py-20 bg-cream dark:bg-gray-800">
+    <div class="max-w-7xl mx-auto px-4">
+        <div class="text-center mb-12">
+            <h2 class="text-3xl md:text-4xl font-serif font-bold mb-4">Hotel Gallery</h2>
+            <p class="text-gray-600 dark:text-gray-300 max-w-3xl mx-auto text-lg">
+                Discover the beauty and elegance of Feizen Haven through our visual journey
+            </p>
+        </div>
+
+        <!-- Gallery Grid -->
+        <div class="gallery-grid">
+            <!-- Image 1 -->
+            <div class="gallery-item">
+                <img src="https://images.unsplash.com/photo-1566073771259-6a8506099945?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" 
+                     alt="Grand Lobby">
+                <div class="gallery-overlay">
+                    <h3 class="font-bold text-lg mb-1">Grand Lobby</h3>
+                    <p class="text-sm text-gray-200">Traditional Javanese architecture</p>
+                </div>
+            </div>
+            
+            <!-- Image 2 -->
+            <div class="gallery-item">
+                <img src="https://images.unsplash.com/photo-1584132967334-10e028bd69f7?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" 
+                     alt="Infinity Pool">
+                <div class="gallery-overlay">
+                    <h3 class="font-bold text-lg mb-1">Infinity Pool</h3>
+                    <p class="text-sm text-gray-200">Panoramic Merapi volcano view</p>
+                </div>
+            </div>
+            
+            <!-- Image 3 -->
+            <div class="gallery-item">
+                <img src="https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" 
+                     alt="Fine Dining">
+                <div class="gallery-overlay">
+                    <h3 class="font-bold text-lg mb-1">Taman Sari Restaurant</h3>
+                    <p class="text-sm text-gray-200">Modern Javanese cuisine</p>
+                </div>
+            </div>
+            
+            <!-- Image 4 -->
+            <div class="gallery-item">
+                <img src="https://images.unsplash.com/photo-1540555700478-4be289fbecef?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" 
+                     alt="Royal Spa">
+                <div class="gallery-overlay">
+                    <h3 class="font-bold text-lg mb-1">Javanese Royal Spa</h3>
+                    <p class="text-sm text-gray-200">Traditional wellness treatments</p>
+                </div>
+            </div>
+        </div>
+</section>
+
+<!-- ===== OUR VALUES SECTION ===== -->
+<section class="py-20 bg-white dark:bg-gray-900">
+    <div class="max-w-7xl mx-auto px-4">
+        <div class="text-center mb-16">
+            <h2 class="text-3xl md:text-4xl font-serif font-bold mb-4">Our Core Values</h2>
+            <p class="text-gray-600 dark:text-gray-300 max-w-3xl mx-auto text-lg">
+                The principles that guide every decision and interaction at Feizen Haven
+            </p>
+        </div>
+
+        <div class="values-grid">
+            <!-- Value 1 -->
+            <div class="value-card">
+                <div class="w-20 h-20 bg-gold/10 rounded-full flex items-center justify-center mx-auto mb-6">
+                    <i class="fas fa-heart text-gold text-3xl"></i>
+                </div>
+                <h3 class="text-xl font-serif font-bold mb-4">Authentic Hospitality</h3>
+                <p class="text-gray-600 dark:text-gray-300 mb-4">
+                    We treat every guest with the warm, genuine hospitality that Java is renowned for worldwide.
+                </p>
+                <div class="text-sm text-gold">
+                    <i class="fas fa-quote-left mr-2"></i>
+                    <span>Guest is King</span>
+                </div>
+            </div>
+
+            <!-- Value 2 -->
+            <div class="value-card">
+                <div class="w-20 h-20 bg-gold/10 rounded-full flex items-center justify-center mx-auto mb-6">
+                    <i class="fas fa-leaf text-gold text-3xl"></i>
+                </div>
+                <h3 class="text-xl font-serif font-bold mb-4">Sustainable Luxury</h3>
+                <p class="text-gray-600 dark:text-gray-300 mb-4">
+                    True luxury respects the environment. We implement eco-friendly practices from sourcing to operations.
+                </p>
+                <div class="text-sm text-gold">
+                    <i class="fas fa-quote-left mr-2"></i>
+                    <span>Green by Design</span>
+                </div>
+            </div>
+
+            <!-- Value 3 -->
+            <div class="value-card">
+                <div class="w-20 h-20 bg-gold/10 rounded-full flex items-center justify-center mx-auto mb-6">
+                    <i class="fas fa-award text-gold text-3xl"></i>
+                </div>
+                <h3 class="text-xl font-serif font-bold mb-4">Excellence in Service</h3>
+                <p class="text-gray-600 dark:text-gray-300 mb-4">
+                    Every detail matters. Our team undergoes rigorous training to deliver impeccable service.
+                </p>
+                <div class="text-sm text-gold">
+                    <i class="fas fa-quote-left mr-2"></i>
+                    <span>Perfection in Details</span>
+                </div>
+            </div>
+
+            <!-- Value 4 -->
+            <div class="value-card">
+                <div class="w-20 h-20 bg-gold/10 rounded-full flex items-center justify-center mx-auto mb-6">
+                    <i class="fas fa-hands-helping text-gold text-3xl"></i>
+                </div>
+                <h3 class="text-xl font-serif font-bold mb-4">Community First</h3>
+                <p class="text-gray-600 dark:text-gray-300 mb-4">
+                    We support local artisans, farmers, and communities, ensuring our success benefits Yogyakarta.
+                </p>
+                <div class="text-sm text-gold">
+                    <i class="fas fa-quote-left mr-2"></i>
+                    <span>Local Roots, Global Reach</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ===== MANAGEMENT TEAM SECTION (Original Size) ===== -->
+<section id="our-team" class="py-20 bg-cream dark:bg-gray-800">
+    <div class="max-w-7xl mx-auto px-4">
+        <div class="text-center mb-16">
+            <h2 class="text-3xl md:text-4xl font-serif font-bold mb-4">Leadership Team</h2>
+            <p class="text-gray-600 dark:text-gray-300 max-w-3xl mx-auto text-lg">
+                Meet the passionate individuals dedicated to creating unforgettable experiences
+            </p>
+        </div>
+
+        <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+            <!-- Team Member 1 -->
+            <div class="team-member">
+                <div class="team-member-img">
+                    <img src="https://images.unsplash.com/photo-1623366302587-b38b1ddaefd9?q=80&w=1025&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3DD?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80" 
+                         alt="Managing Director">
+                </div>
+                <div class="team-member-info">
+                    <h3 class="text-xl font-serif font-bold">Fernanda Brian</h3>
+                    <p class="text-gold font-medium">Managing Director</p>
+                    <p class="text-gray-600 dark:text-gray-300 text-sm mb-4">
+                        25+ years in luxury hospitality. Former GM at Four Seasons Bali.
+                    </p>
+                    <div class="flex justify-center space-x-3">
+                        <a href="#" class="text-gray-400 hover:text-gold">
+                            <i class="fab fa-linkedin"></i>
+                        </a>
+                        <a href="#" class="text-gray-400 hover:text-gold">
+                            <i class="fas fa-envelope"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Team Member 2 -->
+            <div class="team-member">
+                <div class="team-member-img">
+                    <img src="https://images.unsplash.com/photo-1549473448-b0acc73629dc?q=80&w=687&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80" 
+                         alt="General Manager">
+                </div>
+                <div class="team-member-info">
+                    <h3 class="text-xl font-serif font-bold">Ega Saputra</h3>
+                    <p class="text-gold font-medium">General Manager</p>
+                    <p class="text-gray-600 dark:text-gray-300 text-sm mb-4">
+                        Hospitality management graduate from École hôtelière de Lausanne.
+                    </p>
+                    <div class="flex justify-center space-x-3">
+                        <a href="#" class="text-gray-400 hover:text-gold">
+                            <i class="fab fa-linkedin"></i>
+                        </a>
+                        <a href="#" class="text-gray-400 hover:text-gold">
+                            <i class="fas fa-envelope"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Team Member 3 -->
+            <div class="team-member">
+                <div class="team-member-img">
+                    <img src="https://images.unsplash.com/photo-1597204081767-4c14a6b7cbec?q=80&w=687&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80" 
+                         alt="Executive Chef">
+                </div>
+                <div class="team-member-info">
+                    <h3 class="text-xl font-serif font-bold">Zaki Nugroho</h3>
+                    <p class="text-gold font-medium">Executive Chef</p>
+                    <p class="text-gray-600 dark:text-gray-300 text-sm mb-4">
+                        Michelin-starred chef specializing in modern Javanese cuisine.
+                    </p>
+                    <div class="flex justify-center space-x-3">
+                        <a href="#" class="text-gray-400 hover:text-gold">
+                            <i class="fab fa-linkedin"></i>
+                        </a>
+                        <a href="#" class="text-gray-400 hover:text-gold">
+                            <i class="fas fa-envelope"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Team Member 4 -->
+            <div class="team-member">
+                <div class="team-member-img">
+                    <img src="https://images.unsplash.com/photo-1653856942271-32c442c5022c?q=80&w=735&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80" 
+                         alt="Spa Director">
+                </div>
+                <div class="team-member-info">
+                    <h3 class="text-xl font-serif font-bold">Sakius Siregar</h3>
+                    <p class="text-gold font-medium">Wellness Director</p>
+                    <p class="text-gray-600 dark:text-gray-300 text-sm mb-4">
+                        Traditional Javanese healing expert with 15+ years experience.
+                    </p>
+                    <div class="flex justify-center space-x-3">
+                        <a href="#" class="text-gray-400 hover:text-gold">
+                            <i class="fab fa-linkedin"></i>
+                        </a>
+                        <a href="#" class="text-gray-400 hover:text-gold">
+                            <i class="fas fa-envelope"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Team Stats -->
+        <div class="mt-16 bg-gradient-to-r from-navy/5 to-transparent dark:from-navy/20 p-8 rounded-2xl">
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
+                <div>
+                    <div class="text-3xl font-bold text-gold">150+</div>
+                    <div class="text-sm text-gray-600 dark:text-gray-400">Team Members</div>
+                </div>
+                <div>
+                    <div class="text-3xl font-bold text-gold">85%</div>
+                    <div class="text-sm text-gray-600 dark:text-gray-400">Local Yogyakarta Staff</div>
+                </div>
+                <div>
+                    <div class="text-3xl font-bold text-gold">200+</div>
+                    <div class="text-sm text-gray-600 dark:text-gray-400">Training Hours/Year</div>
+                </div>
+                <div>
+                    <div class="text-3xl font-bold text-gold">5+</div>
+                    <div class="text-sm text-gray-600 dark:text-gray-400">Years Avg. Tenure</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ===== CTA SECTION ===== -->
+<section class="py-20 bg-gradient-to-r from-navy to-gray-900">
+    <div class="max-w-7xl mx-auto px-4 text-center">
+        <h2 class="text-3xl md:text-4xl font-serif font-bold text-white mb-6">
+            Experience Our Hospitality
+        </h2>
+        <p class="text-gray-300 text-lg mb-8 max-w-2xl mx-auto">
+            Book your stay and discover why Feizen Haven is more than just a hotel - it's an experience that stays with you forever.
+        </p>
+        <div class="flex flex-col sm:flex-row gap-4 justify-center">
+            <a href="{{ url_for('contact') }}" 
+               class="px-8 py-4 bg-gold text-navy font-semibold rounded-full hover:bg-gold-light hover:shadow-xl transition-all duration-300 inline-flex items-center justify-center">
+                <i class="fas fa-phone-alt mr-3"></i>
+                <span>Contact Us</span>
+            </a>
+            <a href="{{ url_for('book') }}" 
+               class="px-8 py-4 bg-transparent border-2 border-white text-white rounded-full hover:bg-white hover:text-navy transition-all duration-300 inline-flex items-center justify-center">
+                <i class="fas fa-calendar-check mr-3"></i>
+                <span>Book Your Stay</span>
+            </a>
+        </div>
+    </div>
+</section>
+{% endblock %}

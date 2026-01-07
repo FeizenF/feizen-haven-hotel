@@ -1,0 +1,724 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Room - Admin{% endblock %}
+
+{% block extra_css %}
+<style>
+    .room-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+    
+    .image-preview {
+        transition: all 0.3s ease;
+    }
+    
+    .image-preview:hover {
+        transform: scale(1.05);
+    }
+    
+    .remove-image {
+        position: absolute;
+        top: -8px;
+        right: -8px;
+        width: 24px;
+        height: 24px;
+        background: #ef4444;
+        color: white;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 12px;
+        cursor: pointer;
+        opacity: 0;
+        transition: opacity 0.2s;
+    }
+    
+    .image-container:hover .remove-image {
+        opacity: 1;
+    }
+    
+    .amenity-tag {
+        transition: all 0.2s ease;
+    }
+    
+    .amenity-tag:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="pt-24 pb-16">
+    <div class="max-w-4xl mx-auto px-4">
+        <!-- Header dengan Breadcrumb -->
+        <div class="mb-8">
+            <nav class="flex mb-4" aria-label="Breadcrumb">
+                <ol class="inline-flex items-center space-x-1 md:space-x-3">
+                    <li class="inline-flex items-center">
+                        <a href="{{ url_for('admin_dashboard') }}" 
+                           class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-gold dark:text-gray-400 dark:hover:text-white">
+                            <i class="fas fa-tachometer-alt mr-2"></i>
+                            Dashboard
+                        </a>
+                    </li>
+                    <li>
+                        <div class="flex items-center">
+                            <i class="fas fa-chevron-right text-gray-400"></i>
+                            <a href="{{ url_for('manage_rooms') }}" 
+                               class="ml-1 text-sm font-medium text-gray-700 hover:text-gold dark:text-gray-400 dark:hover:text-white md:ml-2">
+                                Rooms Management
+                            </a>
+                        </div>
+                    </li>
+                    <li aria-current="page">
+                        <div class="flex items-center">
+                            <i class="fas fa-chevron-right text-gray-400"></i>
+                            <span class="ml-1 text-sm font-medium text-gray-500 dark:text-gray-400 md:ml-2">
+                                Edit Room: {{ room.name }}
+                            </span>
+                        </div>
+                    </li>
+                </ol>
+            </nav>
+            
+            <div class="flex justify-between items-center">
+                <div>
+                    <h1 class="text-3xl font-serif font-bold text-gray-900 dark:text-white">Edit Room</h1>
+                    <p class="text-gray-600 dark:text-gray-300">Update room details and availability</p>
+                </div>
+                <a href="{{ url_for('manage_rooms') }}" 
+                   class="px-4 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors">
+                    <i class="fas fa-arrow-left mr-2"></i>
+                    Back to Rooms
+                </a>
+            </div>
+        </div>
+
+        <!-- Flash Messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="mb-6">
+                    {% for category, message in messages %}
+                    <div class="p-4 rounded-lg {% if category == 'success' %}bg-green-100 text-green-800 border border-green-300 dark:bg-green-900/30 dark:text-green-300 dark:border-green-800
+                                    {% elif category == 'error' %}bg-red-100 text-red-800 border border-red-300 dark:bg-red-900/30 dark:text-red-300 dark:border-red-800
+                                    {% else %}bg-blue-100 text-blue-800 border border-blue-300 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-800{% endif %}">
+                        <div class="flex items-center">
+                            <i class="fas {% if category == 'success' %}fa-check-circle{% elif category == 'error' %}fa-exclamation-circle{% else %}fa-info-circle{% endif %} mr-3"></i>
+                            <span>{{ message }}</span>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+
+        <!-- Edit Room Form -->
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg overflow-hidden">
+            <!-- Form Header -->
+            <div class="room-header px-8 py-6 text-white">
+                <div class="flex items-center">
+                    <div class="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center mr-4">
+                        <i class="fas fa-bed text-xl"></i>
+                    </div>
+                    <div>
+                        <h2 class="text-2xl font-bold">{{ room.name }}</h2>
+                        <p class="text-white/80">Room ID: #{{ "%04d"|format(room.id) }}</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Form Content -->
+            <div class="p-8">
+                <form method="POST" action="{{ url_for('edit_room', room_id=room.id) }}" enctype="multipart/form-data" class="space-y-8">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    
+                    <!-- Basic Information -->
+                    <div>
+                        <h3 class="text-lg font-semibold mb-6 text-gray-900 dark:text-white">Basic Information</h3>
+                        <div class="grid md:grid-cols-2 gap-6">
+                            <div>
+                                <label class="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
+                                    Room Name <span class="text-red-500">*</span>
+                                </label>
+                                <input type="text" name="name" value="{{ room.name }}" required
+                                       class="w-full px-4 py-3 rounded-lg border dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:border-gold focus:ring-1 focus:ring-gold"
+                                       placeholder="e.g., Deluxe Suite with Sea View">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
+                                    Room Type <span class="text-red-500">*</span>
+                                </label>
+                                <select name="room_type" required
+                                        class="w-full px-4 py-3 rounded-lg border dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:border-gold focus:ring-1 focus:ring-gold">
+                                    <option value="meeting_room" {% if room.room_type == 'meeting_room' %}selected{% endif %}>Meeting Room</option>
+                                    <option value="facility" {% if room.room_type == 'facility' %}selected{% endif %}>Facility</option>
+                                    <option value="restaurant" {% if room.room_type == 'restaurant' %}selected{% endif %}>Restaurant</option>
+                                    <option value="spa" {% if room.room_type == 'spa' %}selected{% endif %}>Spa</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="mt-6">
+                            <label class="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
+                                Description <span class="text-red-500">*</span>
+                            </label>
+                            <textarea name="description" rows="4" required
+                                      class="w-full px-4 py-3 rounded-lg border dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:border-gold focus:ring-1 focus:ring-gold"
+                                      placeholder="Describe the room features, ambiance, and unique selling points">{{ room.description }}</textarea>
+                        </div>
+                    </div>
+                    
+                    <!-- Specifications -->
+                    <div>
+                        <h3 class="text-lg font-semibold mb-6 text-gray-900 dark:text-white">Room Specifications</h3>
+                        <div class="grid md:grid-cols-4 gap-6">
+                            <div>
+                                <label class="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
+                                    Price per Night <span class="text-red-500">*</span>
+                                </label>
+                                <div class="relative">
+                                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                        <span class="text-gray-500">Rp</span>
+                                    </div>
+                                    <input type="number" name="price" value="{{ room.price }}" min="0" step="50000" required
+                                           class="w-full pl-10 pr-4 py-3 rounded-lg border dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:border-gold focus:ring-1 focus:ring-gold"
+                                           placeholder="1500000">
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
+                                    Room Size <span class="text-red-500">*</span>
+                                </label>
+                                <div class="relative">
+                                    <input type="text" name="size" value="{{ room.size }}" required
+                                           class="w-full px-4 py-3 rounded-lg border dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:border-gold focus:ring-1 focus:ring-gold"
+                                           placeholder="e.g., 45 m²">
+                                    <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                                        <span class="text-gray-500">m²</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
+                                    Capacity <span class="text-red-500">*</span>
+                                </label>
+                                <div class="relative">
+                                    <input type="number" name="capacity" value="{{ room.capacity }}" min="1" max="10" required
+                                           class="w-full px-4 py-3 rounded-lg border dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:border-gold focus:ring-1 focus:ring-gold"
+                                           placeholder="2">
+                                    <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                                        <span class="text-gray-500">persons</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
+                                    Available Rooms <span class="text-red-500">*</span>
+                                </label>
+                                <input type="number" name="available_count" value="{{ room.available_count }}" min="0" required
+                                       class="w-full px-4 py-3 rounded-lg border dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:border-gold focus:ring-1 focus:ring-gold"
+                                       placeholder="5">
+                            </div>
+                        </div>
+                        
+                        <div class="grid md:grid-cols-2 gap-6 mt-6">
+                            <div>
+                                <label class="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
+                                    View Type
+                                </label>
+                                <select name="view_type"
+                                        class="w-full px-4 py-3 rounded-lg border dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:border-gold focus:ring-1 focus:ring-gold">
+                                    <option value="" {% if not room.view_type %}selected{% endif %}>Select view type</option>
+                                    <option value="sea_view" {% if room.view_type == 'sea_view' %}selected{% endif %}>Sea View</option>
+                                    <option value="garden_view" {% if room.view_type == 'garden_view' %}selected{% endif %}>Garden View</option>
+                                    <option value="city_view" {% if room.view_type == 'city_view' %}selected{% endif %}>City View</option>
+                                    <option value="pool_view" {% if room.view_type == 'pool_view' %}selected{% endif %}>Pool View</option>
+                                    <option value="mountain_view" {% if room.view_type == 'mountain_view' %}selected{% endif %}>Mountain View</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
+                                    Bed Type
+                                </label>
+                                <select name="bed_type"
+                                        class="w-full px-4 py-3 rounded-lg border dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:border-gold focus:ring-1 focus:ring-gold">
+                                    <option value="" {% if not room.bed_type %}selected{% endif %}>Select bed type</option>
+                                    <option value="king_bed" {% if room.bed_type == 'king_bed' %}selected{% endif %}>King Bed</option>
+                                    <option value="queen_bed" {% if room.bed_type == 'queen_bed' %}selected{% endif %}>Queen Bed</option>
+                                    <option value="twin_beds" {% if room.bed_type == 'twin_beds' %}selected{% endif %}>Twin Beds</option>
+                                    <option value="double_bed" {% if room.bed_type == 'double_bed' %}selected{% endif %}>Double Bed</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Amenities -->
+                    <div>
+                        <h3 class="text-lg font-semibold mb-6 text-gray-900 dark:text-white">Room Amenities</h3>
+                        <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            {% set amenities_list = [] %}
+                            {% if room.amenities %}
+                                {% if room.amenities is string %}
+                                    {% if room.amenities.startswith('[') %}
+                                        {% set amenities_list = room.amenities.replace("'", '"')|from_json %}
+                                    {% else %}
+                                        {% set amenities_list = room.amenities.split(',') %}
+                                    {% endif %}
+                                {% endif %}
+                            {% endif %}
+                            
+                            <!-- Common Amenities -->
+                            {% set common_amenities = [
+                                'Free WiFi', 'Air Conditioning', 'Flat-screen TV', 'Minibar', 
+                                'Safe', 'Coffee Maker', 'Kettle', 'Hair Dryer', 'Iron',
+                                'Desk', 'Sitting Area', 'Balcony/Terrace', 'Room Service',
+                                'Daily Housekeeping', 'Wake-up Service', 'Blackout Curtains',
+                                'Soundproofing', 'Bathrobe', 'Slippers', 'Toiletries'
+                            ] %}
+                            
+                            <input type="hidden" name="existing_amenities" id="existingAmenities" value="{{ amenities_list|join(',') }}">
+                            
+                            {% for amenity in common_amenities %}
+                            <label class="flex items-center p-3 border dark:border-gray-600 rounded-lg cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                                <input type="checkbox" name="amenities" value="{{ amenity }}"
+                                       class="mr-3 rounded text-gold focus:ring-gold"
+                                       {% if amenity in amenities_list %}checked{% endif %}>
+                                <div class="flex-1">
+                                    <div class="font-medium text-sm">{{ amenity }}</div>
+                                </div>
+                            </label>
+                            {% endfor %}
+                            
+                            <!-- Custom Amenity Input -->
+                            <div class="md:col-span-2 lg:col-span-3">
+                                <label class="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
+                                    Add Custom Amenities
+                                </label>
+                                <div class="flex gap-2">
+                                    <input type="text" id="customAmenity" 
+                                           class="flex-1 px-4 py-3 rounded-lg border dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:border-gold focus:ring-1 focus:ring-gold"
+                                           placeholder="e.g., Smart TV, Fireplace, Jacuzzi">
+                                    <button type="button" onclick="addCustomAmenity()"
+                                            class="px-4 py-3 bg-gold text-navy font-semibold rounded-lg hover:bg-gold/90 transition-colors">
+                                        Add
+                                    </button>
+                                </div>
+                                <div id="customAmenitiesList" class="flex flex-wrap gap-2 mt-3">
+                                    <!-- Custom amenities will be added here -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Images -->
+                    <div>
+                        <h3 class="text-lg font-semibold mb-6 text-gray-900 dark:text-white">Room Images</h3>
+                        
+                        <!-- Existing Images -->
+                        <div class="mb-6">
+                            <label class="block text-sm font-medium mb-3 text-gray-700 dark:text-gray-300">
+                                Current Images
+                            </label>
+                            
+                            {% set images_list = [] %}
+                            {% if room.images %}
+                                {% if room.images is string %}
+                                    {% if room.images.startswith('[') %}
+                                        {% set images_list = room.images.replace("'", '"')|from_json %}
+                                    {% else %}
+                                        {% set images_list = room.images.split(',') %}
+                                    {% endif %}
+                                {% endif %}
+                            {% endif %}
+                            
+                            <input type="hidden" name="existing_images" id="existingImages" value="{{ images_list|join(',') }}">
+                            
+                            <div id="existingImagesPreview" class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                {% for image in images_list %}
+                                <div class="image-container relative">
+                                    <img src="{{ image }}" alt="Room Image" 
+                                         class="w-full h-32 object-cover rounded-lg image-preview">
+                                    <button type="button" onclick="removeExistingImage('{{ image }}')"
+                                            class="remove-image">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </div>
+                                {% endfor %}
+                                
+                                {% if not images_list %}
+                                <div class="col-span-2 md:col-span-4 text-center py-8 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg">
+                                    <i class="fas fa-images text-gray-400 text-3xl mb-3"></i>
+                                    <p class="text-gray-500 dark:text-gray-400">No images uploaded yet</p>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <!-- Upload New Images -->
+                        <div>
+                            <label class="block text-sm font-medium mb-3 text-gray-700 dark:text-gray-300">
+                                Upload New Images
+                            </label>
+                            <div class="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-8 text-center">
+                                <i class="fas fa-cloud-upload-alt text-gray-400 text-4xl mb-4"></i>
+                                <p class="font-medium mb-2">Drag & drop images here</p>
+                                <p class="text-sm text-gray-500 dark:text-gray-400 mb-4">or click to browse files</p>
+                                
+                                <input type="file" name="images" id="imageUpload" multiple accept="image/*"
+                                       class="hidden" onchange="previewNewImages(event)">
+                                <label for="imageUpload" 
+                                       class="px-6 py-3 bg-gold text-navy font-semibold rounded-lg hover:bg-gold/90 transition-colors cursor-pointer inline-block">
+                                    <i class="fas fa-upload mr-2"></i>
+                                    Choose Images
+                                </label>
+                                <p class="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                                    Supported: JPG, PNG, GIF (Max 5MB each)
+                                </p>
+                            </div>
+                            
+                            <!-- New Images Preview -->
+                            <div id="newImagesPreview" class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4 hidden">
+                                <!-- New images will be previewed here -->
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Availability -->
+                    <div>
+                        <h3 class="text-lg font-semibold mb-6 text-gray-900 dark:text-white">Availability Settings</h3>
+                        <div class="bg-gray-50 dark:bg-gray-900 rounded-lg p-6">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <div class="font-medium text-gray-900 dark:text-white">Room Status</div>
+                                    <p class="text-sm text-gray-500 dark:text-gray-400">
+                                        Set whether this room is available for booking
+                                    </p>
+                                </div>
+                                <label class="relative inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" name="is_available" value="1"
+                                           class="sr-only peer" {% if room.is_available %}checked{% endif %}>
+                                    <div class="w-14 h-7 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[4px] after:bg-white after:rounded-full after:h-6 after:w-6 after:transition-all dark:border-gray-600 peer-checked:bg-gold"></div>
+                                    <span class="ml-3 font-medium text-gray-900 dark:text-white">
+                                        {% if room.is_available %}Available{% else %}Unavailable{% endif %}
+                                    </span>
+                                </label>
+                            </div>
+                            
+                            <div class="mt-6 pt-6 border-t dark:border-gray-700">
+                                <div class="grid md:grid-cols-2 gap-6">
+                                    <div>
+                                        <label class="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
+                                            Minimum Stay (nights)
+                                        </label>
+                                        <input type="number" name="min_stay" value="{{ room.min_stay or 1 }}" min="1"
+                                               class="w-full px-4 py-3 rounded-lg border dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:border-gold focus:ring-1 focus:ring-gold">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
+                                            Maximum Stay (nights)
+                                        </label>
+                                        <input type="number" name="max_stay" value="{{ room.max_stay or 30 }}" min="1"
+                                               class="w-full px-4 py-3 rounded-lg border dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:border-gold focus:ring-1 focus:ring-gold">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Form Actions -->
+                    <div class="flex justify-between pt-8 border-t dark:border-gray-700">
+                        <div>
+                            <button type="submit" 
+                                    class="px-8 py-3 bg-gold text-navy font-semibold rounded-lg hover:bg-gold/90 transition-colors mr-4">
+                                <i class="fas fa-save mr-2"></i>
+                                Update Room
+                            </button>
+                            
+                            <a href="{{ url_for('manage_rooms') }}" 
+                               class="px-6 py-3 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 font-semibold rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                                Cancel
+                            </a>
+                        </div>
+                        
+                        <button type="button" onclick="showDeleteModal()"
+                                class="px-6 py-3 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 font-semibold rounded-lg hover:bg-red-200 dark:hover:bg-red-900/50 transition-colors">
+                            <i class="fas fa-trash mr-2"></i>
+                            Delete Room
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div id="deleteModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50 p-4">
+    <div class="bg-white dark:bg-gray-800 rounded-lg max-w-md w-full p-6">
+        <div class="text-center">
+            <div class="w-16 h-16 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
+                <i class="fas fa-exclamation-triangle text-red-600 dark:text-red-400 text-2xl"></i>
+            </div>
+            <h3 class="text-xl font-bold mb-2 text-gray-900 dark:text-white">Delete Room</h3>
+            <p class="text-gray-600 dark:text-gray-300 mb-4">
+                Are you sure you want to delete <strong>{{ room.name }}</strong>?
+            </p>
+            <p class="text-sm text-red-600 dark:text-red-400 mb-6">
+                <i class="fas fa-exclamation-circle mr-1"></i>
+                This action cannot be undone. All bookings for this room will be cancelled.
+            </p>
+            <div class="flex space-x-3">
+                <button onclick="hideDeleteModal()" 
+                        class="flex-1 py-3 bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-300 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors">
+                    Cancel
+                </button>
+                <form method="POST" action="{{ url_for('delete_room', room_id=room.id) }}" class="flex-1">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" 
+                            class="w-full py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors">
+                        Delete Room
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let existingImages = [];
+let customAmenities = [];
+
+// Initialize existing images
+document.addEventListener('DOMContentLoaded', function() {
+    const existingImagesInput = document.getElementById('existingImages');
+    if (existingImagesInput && existingImagesInput.value) {
+        existingImages = existingImagesInput.value.split(',').filter(img => img.trim() !== '');
+    }
+    
+    const existingAmenitiesInput = document.getElementById('existingAmenities');
+    if (existingAmenitiesInput && existingAmenitiesInput.value) {
+        const amenities = existingAmenitiesInput.value.split(',').filter(a => a.trim() !== '');
+        amenities.forEach(amenity => {
+            if (!document.querySelector(`input[name="amenities"][value="${amenity}"]`)) {
+                customAmenities.push(amenity);
+                addAmenityToUI(amenity);
+            }
+        });
+    }
+});
+
+function showDeleteModal() {
+    document.getElementById('deleteModal').classList.remove('hidden');
+    document.getElementById('deleteModal').classList.add('flex');
+}
+
+function hideDeleteModal() {
+    document.getElementById('deleteModal').classList.remove('flex');
+    document.getElementById('deleteModal').classList.add('hidden');
+}
+
+// Close modal when clicking outside
+document.getElementById('deleteModal').addEventListener('click', function(e) {
+    if (e.target === this) {
+        hideDeleteModal();
+    }
+});
+
+// Existing images management
+function removeExistingImage(imageUrl) {
+    existingImages = existingImages.filter(img => img !== imageUrl);
+    document.getElementById('existingImages').value = existingImages.join(',');
+    
+    // Remove from UI
+    const imageContainers = document.querySelectorAll('#existingImagesPreview .image-container');
+    imageContainers.forEach(container => {
+        const img = container.querySelector('img');
+        if (img && img.src.includes(imageUrl)) {
+            container.remove();
+        }
+    });
+    
+    // Show empty state if no images
+    if (existingImages.length === 0) {
+        const emptyState = document.createElement('div');
+        emptyState.className = 'col-span-2 md:col-span-4 text-center py-8 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg';
+        emptyState.innerHTML = `
+            <i class="fas fa-images text-gray-400 text-3xl mb-3"></i>
+            <p class="text-gray-500 dark:text-gray-400">No images uploaded yet</p>
+        `;
+        document.getElementById('existingImagesPreview').appendChild(emptyState);
+    }
+}
+
+// New images preview
+function previewNewImages(event) {
+    const files = event.target.files;
+    const previewContainer = document.getElementById('newImagesPreview');
+    
+    // Clear previous preview
+    previewContainer.innerHTML = '';
+    previewContainer.classList.remove('hidden');
+    
+    if (files.length === 0) {
+        previewContainer.classList.add('hidden');
+        return;
+    }
+    
+    for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        
+        // Validate file size (5MB)
+        if (file.size > 5 * 1024 * 1024) {
+            alert(`File ${file.name} is too large. Maximum size is 5MB.`);
+            continue;
+        }
+        
+        // Validate file type
+        if (!file.type.match('image.*')) {
+            alert(`File ${file.name} is not an image.`);
+            continue;
+        }
+        
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const div = document.createElement('div');
+            div.className = 'image-container relative';
+            div.innerHTML = `
+                <img src="${e.target.result}" alt="New Image" 
+                     class="w-full h-32 object-cover rounded-lg image-preview">
+                <button type="button" onclick="removeNewImage(this)"
+                        class="remove-image">
+                    <i class="fas fa-times"></i>
+                </button>
+                <input type="hidden" name="new_image_${i}" value="${e.target.result}">
+            `;
+            previewContainer.appendChild(div);
+        };
+        reader.readAsDataURL(file);
+    }
+}
+
+function removeNewImage(button) {
+    const container = button.closest('.image-container');
+    container.remove();
+    
+    // Hide container if empty
+    const previewContainer = document.getElementById('newImagesPreview');
+    if (previewContainer.children.length === 0) {
+        previewContainer.classList.add('hidden');
+    }
+}
+
+// Custom amenities
+function addCustomAmenity() {
+    const input = document.getElementById('customAmenity');
+    const amenity = input.value.trim();
+    
+    if (!amenity) {
+        alert('Please enter an amenity name.');
+        return;
+    }
+    
+    // Check if already exists
+    const existingCheckbox = document.querySelector(`input[name="amenities"][value="${amenity}"]`);
+    if (existingCheckbox) {
+        alert('This amenity already exists in the list.');
+        input.value = '';
+        return;
+    }
+    
+    if (customAmenities.includes(amenity)) {
+        alert('This custom amenity already exists.');
+        input.value = '';
+        return;
+    }
+    
+    customAmenities.push(amenity);
+    addAmenityToUI(amenity);
+    input.value = '';
+}
+
+function addAmenityToUI(amenity) {
+    const container = document.getElementById('customAmenitiesList');
+    
+    const tag = document.createElement('div');
+    tag.className = 'amenity-tag inline-flex items-center px-3 py-1.5 bg-gold/20 text-gold rounded-full text-sm';
+    tag.innerHTML = `
+        ${amenity}
+        <button type="button" onclick="removeCustomAmenity('${amenity}')" 
+                class="ml-2 text-gold hover:text-gold/70">
+            <i class="fas fa-times text-xs"></i>
+        </button>
+    `;
+    container.appendChild(tag);
+}
+
+function removeCustomAmenity(amenity) {
+    customAmenities = customAmenities.filter(a => a !== amenity);
+    
+    // Remove from UI
+    const tags = document.querySelectorAll('#customAmenitiesList .amenity-tag');
+    tags.forEach(tag => {
+        if (tag.textContent.trim().startsWith(amenity)) {
+            tag.remove();
+        }
+    });
+    
+    // Remove from form submission
+    const hiddenInput = document.createElement('input');
+    hiddenInput.type = 'hidden';
+    hiddenInput.name = 'amenities';
+    hiddenInput.value = amenity;
+    hiddenInput.id = `custom_amenity_${amenity}`;
+    document.querySelector('form').appendChild(hiddenInput);
+}
+
+// Form validation
+const form = document.querySelector('form');
+if (form) {
+    form.addEventListener('submit', function(e) {
+        // Validate price
+        const price = form.querySelector('input[name="price"]').value;
+        if (price < 100000) {
+            e.preventDefault();
+            alert('Price must be at least Rp 100,000');
+            return false;
+        }
+        
+        // Validate capacity
+        const capacity = form.querySelector('input[name="capacity"]').value;
+        if (capacity < 1 || capacity > 10) {
+            e.preventDefault();
+            alert('Capacity must be between 1 and 10 persons');
+            return false;
+        }
+        
+        // Validate available count
+        const availableCount = form.querySelector('input[name="available_count"]').value;
+        if (availableCount < 0) {
+            e.preventDefault();
+            alert('Available rooms cannot be negative');
+            return false;
+        }
+        
+        // Show loading state
+        const submitBtn = form.querySelector('button[type="submit"]');
+        const originalText = submitBtn.innerHTML;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Saving...';
+        submitBtn.disabled = true;
+        
+        // Re-enable after 5 seconds in case of error
+        setTimeout(() => {
+            submitBtn.innerHTML = originalText;
+            submitBtn.disabled = false;
+        }, 5000);
+        
+        return true;
+    });
+}
+</script>
+{% endblock %}

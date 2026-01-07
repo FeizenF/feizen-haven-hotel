@@ -1,0 +1,488 @@
+{% extends "base.html" %}
+
+{% block title %}My Profile - Feizen Haven{% endblock %}
+
+{% block extra_css %}
+<style>
+    .profile-header-gradient {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+    
+    .profile-avatar {
+        background: rgba(255, 255, 255, 0.2);
+        border: 3px solid rgba(255, 255, 255, 0.3);
+    }
+    
+    .admin-badge {
+        background: rgba(255, 215, 0, 0.2);
+        color: #FFD700;
+        padding: 2px 8px;
+        border-radius: 12px;
+        font-size: 11px;
+        font-weight: 600;
+    }
+    
+    .stats-icon {
+        transition: transform 0.3s ease;
+    }
+    
+    .stats-icon:hover {
+        transform: scale(1.1);
+    }
+    
+    .logout-btn:hover {
+        background: linear-gradient(to right, rgba(239, 68, 68, 0.1), rgba(239, 68, 68, 0.05));
+    }
+    
+    .password-strength {
+        height: 4px;
+        border-radius: 2px;
+        margin-top: 4px;
+    }
+    
+    .strength-weak {
+        background-color: #ef4444;
+        width: 25%;
+    }
+    
+    .strength-medium {
+        background-color: #f59e0b;
+        width: 50%;
+    }
+    
+    .strength-strong {
+        background-color: #10b981;
+        width: 75%;
+    }
+    
+    .strength-very-strong {
+        background-color: #059669;
+        width: 100%;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="pt-24 pb-16">
+    <div class="max-w-7xl mx-auto px-4">
+        <!-- Flash Messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="mb-6 p-4 rounded-lg {% if category == 'success' %}bg-green-100 text-green-800 border border-green-300{% elif category == 'error' %}bg-red-100 text-red-800 border border-red-300{% else %}bg-blue-100 text-blue-800 border border-blue-300{% endif %}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+        
+        <!-- Header -->
+        <div class="mb-8">
+            <h1 class="text-3xl font-serif font-bold text-gray-900 dark:text-white">My Profile</h1>
+            <p class="text-gray-600 dark:text-gray-300">Manage your account information and preferences</p>
+        </div>
+        
+        <div class="grid lg:grid-cols-3 gap-8">
+            <!-- Left Column: Profile Info -->
+            <div class="lg:col-span-2">
+                <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden">
+                    <!-- Profile Header -->
+                    <div class="profile-header-gradient p-8 text-white">
+                        <div class="flex items-center">
+                            <div class="w-24 h-24 profile-avatar rounded-full flex items-center justify-center mr-6">
+                                <i class="fas fa-user text-3xl"></i>
+                            </div>
+                            <div>
+                                <h2 class="text-2xl font-bold">{{ user.first_name }} {{ user.last_name }}</h2>
+                                <p class="text-gray-300">{{ user.email }}</p>
+                                <div class="flex items-center mt-2">
+                                    <span class="bg-gold text-navy px-3 py-1 rounded-full text-xs font-semibold">
+                                        {{ user.role|title }} Account
+                                    </span>
+                                    {% if user.role == 'admin' %}
+                                    <span class="admin-badge ml-2">
+                                        <i class="fas fa-crown mr-1"></i> Administrator
+                                    </span>
+                                    {% endif %}
+                                    <span class="ml-3 text-sm text-gray-300">
+                                        Member since {{ user.created_at.strftime('%B %Y') if user.created_at else 'Recently' }}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Profile Form -->
+                    <div class="p-8">
+                        <h3 class="text-xl font-semibold mb-6 text-gray-900 dark:text-white">Personal Information</h3>
+                        
+                        <form method="POST" action="{{ url_for('update_profile') }}" class="space-y-6">
+                            <!-- CSRF TOKEN - TAMBAHKAN INI -->
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            
+                            <div class="grid md:grid-cols-2 gap-6">
+                                <div>
+                                    <label class="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">First Name *</label>
+                                    <input type="text" name="first_name" value="{{ user.first_name }}" required
+                                           class="w-full px-4 py-3 rounded-lg border dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:border-gold focus:ring-1 focus:ring-gold">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">Last Name *</label>
+                                    <input type="text" name="last_name" value="{{ user.last_name }}" required
+                                           class="w-full px-4 py-3 rounded-lg border dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:border-gold focus:ring-1 focus:ring-gold">
+                                </div>
+                            </div>
+                            
+                            <div class="grid md:grid-cols-2 gap-6">
+                                <div>
+                                    <label class="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">Email Address</label>
+                                    <input type="email" value="{{ user.email }}" disabled
+                                           class="w-full px-4 py-3 rounded-lg border dark:border-gray-600 dark:bg-gray-700 bg-gray-100 dark:bg-gray-800 cursor-not-allowed dark:text-gray-400">
+                                    <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Email cannot be changed</p>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">Phone Number</label>
+                                    <input type="tel" name="phone" value="{{ user.phone or '' }}"
+                                           class="w-full px-4 py-3 rounded-lg border dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:border-gold focus:ring-1 focus:ring-gold"
+                                           placeholder="+62 xxx xxxx xxxx">
+                                </div>
+                            </div>
+                            
+                            <div class="pt-6 border-t dark:border-gray-700">
+                                <button type="submit" 
+                                        class="px-6 py-3 bg-gold text-navy font-semibold rounded-lg hover:bg-gold/90 transition-colors">
+                                    <i class="fas fa-save mr-2"></i>
+                                    Save Changes
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+                
+                <!-- Change Password -->
+                <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-8 mt-8">
+                    <h3 class="text-xl font-semibold mb-6 text-gray-900 dark:text-white">Change Password</h3>
+                    
+                    <form method="POST" action="{{ url_for('change_password') }}" class="space-y-6">
+                        <!-- CSRF TOKEN - TAMBAHKAN INI -->
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        
+                        <div>
+                            <label class="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">Current Password</label>
+                            <input type="password" name="current_password" required
+                                   class="w-full px-4 py-3 rounded-lg border dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:border-gold focus:ring-1 focus:ring-gold">
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">New Password</label>
+                            <input type="password" name="new_password" id="newPassword" required
+                                   class="w-full px-4 py-3 rounded-lg border dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:border-gold focus:ring-1 focus:ring-gold">
+                            <div id="passwordStrength" class="password-strength"></div>
+                            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                Minimum 8 characters with uppercase, lowercase, number, and special character
+                            </p>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">Confirm New Password</label>
+                            <input type="password" name="confirm_password" id="confirmPassword" required
+                                   class="w-full px-4 py-3 rounded-lg border dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:border-gold focus:ring-1 focus:ring-gold">
+                            <div id="passwordMatch" class="text-xs mt-1"></div>
+                        </div>
+                        
+                        <button type="submit" 
+                                class="px-6 py-3 border border-gold text-gold font-semibold rounded-lg hover:bg-gold/10 transition-colors">
+                            <i class="fas fa-key mr-2"></i>
+                            Update Password
+                        </button>
+                    </form>
+                </div>
+            </div>
+            
+            <!-- Right Column: Stats & Quick Actions -->
+            <div class="lg:col-span-1">
+                <!-- Stats Card -->
+                <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 mb-6">
+                    <h3 class="text-lg font-semibold mb-4 text-gray-900 dark:text-white">Booking Statistics</h3>
+                    
+                    <div class="space-y-4">
+                        <div class="flex justify-between items-center">
+                            <div class="flex items-center">
+                                <div class="stats-icon w-10 h-10 bg-blue-100 dark:bg-blue-900 rounded-lg flex items-center justify-center mr-3">
+                                    <i class="fas fa-calendar-check text-blue-600 dark:text-blue-300"></i>
+                                </div>
+                                <div>
+                                    <div class="text-sm text-gray-500 dark:text-gray-400">Total Bookings</div>
+                                    <div class="text-xl font-bold text-gray-900 dark:text-white">{{ stats.total_bookings or 0 }}</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="flex justify-between items-center">
+                            <div class="flex items-center">
+                                <div class="stats-icon w-10 h-10 bg-green-100 dark:bg-green-900 rounded-lg flex items-center justify-center mr-3">
+                                    <i class="fas fa-check-circle text-green-600 dark:text-green-300"></i>
+                                </div>
+                                <div>
+                                    <div class="text-sm text-gray-500 dark:text-gray-400">Confirmed</div>
+                                    <div class="text-xl font-bold text-gray-900 dark:text-white">{{ stats.confirmed_bookings or 0 }}</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="flex justify-between items-center">
+                            <div class="flex items-center">
+                                <div class="stats-icon w-10 h-10 bg-gold/20 rounded-lg flex items-center justify-center mr-3">
+                                    <i class="fas fa-money-bill-wave text-gold"></i>
+                                </div>
+                                <div>
+                                    <div class="text-sm text-gray-500 dark:text-gray-400">Total Spent</div>
+                                    <div class="text-xl font-bold text-gray-900 dark:text-white">Rp{{ "{:,.0f}".format(stats.total_spent or 0) }}</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Quick Actions -->
+                <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
+                    <h3 class="text-lg font-semibold mb-4 text-gray-900 dark:text-white">Quick Actions</h3>
+                    
+                    <div class="space-y-3">
+                        <a href="{{ url_for('my_bookings') }}" 
+                           class="flex items-center p-3 rounded-lg border dark:border-gray-700 hover:border-gold hover:bg-gold/5 transition-colors text-gray-700 dark:text-gray-300">
+                            <i class="fas fa-calendar-alt text-gold mr-3"></i>
+                            <span>View My Bookings</span>
+                        </a>
+                        
+                        {% if session.role != 'admin' %}
+                        <a href="{{ url_for('book') }}" 
+                           class="flex items-center p-3 rounded-lg border dark:border-gray-700 hover:border-gold hover:bg-gold/5 transition-colors text-gray-700 dark:text-gray-300">
+                            <i class="fas fa-plus-circle text-gold mr-3"></i>
+                            <span>Make New Booking</span>
+                        </a>
+                        {% endif %}
+
+                        {% if session.role == 'admin' %}
+                        <a href="{{ url_for('admin_users') }}" 
+                        class="flex items-center p-3 rounded-lg border dark:border-gray-700 hover:border-gold hover:bg-gold/5 transition-colors text-gray-700 dark:text-gray-300">
+                            <i class="fas fa-users-cog text-gold mr-3"></i>
+                            <span>Manage All Users</span>
+                        </a>
+                        {% endif %}
+                        
+                        <a href="{{ url_for('index') }}" 
+                           class="flex items-center p-3 rounded-lg border dark:border-gray-700 hover:border-gold hover:bg-gold/5 transition-colors text-gray-700 dark:text-gray-300">
+                            <i class="fas fa-home text-gold mr-3"></i>
+                            <span>Back to Home</span>
+                        </a>
+                        
+                        <!-- Logout dengan form POST untuk CSRF -->
+                        <form method="POST" action="{{ url_for('logout') }}" class="m-0">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <button type="submit" 
+                                    class="logout-btn w-full flex items-center p-3 rounded-lg border border-red-200 dark:border-red-900 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 transition-colors text-left">
+                                <i class="fas fa-sign-out-alt mr-3"></i>
+                                <span>Logout</span>
+                            </button>
+                        </form>
+                    </div>
+                </div>
+                
+                <!-- Admin Section (Only for Admin Users) -->
+                {% if session.role == 'admin' %}
+                <div class="bg-gradient-to-r from-purple-500 to-purple-600 rounded-lg shadow-lg p-6 mt-6 text-white">
+                    <div class="flex items-center mb-4">
+                        <div class="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center mr-4">
+                            <i class="fas fa-cog text-xl"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-semibold">Admin Privileges</h3>
+                            <p class="text-purple-100 text-sm">Administrator Access</p>
+                        </div>
+                    </div>
+                    
+                    <div class="space-y-3">
+                        <a href="{{ url_for('admin_dashboard') }}" 
+                           class="flex items-center justify-between p-3 bg-white/10 rounded-lg hover:bg-white/20 transition-colors">
+                            <div class="flex items-center">
+                                <i class="fas fa-tachometer-alt mr-3"></i>
+                                <span>Admin Dashboard</span>
+                            </div>
+                            <i class="fas fa-arrow-right"></i>
+                        </a>
+                        
+                        <a href="{{ url_for('admin_bookings') }}" 
+                           class="flex items-center justify-between p-3 bg-white/10 rounded-lg hover:bg-white/20 transition-colors">
+                            <div class="flex items-center">
+                                <i class="fas fa-calendar-alt mr-3"></i>
+                                <span>Manage Bookings</span>
+                            </div>
+                            <i class="fas fa-arrow-right"></i>
+                        </a>
+                        
+                        <a href="{{ url_for('admin_users') }}" 
+                           class="flex items-center justify-between p-3 bg-white/10 rounded-lg hover:bg-white/20 transition-colors">
+                            <div class="flex items-center">
+                                <i class="fas fa-users mr-3"></i>
+                                <span>Manage Users</span>
+                            </div>
+                            <i class="fas fa-arrow-right"></i>
+                        </a>
+                        
+                        <!-- TAMBAHKAN PAYMENT MANAGEMENT DI SINI -->
+                        <a href="{{ url_for('admin_payments') }}" 
+                           class="flex items-center justify-between p-3 bg-white/10 rounded-lg hover:bg-white/20 transition-colors">
+                            <div class="flex items-center">
+                                <i class="fas fa-credit-card mr-3"></i>
+                                <span>Payment Management</span>
+                            </div>
+                            <i class="fas fa-arrow-right"></i>
+                        </a>
+                        
+                        <!-- TAMBAHKAN LINK UNTUK MENGELOLA USER LAIN -->
+                        <div class="pt-3 mt-3 border-t border-white/20">
+                            <p class="text-sm text-purple-100 mb-2">Quick User Management:</p>
+                            <form method="GET" action="{{ url_for('admin_users') }}" class="mb-2">
+                                <input type="text" name="search" placeholder="Search user by email" 
+                                       class="w-full px-3 py-2 bg-white/10 rounded text-sm text-white placeholder-purple-300 focus:outline-none focus:ring-1 focus:ring-white">
+                            </form>
+                            <a href="{{ url_for('admin_users') }}?action=create" 
+                               class="flex items-center p-2 bg-white/10 rounded hover:bg-white/20 text-sm">
+                                <i class="fas fa-user-plus mr-2"></i>
+                                <span>Create New User</span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Password strength indicator
+    const newPasswordInput = document.getElementById('newPassword');
+    const passwordStrength = document.getElementById('passwordStrength');
+    const confirmPasswordInput = document.getElementById('confirmPassword');
+    const passwordMatch = document.getElementById('passwordMatch');
+    
+    function checkPasswordStrength(password) {
+        let strength = 0;
+        const strengthClasses = ['strength-weak', 'strength-medium', 'strength-strong', 'strength-very-strong'];
+        
+        if (password.length >= 8) strength++;
+        if (/[A-Z]/.test(password)) strength++;
+        if (/[0-9]/.test(password)) strength++;
+        if (/[^A-Za-z0-9]/.test(password)) strength++;
+        
+        // Reset classes
+        passwordStrength.className = 'password-strength';
+        
+        if (password.length === 0) {
+            passwordStrength.style.width = '0';
+        } else {
+            passwordStrength.classList.add(strengthClasses[Math.min(strength, 4) - 1]);
+        }
+    }
+    
+    function checkPasswordMatch() {
+        const newPassword = newPasswordInput.value;
+        const confirmPassword = confirmPasswordInput.value;
+        
+        if (confirmPassword.length === 0) {
+            passwordMatch.textContent = '';
+            return;
+        }
+        
+        if (newPassword === confirmPassword) {
+            passwordMatch.textContent = 'Passwords match';
+            passwordMatch.className = 'text-xs mt-1 text-green-600';
+        } else {
+            passwordMatch.textContent = 'Passwords do not match';
+            passwordMatch.className = 'text-xs mt-1 text-red-600';
+        }
+    }
+    
+    if (newPasswordInput) {
+        newPasswordInput.addEventListener('input', function() {
+            checkPasswordStrength(this.value);
+            checkPasswordMatch();
+        });
+    }
+    
+    if (confirmPasswordInput) {
+        confirmPasswordInput.addEventListener('input', checkPasswordMatch);
+    }
+    
+    // Phone number formatting
+    const phoneInput = document.querySelector('input[name="phone"]');
+    if (phoneInput) {
+        phoneInput.addEventListener('input', function(e) {
+            let value = e.target.value.replace(/\D/g, '');
+            
+            if (value.startsWith('0')) {
+                value = '+62' + value.substring(1);
+            } else if (value.startsWith('62')) {
+                value = '+' + value;
+            } else if (value && !value.startsWith('+')) {
+                value = '+62' + value;
+            }
+            
+            e.target.value = value;
+        });
+    }
+    
+    // Form validation for profile update
+    const profileForm = document.querySelector('form[action="{{ url_for("update_profile") }}"]');
+    if (profileForm) {
+        profileForm.addEventListener('submit', function(e) {
+            const firstName = this.querySelector('input[name="first_name"]').value.trim();
+            const lastName = this.querySelector('input[name="last_name"]').value.trim();
+            
+            if (!firstName || !lastName) {
+                e.preventDefault();
+                alert('Please fill in all required fields.');
+                return false;
+            }
+            
+            return true;
+        });
+    }
+    
+    // Form validation for password change
+    const passwordForm = document.querySelector('form[action="{{ url_for("change_password") }}"]');
+    if (passwordForm) {
+        passwordForm.addEventListener('submit', function(e) {
+            const currentPassword = this.querySelector('input[name="current_password"]').value;
+            const newPassword = this.querySelector('input[name="new_password"]').value;
+            const confirmPassword = this.querySelector('input[name="confirm_password"]').value;
+            
+            if (!currentPassword || !newPassword || !confirmPassword) {
+                e.preventDefault();
+                alert('All password fields are required.');
+                return false;
+            }
+            
+            if (newPassword.length < 8) {
+                e.preventDefault();
+                alert('New password must be at least 8 characters long.');
+                return false;
+            }
+            
+            if (newPassword !== confirmPassword) {
+                e.preventDefault();
+                alert('New passwords do not match.');
+                return false;
+            }
+            
+            return true;
+        });
+    }
+});
+</script>
+{% endblock %}
