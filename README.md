@@ -4,102 +4,99 @@ A comprehensive hotel booking system built with Python Flask featuring room book
 
 ## 📁 Project Structure
 FEIZEN_HAVEN/
-├── .gitignore # Git ignore file for sensitive data
-├── README.md # Project documentation
-├── requirements.txt # Python dependencies
-├── .env.example # Environment variables template
 │
-├── app.py # Main Flask application
-├── config.py # Application configuration
-├── extensions.py # Flask extensions initialization
-├── helpers.py # Utility helper functions
-├── models.py # Database models (SQLAlchemy)
-├── database_models.py # Additional database models
-├── setup_database.py # Database setup script
+├── .gitignore                  # Ignore env, cache, uploads
+├── README.md                   # Project documentation
+├── requirements.txt            # Python dependencies
+├── .env.example                # Environment variables template
 │
-├── routes/ # Flask route blueprints
-│ ├── init.py
-│ ├── admin_routes.py # Admin management routes
-│ ├── api_routes.py # REST API endpoints
-│ ├── auth_routes.py # Authentication routes
-│ ├── booking_routes.py # Room booking routes
-│ ├── main_routes.py # Main website routes
-│ └── user_routes.py # User profile routes
+├── app.py                      # Main Flask application
+├── config.py                   # Application configuration
+├── extensions.py               # Flask extensions initialization
+├── helpers.py                  # Utility helper functions
+├── models.py                   # Database models (SQLAlchemy)
+├── database_models.py          # Additional database models
+├── setup_database.py           # Database setup & seeding
 │
-├── templates/ # HTML templates (Jinja2)
-│ ├── admin/ # Admin panel templates
-│ │ ├── dashboard.html
-│ │ ├── bookings.html
-│ │ ├── manage_rooms.html
-│ │ ├── add_room.html
-│ │ ├── edit_room.html
-│ │ ├── payments.html
-│ │ ├── rooms.html
-│ │ ├── users.html
-│ │ ├── create_user.html
-│ │ └── user_profile.html
-│ │
-│ ├── auth/ # Authentication templates
-│ │ ├── login.html
-│ │ └── register.html
-│ │
-│ ├── booking/ # Booking process templates
-│ │ ├── book.html
-│ │ ├── payment.html
-│ │ └── success.html
-│ │
-│ ├── main/ # Main website templates
-│ │ ├── index.html
-│ │ ├── about.html
-│ │ ├── contact.html
-│ │ ├── rooms.html
-│ │ ├── venues.html
-│ │ └── contact_support.html
-│ │
-│ ├── user/ # User dashboard templates
-│ │ ├── profile.html
-│ │ └── bookings.html
-│ │
-│ └── base.html # Base template
+├── routes/                     # Flask Blueprints
+│   ├── __init__.py
+│   ├── admin_routes.py         # Admin management routes
+│   ├── api_routes.py           # REST API endpoints
+│   ├── auth_routes.py          # Authentication routes
+│   ├── booking_routes.py       # Booking routes
+│   ├── main_routes.py          # Main website routes
+│   └── user_routes.py          # User profile routes
 │
-├── static/ # Static assets
-│ ├── css/ # Stylesheets
-│ │ ├── style.css
-│ │ └── booking.css
-│ │
-│ ├── js/ # JavaScript files
-│ │ ├── main.js
-│ │ ├── index.js
-│ │ └── book.js
-│ │
-│ ├── images/ # Image assets
-│ │ ├── rooms/ # Room type images
-│ │ │ ├── deluxe.jpg
-│ │ │ ├── executive.jpg
-│ │ │ ├── presidential.jpg
-│ │ │ └── default.jpg
-│ │ │
-│ │ ├── venues/ # Venue images
-│ │ │ ├── venue1.jpg
-│ │ │ ├── venue2.jpg
-│ │ │ └── venue3.jpg
-│ │ │
-│ │ ├── payment/ # Payment method icons
-│ │ │ ├── qris.png
-│ │ │ ├── bank-transfer.png
-│ │ │ └── credit-card.png
-│ │ │
-│ │ └── icons/ # Website icons
-│ │ ├── favicon.ico
-│ │ └── logo.png
-│ │
-│ └── uploads/ # Placeholder for uploads (git-kept)
-│ ├── payments/
-│ └── rooms/
+├── templates/                  # Jinja2 templates
+│   ├── base.html               # Base layout
+│   │
+│   ├── admin/                  # Admin panel pages
+│   │   ├── dashboard.html
+│   │   ├── bookings.html
+│   │   ├── manage_rooms.html
+│   │   ├── add_room.html
+│   │   ├── edit_room.html
+│   │   ├── payments.html
+│   │   ├── rooms.html
+│   │   ├── users.html
+│   │   ├── create_user.html
+│   │   └── user_profile.html
+│   │
+│   ├── auth/                   # Authentication pages
+│   │   ├── login.html
+│   │   └── register.html
+│   │
+│   ├── booking/                # Booking process pages
+│   │   ├── book.html
+│   │   ├── payment.html
+│   │   └── success.html
+│   │
+│   ├── main/                   # Public website pages
+│   │   ├── index.html
+│   │   ├── about.html
+│   │   ├── contact.html
+│   │   ├── rooms.html
+│   │   ├── venues.html
+│   │   └── contact_support.html
+│   │
+│   └── user/                   # User dashboard pages
+│       ├── profile.html
+│       └── bookings.html
 │
-└── uploads/ # User uploads directory (git-ignored)
-└── payments/
-
+├── static/                     # Static assets
+│   ├── css/
+│   │   ├── style.css
+│   │   └── booking.css
+│   │
+│   ├── js/
+│   │   ├── main.js
+│   │   ├── index.js
+│   │   └── book.js
+│   │
+│   ├── images/
+│   │   ├── rooms/
+│   │   │   ├── deluxe.jpg
+│   │   │   ├── executive.jpg
+│   │   │   ├── presidential.jpg
+│   │   │   └── default.jpg
+│   │   │
+│   │   ├── venues/
+│   │   │   ├── venue1.jpg
+│   │   │   ├── venue2.jpg
+│   │   │   └── venue3.jpg
+│   │   │
+│   │   ├── payment/
+│   │   │   ├── qris.png
+│   │   │   ├── bank-transfer.png
+│   │   │   └── credit-card.png
+│   │   │
+│   │   └── icons/
+│   │       ├── favicon.ico
+│   │       └── logo.png
+│
+└── uploads/                    # User uploads (ignored by Git)
+    ├── payments/
+    └── rooms/
 
 ## 🚀 Quick Start
 
