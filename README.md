@@ -94,6 +94,95 @@ FEIZEN_HAVEN/
 │   │       ├── favicon.ico
 │   │       └── logo.png
 │
+=======
+├── .gitignore                  # Ignore env, cache, uploads
+├── README.md                   # Project documentation
+├── requirements.txt            # Python dependencies
+├── .env.example                # Environment variables template
+│
+├── app.py                      # Main Flask application
+├── config.py                   # Application configuration
+├── extensions.py               # Flask extensions initialization
+├── helpers.py                  # Utility helper functions
+├── models.py                   # Database models (SQLAlchemy)
+├── database_models.py          # Additional database models
+├── setup_database.py           # Database setup & seeding
+│
+├── routes/                     # Flask Blueprints
+│   ├── __init__.py
+│   ├── admin_routes.py         # Admin management routes
+│   ├── api_routes.py           # REST API endpoints
+│   ├── auth_routes.py          # Authentication routes
+│   ├── booking_routes.py       # Booking routes
+│   ├── main_routes.py          # Main website routes
+│   └── user_routes.py          # User profile routes
+│
+├── templates/                  # Jinja2 templates
+│   ├── base.html               # Base layout
+│   │
+│   ├── admin/                  # Admin panel pages
+│   │   ├── dashboard.html
+│   │   ├── bookings.html
+│   │   ├── manage_rooms.html
+│   │   ├── add_room.html
+│   │   ├── edit_room.html
+│   │   ├── payments.html
+│   │   ├── rooms.html
+│   │   ├── users.html
+│   │   ├── create_user.html
+│   │   └── user_profile.html
+│   │
+│   ├── auth/                   # Authentication pages
+│   │   ├── login.html
+│   │   └── register.html
+│   │
+│   ├── booking/                # Booking process pages
+│   │   ├── book.html
+│   │   ├── payment.html
+│   │   └── success.html
+│   │
+│   ├── main/                   # Public website pages
+│   │   ├── index.html
+│   │   ├── about.html
+│   │   ├── contact.html
+│   │   ├── rooms.html
+│   │   ├── venues.html
+│   │   └── contact_support.html
+│   │
+│   └── user/                   # User dashboard pages
+│       ├── profile.html
+│       └── bookings.html
+│
+├── static/                     # Static assets
+│   ├── css/
+│   │   ├── style.css
+│   │   └── booking.css
+│   │
+│   ├── js/
+│   │   ├── main.js
+│   │   ├── index.js
+│   │   └── book.js
+│   │
+│   ├── images/
+│   │   ├── rooms/
+│   │   │   ├── deluxe.jpg
+│   │   │   ├── executive.jpg
+│   │   │   ├── presidential.jpg
+│   │   │   └── default.jpg
+│   │   │
+│   │   ├── venues/
+│   │   │   ├── venue1.jpg
+│   │   │   ├── venue2.jpg
+│   │   │   └── venue3.jpg
+│   │   │
+│   │   ├── payment/
+│   │   │   ├── qris.png
+│   │   │   ├── bank-transfer.png
+│   │   │   └── credit-card.png
+│   │   │
+│   │   └── icons/
+│   │       ├── favicon.ico
+│   │       └── logo.png
 └── uploads/                    # User uploads (ignored by Git)
     ├── payments/
     └── rooms/
