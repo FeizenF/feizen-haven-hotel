@@ -2,7 +2,6 @@ from flask import render_template, request, redirect, url_for, flash, session
 from werkzeug.security import generate_password_hash, check_password_hash
 from config import app, mysql
 import re
-from flask_wtf.csrf import CSRFProtect, generate_csrf
 
 def validate_email(email):
     """Validasi format email sederhana tapi efektif"""
@@ -92,19 +91,9 @@ def register():
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
-    print(f"🔍 DEBUG: Login route accessed. Method: {request.method}")
-    print(f"🔍 DEBUG: CSRF enabled: {'csrf_token' in dir()}")
-    
     if request.method == 'POST':
-        # Debug CSRF token
-        print(f"🔍 DEBUG: Form data: {request.form}")
-        print(f"🔍 DEBUG: CSRF token in form: {request.form.get('csrf_token')}")
-        
         email = request.form.get('email', '').strip()
         password = request.form.get('password', '')
-        
-        print(f"🔍 DEBUG: Email: {email}")
-        print(f"🔍 DEBUG: Password: {password}")
         
         if not email or not password:
             flash('Email dan password harus diisi', 'danger')
@@ -116,46 +105,23 @@ def login():
             user = cur.fetchone()
             cur.close()
             
-            print(f"🔍 DEBUG: User found in DB: {user is not None}")
-            if user:
-                print(f"🔍 DEBUG: User email: {user['email']}")
-                print(f"🔍 DEBUG: User role: {user['role']}")
-                print(f"🔍 DEBUG: Stored password hash: {user['password'][:30]}...")
+            if user and check_password_hash(user['password'], password):
+                session['user_id'] = user['id']
+                session['email'] = user['email']
+                session['name'] = f"{user['first_name']} {user['last_name']}"
+                session['role'] = user['role']
                 
-                # Cek password
-                password_match = check_password_hash(user['password'], password)
-                print(f"🔍 DEBUG: Password match: {password_match}")
+                flash('Login berhasil!', 'success')
                 
-                # Coba manual check untuk debugging
-                print(f"🔍 DEBUG: Input password: {password}")
-                
-                if password_match:
-                    session['user_id'] = user['id']
-                    session['email'] = user['email']
-                    session['name'] = f"{user['first_name']} {user['last_name']}"
-                    session['role'] = user['role']
-                    
-                    print(f"✅ DEBUG: Login successful for {email}")
-                    flash('Login berhasil!', 'success')
-                    
-                    if user['role'] == 'admin':
-                        return redirect(url_for('admin_dashboard'))
-                    else:
-                        return redirect(url_for('index'))
+                if user['role'] == 'admin':
+                    return redirect(url_for('admin_dashboard'))
                 else:
-                    print(f"❌ DEBUG: Password doesn't match for {email}")
-                    flash('Email atau password salah', 'danger')
+                    return redirect(url_for('index'))
             else:
-                print(f"❌ DEBUG: User not found for email: {email}")
                 flash('Email atau password salah', 'danger')
                 
         except Exception as e:
-            print(f"❌ DEBUG: Database error: {str(e)}")
             flash('Terjadi kesalahan sistem', 'danger')
-    
-    # Generate CSRF token untuk GET request
-    csrf_token = generate_csrf() if 'generate_csrf' in dir() else ''
-    print(f"🔍 DEBUG: CSRF token generated: {csrf_token[:20] if csrf_token else 'None'}...")
     
     return render_template('auth/login.html')
 
