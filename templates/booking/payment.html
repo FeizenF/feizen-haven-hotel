@@ -821,11 +821,7 @@
                                 <div class="text-right">
                                     <p class="text-sm text-gray-600 dark:text-gray-400">Per Night</p>
                                     <p class="font-semibold text-gold">
-                                        {% if booking.nights > 0 %}
-                                            Rp{{ "{:,.0f}".format(booking.room_price // booking.nights) }}
-                                        {% else %}
-                                            Rp{{ "{:,.0f}".format(booking.room_price) }}
-                                        {% endif %}
+                                        Rp{{ "{:,.0f}".format(booking.room_price) }}
                                     </p>
                                 </div>
                             </div>
@@ -833,6 +829,9 @@
                     </div>
                     
                     <!-- Price Breakdown -->
+                    {% set room_charges = booking.subtotal if booking.subtotal else (booking.room_price * booking.nights) %}
+                    {% set gov_tax = booking.tax_amount if booking.tax_amount else (room_charges * 0.10) %}
+                    {% set svc_charge = booking.service_charge if booking.service_charge else (room_charges * 0.11) %}
                     <div class="border-t dark:border-gray-700 pt-4 mb-6">
                         <h4 class="font-medium text-gray-900 dark:text-white mb-3 flex items-center">
                             <i class="fas fa-calculator text-gold mr-2"></i>
@@ -849,7 +848,7 @@
                                     </div>
                                 </div>
                                 <span class="font-medium" id="roomCharges">
-                                    Rp{{ "{:,.0f}".format(booking.room_price) }}
+                                    Rp{{ "{:,.0f}".format(room_charges) }}
                                 </span>
                             </div>
                             
@@ -860,7 +859,6 @@
                                     <div class="text-xs text-gray-500 dark:text-gray-400">10% of room charges</div>
                                 </div>
                                 <span class="text-red-500" id="govTax">
-                                    {% set gov_tax = booking.room_price * 10 // 100 %}
                                     Rp{{ "{:,.0f}".format(gov_tax) }}
                                 </span>
                             </div>
@@ -872,8 +870,7 @@
                                     <div class="text-xs text-gray-500 dark:text-gray-400">11% of room charges</div>
                                 </div>
                                 <span class="text-blue-500" id="serviceCharge">
-                                    {% set service_charge = booking.room_price * 11 // 100 %}
-                                    Rp{{ "{:,.0f}".format(service_charge) }}
+                                    Rp{{ "{:,.0f}".format(svc_charge) }}
                                 </span>
                             </div>
                             
@@ -884,8 +881,7 @@
                                     <div class="text-xs text-gray-500 dark:text-gray-400">Government tax (10%) + Service charge (11%)</div>
                                 </div>
                                 <span class="font-medium text-purple-500" id="totalTax">
-                                    {% set total_tax = booking.room_price * 21 // 100 %}
-                                    Rp{{ "{:,.0f}".format(total_tax) }}
+                                    Rp{{ "{:,.0f}".format(gov_tax + svc_charge) }}
                                 </span>
                             </div>
                             
@@ -1334,10 +1330,12 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Countdown timer untuk booking
     function initializeCountdowns() {
+        const serverSeconds = {{ booking.countdown_seconds if booking.countdown_seconds is defined else 86399 }};
+
         // Timer utama
         const countdownElement = document.getElementById('bookingCountdown');
         if (countdownElement) {
-            let totalSeconds = 23 * 3600 + 59 * 60 + 59;
+            let totalSeconds = serverSeconds;
             
             function updateCountdown() {
                 if (totalSeconds <= 0) {
@@ -1365,7 +1363,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // Timer sidebar
         const globalCountdown = document.getElementById('globalCountdown');
         if (globalCountdown) {
-            let totalSeconds = 23 * 3600 + 59 * 60 + 59;
+            let totalSeconds = serverSeconds;
             
             function updateGlobalCountdown() {
                 if (totalSeconds <= 0) {

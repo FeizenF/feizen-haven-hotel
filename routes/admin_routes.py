@@ -3,33 +3,15 @@ from config import app, mysql
 from models import login_required, admin_required, allowed_file
 import os
 import time
-from datetime import datetime, timedelta
+from datetime import datetime
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
-import re
-from functools import wraps
-from helpers import process_room_images
-
-def login_required(f):
-    @wraps(f)
-    def decorated_function(*args, **kwargs):
-        if 'user_id' not in session:
-            flash('Please login first', 'danger')
-            return redirect(url_for('login'))
-        return f(*args, **kwargs)
-    return decorated_function
-
-def admin_required(f):
-    @wraps(f)
-    def decorated_function(*args, **kwargs):
-        if 'user_id' not in session:
-            flash('Please login first', 'danger')
-            return redirect(url_for('login'))
-        if session.get('role') != 'admin':
-            flash('Admin access required', 'danger')
-            return redirect(url_for('index'))
-        return f(*args, **kwargs)
-    return decorated_function
+from helpers import (
+    process_room_images,
+    parse_images_data,
+    parse_amenities_data,
+    payment_proof_url,
+)
 
 # ADMIN ROUTES
 @app.route('/admin/dashboard')
@@ -220,8 +202,88 @@ def admin_bookings():
         
     bookings = cur.fetchall()
     cur.close()
+
+    for booking in bookings:
+        booking['proof_url'] = payment_proof_url(booking.get('proof_image'))
     
     return render_template('admin/bookings.html', bookings=bookings, status_filter=status_filter)
+
+@app.route('/admin/booking/<int:booking_id>/details')
+@admin_required
+def admin_booking_details(booking_id):
+    """Return booking details as HTML for the admin dashboard modal."""
+    cur = mysql.connection.cursor()
+    cur.execute("""
+        SELECT b.*,
+               r.name AS room_name,
+               r.price AS room_price,
+               u.first_name, u.last_name, u.email, u.phone,
+               p.status AS payment_status,
+               p.payment_method,
+               p.proof_image,
+               p.id AS payment_id
+        FROM bookings b
+        JOIN rooms r ON b.room_id = r.id
+        JOIN users u ON b.user_id = u.id
+        LEFT JOIN payments p ON b.id = p.booking_id
+        WHERE b.id = %s
+    """, (booking_id,))
+    booking = cur.fetchone()
+    cur.close()
+
+    if not booking:
+        return jsonify({'error': 'Booking not found'}), 404
+
+    def fmt_date(value):
+        return value.strftime('%d %b %Y') if hasattr(value, 'strftime') else (value or 'N/A')
+
+    def fmt_money(value):
+        try:
+            return f"Rp{float(value or 0):,.0f}".replace(',', '.')
+        except (TypeError, ValueError):
+            return 'Rp0'
+
+    proof_html = '<p class="text-sm text-gray-500">No payment proof uploaded</p>'
+    if booking.get('proof_image'):
+        proof_url = payment_proof_url(booking['proof_image'])
+        proof_html = f'''
+            <a href="{proof_url}" target="_blank" class="text-blue-600 hover:underline text-sm">
+                <i class="fas fa-external-link-alt mr-1"></i>View payment proof
+            </a>
+        '''
+
+    html = f"""
+    <div class="grid md:grid-cols-2 gap-6">
+        <div>
+            <h4 class="font-semibold mb-4">Booking Information</h4>
+            <div class="space-y-3 text-sm">
+                <div class="flex justify-between"><span class="text-gray-600">Booking Code:</span><span class="font-medium">{booking.get('booking_code') or 'N/A'}</span></div>
+                <div class="flex justify-between"><span class="text-gray-600">Status:</span><span class="font-medium">{(booking.get('status') or '').replace('_', ' ').title()}</span></div>
+                <div class="flex justify-between"><span class="text-gray-600">Room:</span><span class="font-medium">{booking.get('room_name') or 'N/A'}</span></div>
+                <div class="flex justify-between"><span class="text-gray-600">Guests:</span><span class="font-medium">{booking.get('guests') or 0}</span></div>
+                <div class="flex justify-between"><span class="text-gray-600">Check-in:</span><span class="font-medium">{fmt_date(booking.get('check_in'))}</span></div>
+                <div class="flex justify-between"><span class="text-gray-600">Check-out:</span><span class="font-medium">{fmt_date(booking.get('check_out'))}</span></div>
+                <div class="flex justify-between"><span class="text-gray-600">Total:</span><span class="font-bold text-gold">{fmt_money(booking.get('total_price'))}</span></div>
+            </div>
+        </div>
+        <div>
+            <h4 class="font-semibold mb-4">Customer &amp; Payment</h4>
+            <div class="space-y-3 text-sm">
+                <div class="flex justify-between"><span class="text-gray-600">Name:</span><span class="font-medium">{booking.get('first_name') or ''} {booking.get('last_name') or ''}</span></div>
+                <div class="flex justify-between"><span class="text-gray-600">Email:</span><span class="font-medium">{booking.get('email') or 'N/A'}</span></div>
+                <div class="flex justify-between"><span class="text-gray-600">Phone:</span><span class="font-medium">{booking.get('phone') or 'N/A'}</span></div>
+                <div class="flex justify-between"><span class="text-gray-600">Payment:</span><span class="font-medium">{(booking.get('payment_status') or 'pending').replace('_', ' ').title()}</span></div>
+                <div class="flex justify-between"><span class="text-gray-600">Method:</span><span class="font-medium">{(booking.get('payment_method') or 'Not selected').replace('_', ' ').title()}</span></div>
+                <div class="flex justify-between"><span class="text-gray-600">Proof:</span><span>{proof_html}</span></div>
+            </div>
+            <h4 class="font-semibold mt-6 mb-2">Special Requests</h4>
+            <p class="text-sm text-gray-600 dark:text-gray-300">{booking.get('special_requests') or 'None'}</p>
+        </div>
+    </div>
+    """
+
+    return jsonify({'html': html})
+
 
 @app.route('/admin/booking/<int:booking_id>/update', methods=['POST'])
 @admin_required
@@ -272,37 +334,34 @@ def update_booking_status(booking_id):
                 END
                 WHERE id = %s
             """, (room_id,))
-            print(f"✅ Booking {booking_id} confirmed. Updated is_available based on available_count")
             
-        elif new_status in ['cancelled'] and old_status in ['confirmed', 'pending', 'waiting_payment']:
-
+        elif new_status == 'cancelled' and old_status in ['confirmed', 'pending', 'waiting_payment']:
+            # The room was reserved when the booking was created, so return it once.
             cur.execute("""
                 UPDATE rooms 
                 SET available_count = LEAST(room_count, available_count + 1),
-                    is_available = CASE 
-                        WHEN available_count + 1 > 0 THEN 1 
-                        ELSE 0 
-                    END
+                    is_available = 1
                 WHERE id = %s
             """, (room_id,))
-            print(f"✅ Booking {booking_id} cancelled. Incremented available_count")
-            
-        elif new_status == 'completed':
 
+            cur.execute("""
+                UPDATE bookings
+                SET payment_status = CASE
+                    WHEN payment_status IN ('paid', 'completed') THEN payment_status
+                    ELSE 'cancelled'
+                END
+                WHERE id = %s
+            """, (booking_id,))
+            
+        elif new_status == 'completed' and old_status not in ['completed', 'cancelled', 'expired']:
+            # The stay is over, so the room becomes available again.
             cur.execute("""
                 UPDATE rooms 
                 SET available_count = LEAST(room_count, available_count + 1),
-                    is_available = CASE 
-                        WHEN available_count + 1 > 0 THEN 1 
-                        ELSE 0 
-                    END
+                    is_available = 1
                 WHERE id = %s
             """, (room_id,))
-            print(f"✅ Booking {booking_id} completed. Incremented available_count")
-            
-        elif new_status == 'waiting_payment' and old_status == 'pending':
-            print(f"⚠️ Booking {booking_id} waiting payment. No room availability change.")
-            
+        
         mysql.connection.commit()
         
     except Exception as e:
@@ -391,10 +450,12 @@ def admin_manage_user(user_id):
     stats = cur.fetchone()
     
     cur.execute("""
-        SELECT room_name, check_in, check_out, created_at
-        FROM bookings 
-        WHERE user_id = %s 
-        ORDER BY created_at DESC 
+        SELECT b.booking_code, r.name AS room_name, b.check_in, b.check_out,
+               b.status, b.total_price, b.created_at
+        FROM bookings b
+        JOIN rooms r ON b.room_id = r.id
+        WHERE b.user_id = %s 
+        ORDER BY b.created_at DESC 
         LIMIT 5
     """, (user_id,))
     recent_bookings = cur.fetchall()
@@ -406,10 +467,13 @@ def admin_manage_user(user_id):
         first_name = request.form.get('first_name')
         last_name = request.form.get('last_name')
         phone = request.form.get('phone')
-        role = request.form.get('role')
+        role = request.form.get('role', 'user')
         new_password = request.form.get('new_password')
         confirm_password = request.form.get('confirm_password')
-        
+
+        if role not in ('user', 'admin'):
+            role = 'user'
+
         cur.execute("""
             UPDATE users 
             SET first_name = %s, last_name = %s, phone = %s, role = %s
@@ -423,9 +487,15 @@ def admin_manage_user(user_id):
             flash('Password updated successfully', 'success')
         
         mysql.connection.commit()
+        cur.close()
         flash('User updated successfully!', 'success')
+        return redirect(url_for('admin_manage_user', user_id=user_id))
     
     cur.close()
+    if not user:
+        flash('User not found.', 'danger')
+        return redirect(url_for('admin_users'))
+
     return render_template('admin/user_profile.html', 
                          user=user, 
                          stats=stats, 
@@ -473,6 +543,12 @@ def admin_delete_user(user_id):
     
     cur = mysql.connection.cursor()
     
+    # Remove dependent records first so no orphaned payments remain.
+    cur.execute("""
+        DELETE p FROM payments p
+        JOIN bookings b ON p.booking_id = b.id
+        WHERE b.user_id = %s
+    """, (user_id,))
     cur.execute("DELETE FROM bookings WHERE user_id = %s", (user_id,))
     
     # Delete user
@@ -915,14 +991,19 @@ def payment_details(payment_id):
         return jsonify({'error': 'Payment not found'}), 404
     
     status = payment.get("status", "pending")
+    payment_method_display = (payment.get("payment_method") or "Not selected").replace('_', ' ').upper()
+    payment_created = payment.get("created_at")
+    payment_created_display = (
+        payment_created.strftime('%d %b %Y %H:%M') if hasattr(payment_created, 'strftime')
+        else (payment_created or 'N/A')
+    )
     
     image_html = ""
     if payment.get('proof_image'):
         if 'qris_simulated' in payment['proof_image']:
             image_html = '<p class="text-sm text-gray-600 mb-2">QRIS Payment (Simulated)</p>'
         else:
-
-            image_url = url_for('uploaded_file', filename=payment['proof_image'], _external=True)
+            image_url = payment_proof_url(payment['proof_image'])
             
             image_html = f'''
             <div class="text-center">
@@ -955,7 +1036,7 @@ def payment_details(payment_id):
                 </div>
                 <div class="flex justify-between">
                     <span class="text-gray-600">Payment Method:</span>
-                    <span class="font-medium">{payment["payment_method"].upper()}</span>
+                    <span class="font-medium">{payment_method_display}</span>
                 </div>
                 <div class="flex justify-between">
                     <span class="text-gray-600">Amount:</span>
@@ -967,7 +1048,7 @@ def payment_details(payment_id):
                 </div>
                 <div class="flex justify-between">
                     <span class="text-gray-600">Payment Date:</span>
-                    <span>{payment.get("created_at").strftime('%d %b %Y %H:%M')}</span>
+                    <span>{payment_created_display}</span>
                 </div>
             </div>
             
@@ -1068,6 +1149,7 @@ def verify_payment(payment_id):
     booking_id = result['booking_id']
     room_id = result['room_id']
     current_payment_status = result['payment_status']
+    current_booking_status = result['booking_status']
     
     if current_payment_status in ['completed', 'failed']:
         return jsonify({'success': False, 'error': f'Payment already {current_payment_status}'})
@@ -1092,15 +1174,14 @@ def verify_payment(payment_id):
             new_payment_status = 'failed'
             new_booking_status = 'cancelled'
             
-            cur.execute("""
-                UPDATE rooms 
-                SET available_count = LEAST(room_count, available_count + 1),
-                    is_available = CASE 
-                        WHEN available_count + 1 > 0 THEN 1 
-                        ELSE 0 
-                    END
-                WHERE id = %s
-            """, (room_id,))
+            # Only return the room to inventory if the booking still holds a reservation.
+            if current_booking_status not in ('cancelled', 'expired', 'completed'):
+                cur.execute("""
+                    UPDATE rooms 
+                    SET available_count = LEAST(room_count, available_count + 1),
+                        is_available = 1
+                    WHERE id = %s
+                """, (room_id,))
             
         else:
             return jsonify({'success': False, 'error': 'Invalid action'})

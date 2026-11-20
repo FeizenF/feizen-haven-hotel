@@ -79,58 +79,7 @@
         
         <!-- Action Buttons -->
 <div class="space-y-4">
-    <!-- TOMBOL PAY NOW - LOGIC YANG BENAR -->
-    {% if booking.payment_status not in ['verified', 'paid', 'completed'] and booking.status in ['pending', 'waiting_payment'] %}
-    <a href="{{ url_for('booking_payment', booking_id=booking.id) }}" 
-       class="w-full inline-flex justify-center items-center py-4 px-6 border border-transparent text-lg font-bold rounded-lg text-white bg-gradient-to-r from-gold to-yellow-500 hover:from-gold/90 hover:to-yellow-500/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gold shadow-lg hover:shadow-xl transition-all duration-300">
-        PAY NOW - {{ booking.formatted_price if booking.formatted_price else 'Rp{:,.0f}'.format(booking.total_price) }}
-    </a>
-    
-    <!-- Payment Timer Info -->
-    <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
-        <div class="flex items-center">
-            <i class="fas fa-clock text-blue-600 mr-3"></i>
-            <div>
-                <p class="font-medium text-blue-800">Complete payment within {{ booking.hours_left if booking.hours_left else '24' }} hours</p>
-                <p class="text-sm text-blue-700">After this time, booking will be automatically cancelled</p>
-            </div>
-        </div>
-    </div>
-    
-    {% elif booking.payment_status in ['waiting_verification', 'pending'] %}
-    <!-- Payment sedang diverifikasi -->
-    <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-6">
-        <div class="flex items-center">
-            <div class="w-12 h-12 bg-yellow-100 rounded-full flex items-center justify-center mr-4">
-                <i class="fas fa-clock text-yellow-600 text-xl"></i>
-            </div>
-            <div class="flex-1">
-                <h4 class="font-bold text-yellow-800 text-lg">Payment Proof Uploaded ✓</h4>
-                <p class="text-yellow-700 mb-3">Waiting for admin verification (1-2 hours)</p>
-                <a href="{{ url_for('booking_payment', booking_id=booking.id) }}" 
-                   class="inline-flex items-center px-4 py-2 bg-yellow-100 text-yellow-800 hover:bg-yellow-200 rounded-lg font-medium transition-colors">
-                    <i class="fas fa-redo mr-2"></i>
-                    Upload New Proof
-                </a>
-            </div>
-        </div>
-    </div>
-    
-    {% elif booking.status == 'confirmed' or booking.payment_status in ['verified', 'paid', 'completed'] %}
-    <!-- Sudah dibayar -->
-    <div class="bg-green-50 border border-green-200 rounded-lg p-6">
-        <div class="flex items-center">
-            <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mr-4">
-                <i class="fas fa-check-circle text-green-600 text-xl"></i>
-            </div>
-            <div>
-                <h4 class="font-bold text-green-800 text-lg">Payment Completed ✓</h4>
-                <p class="text-green-700">Your booking is confirmed and ready for check-in</p>
-            </div>
-        </div>
-    </div>
-    
-    {% elif booking.status == 'cancelled' or booking.status == 'expired' %}
+    {% if booking.status == 'cancelled' or booking.status == 'expired' %}
     <!-- Dibatalkan/expired -->
     <div class="bg-red-50 border border-red-200 rounded-lg p-6">
         <div class="flex items-center">
@@ -151,6 +100,57 @@
                     <i class="fas fa-bed mr-2"></i>
                     Book New Room
                 </a>
+            </div>
+        </div>
+    </div>
+
+    {% elif booking.status == 'confirmed' or booking.payment_status in ['completed', 'paid', 'verified'] %}
+    <!-- Sudah dibayar -->
+    <div class="bg-green-50 border border-green-200 rounded-lg p-6">
+        <div class="flex items-center">
+            <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mr-4">
+                <i class="fas fa-check-circle text-green-600 text-xl"></i>
+            </div>
+            <div>
+                <h4 class="font-bold text-green-800 text-lg">Payment Completed ✓</h4>
+                <p class="text-green-700">Your booking is confirmed and ready for check-in</p>
+            </div>
+        </div>
+    </div>
+
+    {% elif booking.payment_status == 'processing' %}
+    <!-- Payment sedang diverifikasi -->
+    <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-6">
+        <div class="flex items-center">
+            <div class="w-12 h-12 bg-yellow-100 rounded-full flex items-center justify-center mr-4">
+                <i class="fas fa-clock text-yellow-600 text-xl"></i>
+            </div>
+            <div class="flex-1">
+                <h4 class="font-bold text-yellow-800 text-lg">Payment Proof Uploaded ✓</h4>
+                <p class="text-yellow-700 mb-3">Waiting for admin verification (1-2 hours)</p>
+                <a href="{{ url_for('booking_payment', booking_id=booking.id) }}" 
+                   class="inline-flex items-center px-4 py-2 bg-yellow-100 text-yellow-800 hover:bg-yellow-200 rounded-lg font-medium transition-colors">
+                    <i class="fas fa-redo mr-2"></i>
+                    Upload New Proof
+                </a>
+            </div>
+        </div>
+    </div>
+
+    {% elif booking.status in ['pending', 'waiting_payment'] %}
+    <!-- TOMBOL PAY NOW -->
+    <a href="{{ url_for('booking_payment', booking_id=booking.id) }}" 
+       class="w-full inline-flex justify-center items-center py-4 px-6 border border-transparent text-lg font-bold rounded-lg text-white bg-gradient-to-r from-gold to-yellow-500 hover:from-gold/90 hover:to-yellow-500/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gold shadow-lg hover:shadow-xl transition-all duration-300">
+        PAY NOW - {{ booking.formatted_price if booking.formatted_price else 'Rp{:,.0f}'.format(booking.total_price) }}
+    </a>
+    
+    <!-- Payment Timer Info -->
+    <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+        <div class="flex items-center">
+            <i class="fas fa-clock text-blue-600 mr-3"></i>
+            <div>
+                <p class="font-medium text-blue-800">Complete payment within {{ booking.hours_left if booking.hours_left else '24' }} hours</p>
+                <p class="text-sm text-blue-700">After this time, booking will be automatically cancelled</p>
             </div>
         </div>
     </div>

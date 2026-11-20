@@ -41,10 +41,10 @@
                                     <div class="flex-shrink-0 h-10 w-10">
                                         {% if room.images %}
                                         {% set first_image = room.images.split(',')[0] if room.images else '' %}
-                                        <img class="h-10 w-10 rounded-full object-cover" 
-                                             src="{{ url_for('static', filename='uploads/rooms/' + first_image) }}" 
+                                        <img class="h-10 w-10 rounded-full object-cover"
+                                             src="{{ room.main_image if room.main_image else '/static/images/rooms/default.jpg' }}"
                                              alt="{{ room.name }}"
-                                             onerror="this.src='https://via.placeholder.com/40'">
+                                             onerror="this.src='/static/images/rooms/default.jpg'">
                                         {% else %}
                                         <div class="h-10 w-10 bg-gray-200 rounded-full flex items-center justify-center">
                                             <i class="fas fa-image text-gray-400"></i>

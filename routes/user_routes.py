@@ -1,7 +1,6 @@
-from flask import render_template, request, redirect, url_for, flash, session
+from flask import render_template, request, redirect, url_for, flash, session, jsonify
 from config import app, mysql
-from models import login_required
-import json
+from models import login_required, admin_required
 from datetime import datetime, timedelta
 
 @app.route('/profile')
@@ -198,7 +197,16 @@ def my_bookings():
                         SET status = 'expired', updated_at = NOW() 
                         WHERE id = %s AND status = 'waiting_payment'
                     """, (booking_dict['id'],))
-                    
+
+                    if cur2.rowcount > 0:
+                        # Return the reserved room to the inventory exactly once.
+                        cur2.execute("""
+                            UPDATE rooms
+                            SET available_count = LEAST(room_count, available_count + 1),
+                                is_available = 1
+                            WHERE id = %s
+                        """, (booking_dict['room_id'],))
+
                     if booking_dict.get('payment_status') in ['pending', 'processing']:
                         cur2.execute("""
                             UPDATE payments 
@@ -213,6 +221,7 @@ def my_bookings():
                     booking_dict['payment_status'] = 'expired'
                     
                 except Exception as e:
+                    mysql.connection.rollback()
                     print(f"Error auto-expiring booking {booking_dict['id']}: {e}")
         else:
             total_seconds = int(time_left.total_seconds())
@@ -268,7 +277,7 @@ def my_bookings():
         elif payment_status == 'processing':
             booking_dict['payment_status_bg_color'] = 'bg-yellow-100'
             booking_dict['payment_status_text_color'] = 'text-yellow-800'
-        elif payment_status in ['failed', 'expired']:
+        elif payment_status in ['failed', 'expired', 'cancelled']:
             booking_dict['payment_status_bg_color'] = 'bg-red-100'
             booking_dict['payment_status_text_color'] = 'text-red-800'
         elif payment_status == 'pending':
@@ -363,21 +372,31 @@ def cancel_booking(booking_id):
     return redirect(url_for('my_bookings'))
 
 @app.route('/users')
+@admin_required
 def get_users():
-    """Get all users - pure JSON response (like SQLAlchemy but with MySQLdb)"""
+    """Get all users as JSON (admin only). Password hashes are never exposed."""
     try:
-
         cur = mysql.connection.cursor()
-        cur.execute("SELECT * FROM users")
+        cur.execute("""
+            SELECT id, first_name, last_name, email, phone, role, created_at, updated_at
+            FROM users
+            ORDER BY created_at DESC
+        """)
         users = cur.fetchall()
         cur.close()
-        
-        return {
+
+        users = [dict(user) for user in users]
+        for user in users:
+            for field in ('created_at', 'updated_at'):
+                if user.get(field) and hasattr(user[field], 'isoformat'):
+                    user[field] = user[field].isoformat()
+
+        return jsonify({
             'users': users,
             'count': len(users),
             'message': 'Data fetched successfully using MySQLdb',
             'technology': 'Flask-MySQLdb',
             'format': 'JSON (no HTML)'
-        }
+        })
     except Exception as e:
-        return {'error': str(e)}, 500
+        return jsonify({'error': str(e)}), 500

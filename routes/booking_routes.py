@@ -1,5 +1,4 @@
-from flask import render_template, request, redirect, url_for, flash, session, jsonify, send_from_directory, send_file
-from flask import render_template, request, redirect, url_for, flash, session, jsonify, send_from_directory, send_file
+from flask import render_template, request, redirect, url_for, flash, session, jsonify
 from config import app, mysql
 from models import login_required, allowed_file
 import os
@@ -8,7 +7,9 @@ import json
 import time
 import uuid
 from werkzeug.utils import secure_filename
-from models import allowed_file
+
+PAYMENT_UPLOAD_DIR = os.path.join('static', 'uploads', 'payments')
+PAYMENT_UPLOAD_PREFIX = 'uploads/payments'
 
 # =============== BOOKING ROUTES ===============
 @app.route('/book', methods=['GET', 'POST'])
@@ -18,7 +19,10 @@ def book():
         room_id = request.form.get('room_id')
         check_in = request.form.get('check_in')
         check_out = request.form.get('check_out')
-        guests = int(request.form.get('guests', 2))
+        try:
+            guests = int(request.form.get('guests', 2))
+        except (TypeError, ValueError):
+            guests = 2
         special_requests = request.form.get('special_requests', '')
         
         cur = mysql.connection.cursor()
@@ -60,6 +64,11 @@ def book():
                 check_in_date = datetime.strptime(check_in, '%Y-%m-%d')
                 check_out_date = datetime.strptime(check_out, '%Y-%m-%d')
                 
+                if check_in_date.date() < datetime.now().date():
+                    flash('Check-in date cannot be in the past.', 'danger')
+                    cur.close()
+                    return redirect(url_for('book', room_id=room_id))
+
                 if check_out_date <= check_in_date:
                     flash('Check-out date must be after check-in date.', 'danger')
                     cur.close()
@@ -140,7 +149,7 @@ def book():
             cur.execute("""
                 INSERT INTO payments 
                 (booking_id, amount, payment_method, status, expiration_date)
-                VALUES (%s, %s, 'pending', 'pending', %s)
+                VALUES (%s, %s, NULL, 'pending', %s)
             """, (booking_id, total_price, expiration_date))
             
             new_available_count = current_available - 1
@@ -395,41 +404,6 @@ def booking_success(booking_id):
     
     return render_template('booking/success.html', booking=booking)
 
-def fix_payment_paths():
-    cur = mysql.connection.cursor()
-    
-    cur.execute("SELECT id, proof_image FROM payments WHERE proof_image IS NOT NULL")
-    payments = cur.fetchall()
-    
-    for payment in payments:
-        old_path = payment['proof_image']
-        payment_id = payment['id']
-        
-        if not old_path:
-            continue
-        
-        if old_path.startswith('static/'):
-            print(f"✅ Payment {payment_id}: Path sudah benar - {old_path}")
-            continue
-        
-        if '/' not in old_path:
-            new_path = f"images/uploads/payments/{old_path}"
-            print(f"🔄 Payment {payment_id}: Update '{old_path}' -> '{new_path}'")
-            
-            cur.execute("UPDATE payments SET proof_image = %s WHERE id = %s", 
-                       (new_path, payment_id))
-        
-        elif 'static/images/uploads/payments/' in old_path:
-            new_path = old_path.replace('static/', '')
-            print(f"🔄 Payment {payment_id}: Fix static path '{old_path}' -> '{new_path}'")
-            
-            cur.execute("UPDATE payments SET proof_image = %s WHERE id = %s", 
-                       (new_path, payment_id))
-    
-    mysql.connection.commit()
-    cur.close()
-    print("Migration completed!")
-
 @app.route('/booking/payment/<int:booking_id>', methods=['GET', 'POST'])
 @login_required
 def booking_payment(booking_id):
@@ -478,8 +452,8 @@ def booking_payment(booking_id):
         payment_status = payment_dict.get('status')
         
         allowed_statuses = ['pending', 'failed', 'expired']
-        completed_statuses = ['completed', 'processing']
-        
+        completed_statuses = ['completed']
+
         if payment_status in completed_statuses:
             flash('Payment already submitted for this booking.', 'info')
             cur.close()
@@ -552,10 +526,10 @@ def handle_ajax_payment(booking_id, booking, cur):
         filename = generate_payment_filename(booking_id, payment_method, proof_file.filename, qris_simulated)
         
         # Create directory jika belum ada
-        uploads_dir = os.path.join('uploads', 'payments')
-        os.makedirs(uploads_dir, exist_ok=True)
-        
-        filepath = os.path.join(uploads_dir, filename)
+        os.makedirs(PAYMENT_UPLOAD_DIR, exist_ok=True)
+
+        filepath = os.path.join(PAYMENT_UPLOAD_DIR, filename)
+        stored_path = f"{PAYMENT_UPLOAD_PREFIX}/{filename}"
         
         try:
             # Save file
@@ -572,7 +546,10 @@ def handle_ajax_payment(booking_id, booking, cur):
             # Start transaction
             try:
                 cur.execute("START TRANSACTION")
-                if cur.execute("SELECT id FROM payments WHERE booking_id = %s", (booking_id,)):
+                cur.execute("SELECT id FROM payments WHERE booking_id = %s", (booking_id,))
+                existing = cur.fetchone()
+
+                if existing:
                     # Update existing payment
                     cur.execute("""
                         UPDATE payments 
@@ -583,7 +560,7 @@ def handle_ajax_payment(booking_id, booking, cur):
                             expiration_date = %s,
                             updated_at = NOW()
                         WHERE booking_id = %s
-                    """, (booking.get('total_price', 0), payment_method, filename, 
+                    """, (booking.get('total_price', 0), payment_method, stored_path, 
                           payment_status, expiration_date, booking_id))
                 else:
                     # Insert new payment record
@@ -591,7 +568,7 @@ def handle_ajax_payment(booking_id, booking, cur):
                         INSERT INTO payments (booking_id, amount, payment_method, proof_image, 
                                             status, expiration_date, created_at)
                         VALUES (%s, %s, %s, %s, %s, %s, NOW())
-                    """, (booking_id, booking.get('total_price', 0), payment_method, filename, 
+                    """, (booking_id, booking.get('total_price', 0), payment_method, stored_path, 
                           payment_status, expiration_date))
                 
                 # Update booking status
@@ -650,13 +627,13 @@ def handle_form_payment(booking_id, booking, cur):
     if payment_method not in valid_methods:
         flash('Invalid payment method.', 'danger')
         cur.close()
-        return render_template('booking/payment.html', booking=booking)
+        return redirect(url_for('booking_payment', booking_id=booking_id))
     
     # Validasi file upload
     if 'payment_proof' not in request.files:
         flash('No file selected.', 'danger')
         cur.close()
-        return render_template('booking/payment.html', booking=booking)
+        return redirect(url_for('booking_payment', booking_id=booking_id))
     
     proof_file = request.files['payment_proof']
     
@@ -664,13 +641,13 @@ def handle_form_payment(booking_id, booking, cur):
     if proof_file.filename == '':
         flash('No file selected.', 'danger')
         cur.close()
-        return render_template('booking/payment.html', booking=booking)
+        return redirect(url_for('booking_payment', booking_id=booking_id))
     
     # Check file extension
     if not allowed_file(proof_file.filename):
         flash('Invalid file type. Please upload JPG, PNG, or PDF.', 'danger')
         cur.close()
-        return render_template('booking/payment.html', booking=booking)
+        return redirect(url_for('booking_payment', booking_id=booking_id))
     
     # Check file size (max 5MB)
     proof_file.seek(0, os.SEEK_END)
@@ -680,15 +657,16 @@ def handle_form_payment(booking_id, booking, cur):
     if file_size > 5 * 1024 * 1024:  # 5MB
         flash('File size must be less than 5MB.', 'danger')
         cur.close()
-        return render_template('booking/payment.html', booking=booking)
+        return redirect(url_for('booking_payment', booking_id=booking_id))
     
     # Generate unique filename
     filename = generate_payment_filename(booking_id, payment_method, proof_file.filename, qris_simulated)
     
-    uploads_dir = os.path.join('uploads', 'payments')
+    uploads_dir = PAYMENT_UPLOAD_DIR
     os.makedirs(uploads_dir, exist_ok=True)
-    
+
     filepath = os.path.join(uploads_dir, filename)
+    stored_path = f"{PAYMENT_UPLOAD_PREFIX}/{filename}"
     
     try:
         # Save file
@@ -705,8 +683,10 @@ def handle_form_payment(booking_id, booking, cur):
         # Start transaction
         try:
             cur.execute("START TRANSACTION")
+            cur.execute("SELECT id FROM payments WHERE booking_id = %s", (booking_id,))
+            existing = cur.fetchone()
 
-            if cur.execute("SELECT id FROM payments WHERE booking_id = %s", (booking_id,)):
+            if existing:
                 cur.execute("""
                     UPDATE payments 
                     SET amount = %s, 
@@ -716,7 +696,7 @@ def handle_form_payment(booking_id, booking, cur):
                         expiration_date = %s,
                         updated_at = NOW()
                     WHERE booking_id = %s
-                """, (booking.get('total_price', 0), payment_method, filename, 
+                """, (booking.get('total_price', 0), payment_method, stored_path, 
                       payment_status, expiration_date, booking_id))
             else:
                 # Insert new payment record
@@ -724,7 +704,7 @@ def handle_form_payment(booking_id, booking, cur):
                     INSERT INTO payments (booking_id, amount, payment_method, proof_image, 
                                         status, expiration_date, created_at)
                     VALUES (%s, %s, %s, %s, %s, %s, NOW())
-                """, (booking_id, booking.get('total_price', 0), payment_method, filename, 
+                """, (booking_id, booking.get('total_price', 0), payment_method, stored_path, 
                       payment_status, expiration_date))
             
             # Update booking status
@@ -764,13 +744,13 @@ def handle_form_payment(booking_id, booking, cur):
             print(f"Database error: {db_error}")
             flash(f'Payment processing failed: {str(db_error)}', 'danger')
             cur.close()
-            return render_template('booking/payment.html', booking=booking)
+            return redirect(url_for('booking_payment', booking_id=booking_id))
             
     except Exception as file_error:
         print(f"File save error: {file_error}")
         flash(f' Failed to save payment proof: {str(file_error)}', 'danger')
         cur.close()
-        return render_template('booking/payment.html', booking=booking)
+        return redirect(url_for('booking_payment', booking_id=booking_id))
 
 def generate_payment_filename(booking_id, payment_method, original_filename, qris_simulated):
     """Generate unique filename for payment proof"""
