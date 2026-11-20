@@ -541,7 +541,7 @@ def create_booking_api():
             cur.execute("""
                 INSERT INTO payments 
                 (booking_id, amount, payment_method, status, expiration_date)
-                VALUES (%s, %s, 'pending', 'pending', %s)
+                VALUES (%s, %s, NULL, 'pending', %s)
             """, (booking_id, total_price, expiration_date))
             
             cur.execute("COMMIT")
@@ -605,15 +605,13 @@ def cancel_user_booking(booking_id):
         cur.execute("START TRANSACTION")
         
         try:
-            # Update booking dengan kolom baru
+            # Update booking - safe for schemas without cancelled_at/cancellation_reason columns
             cur.execute("""
                 UPDATE bookings 
                 SET status = 'cancelled',
-                    cancelled_at = NOW(),
-                    cancellation_reason = %s,
                     updated_at = NOW()
                 WHERE id = %s
-            """, (cancellation_reason, booking_id))
+            """, (booking_id,))
             
             # Update room availability
             room_id = booking['room_id']
@@ -639,7 +637,7 @@ def cancel_user_booking(booking_id):
             
             # Ambil data terbaru
             cur.execute("""
-                SELECT id, booking_code, status, cancelled_at, cancellation_reason,
+                SELECT id, booking_code, status,
                        check_in, check_out, total_price
                 FROM bookings WHERE id = %s
             """, (booking_id,))
@@ -648,7 +646,7 @@ def cancel_user_booking(booking_id):
             
             # Format response
             response_data = dict(updated_booking)
-            for date_field in ['check_in', 'check_out', 'cancelled_at']:
+            for date_field in ['check_in', 'check_out']:
                 if response_data.get(date_field):
                     response_data[date_field] = format_datetime(response_data[date_field])
             
@@ -836,6 +834,7 @@ def health_check():
 
 # =============== DEBUG ROUTES ===============
 @app.route('/api/debug-csrf', methods=['GET', 'POST'])
+@admin_required
 def debug_csrf():
     return jsonify({
         'success': True,
@@ -845,6 +844,7 @@ def debug_csrf():
     })
 
 @app.route('/api/session-test', methods=['GET'])
+@admin_required
 def session_test():
     return jsonify({
         'success': True,
