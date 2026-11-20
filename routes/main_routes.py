@@ -144,8 +144,6 @@ def contact():
         first_name = request.form.get('first_name', '').strip()
         last_name = request.form.get('last_name', '').strip()
         email = request.form.get('email', '').strip()
-        phone = request.form.get('phone', '').strip()
-        subject = request.form.get('subject', '').strip()
         message = request.form.get('message', '').strip()
         
         name = f"{first_name} {last_name}".strip()
@@ -157,22 +155,9 @@ def contact():
             cur = mysql.connection.cursor()
             try:
                 cur.execute("""
-                    CREATE TABLE IF NOT EXISTS contact_inquiries (
-                        id INT AUTO_INCREMENT PRIMARY KEY,
-                        name VARCHAR(100) NOT NULL,
-                        email VARCHAR(100) NOT NULL,
-                        phone VARCHAR(20),
-                        subject VARCHAR(100),
-                        message TEXT NOT NULL,
-                        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                        status ENUM('new', 'read', 'replied') DEFAULT 'new'
-                    )
-                """)
-                
-                cur.execute("""
-                    INSERT INTO contact_inquiries (name, email, phone, subject, message)
-                    VALUES (%s, %s, %s, %s, %s)
-                """, (name, email, phone, subject, message))
+                    INSERT INTO contact_inquiries (name, email, message)
+                    VALUES (%s, %s, %s)
+                """, (name, email, message))
                 
                 mysql.connection.commit()
                 flash('Your message has been sent successfully! We will contact you soon.', 'success')
