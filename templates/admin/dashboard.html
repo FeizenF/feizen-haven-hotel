@@ -459,7 +459,7 @@
                     <div class="stat-label">Registered Users</div>
                     <div class="stat-detail">
                         <i class="fas fa-user-plus"></i>
-                        {{ recent_users|length }} new this month
+                        {{ recent_users|length }} recent signups
                     </div>
                 </div>
             </div>
@@ -527,13 +527,13 @@
                 </div>
             </a>
             
-            <a href="{{ url_for('admin_settings') if 'admin_settings' in url_map else '#' }}" class="quick-action-card">
+            <a href="{{ url_for('admin_payments') }}" class="quick-action-card">
                 <div class="quick-action-icon">
-                    <i class="fas fa-cog"></i>
+                    <i class="fas fa-credit-card"></i>
                 </div>
                 <div class="quick-action-content">
-                    <h3>Settings</h3>
-                    <p>Configure system settings</p>
+                    <h3>Payments</h3>
+                    <p>Review and verify payments</p>
                 </div>
             </a>
         </div>
