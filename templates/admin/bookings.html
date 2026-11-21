@@ -191,7 +191,7 @@
                                 {% if booking.proof_image and booking.proof_image|length > 5 %}
                                 <div class="mt-2">
                                     <button type="button" 
-                                            onclick="showPaymentProof('{{ booking.proof_image }}', '{{ booking.booking_code or ("FH" + "%04d"|format(booking.id)) }}')"
+                                            onclick="showPaymentProof('{{ booking.proof_url }}', '{{ booking.booking_code or ("FH" + "%04d"|format(booking.id)) }}')"
                                             class="inline-flex items-center px-3 py-1 text-xs bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-colors border border-blue-200 dark:border-blue-800">
                                         <i class="fas fa-file-invoice-dollar mr-1"></i>
                                         View Payment Proof
@@ -260,8 +260,8 @@
                                     </button>
                                     
                                     <!-- Verify Payment Button (if applicable) -->
-                                    {% if booking.final_payment_status in ['waiting_payment', 'processing'] and booking.proof_image %}
-                                    <button onclick="verifyPayment('{{ booking.id }}')"
+                                    {% if booking.payment_id and booking.final_payment_status in ['waiting_payment', 'processing'] and booking.proof_image %}
+                                    <button onclick="verifyPayment('{{ booking.payment_id }}')"
                                             class="px-3 py-1.5 bg-green-600 text-white text-xs font-medium rounded hover:bg-green-700 transition-colors flex items-center justify-center">
                                         <i class="fas fa-check-circle mr-1.5"></i>
                                         Verify Payment
@@ -410,13 +410,14 @@ function showPaymentProof(proofImage, bookingCode) {
     // Buat URL yang benar
     let imageUrl = '';
     
-    if (proofImage.startsWith('http')) {
+    if (/^https?:\/\//.test(proofImage) || proofImage.startsWith('/')) {
         imageUrl = proofImage;
-    } else if (proofImage.includes('/')) {
-        imageUrl = proofImage;
+    } else if (proofImage.startsWith('static/')) {
+        imageUrl = '/' + proofImage;
+    } else if (proofImage.startsWith('uploads/') || proofImage.startsWith('images/') || proofImage.includes('/')) {
+        imageUrl = '/static/' + proofImage;
     } else {
-        // Gunakan route yang sudah diperbaiki
-        imageUrl = `/uploads/payments/${encodeURIComponent(proofImage)}`;
+        imageUrl = `/static/uploads/payments/${encodeURIComponent(proofImage)}`;
     }
     
     console.log('🔗 DEBUG - Image URL:', imageUrl);
@@ -496,12 +497,10 @@ function tryAlternativePaths(paths, index, bookingCode) {
         const content = document.getElementById('paymentProofContent');
         content.innerHTML = `
             <div class="text-center py-8">
-                <i class="fas fa-file-image text-gray-400 text-4xl mb-4"></i>
-                <h4 class="font-semibold text-lg text-gray-900 dark:text-white">Default Payment Image</h4>
-                <p class="text-gray-600 dark:text-gray-400">Original file not found</p>
-                <img src="/static/images/default-payment.jpg" 
-                     alt="Default payment" 
-                     class="max-w-xs mx-auto mt-4 rounded-lg">
+                <i class="fas fa-file-image text-gray-400 text-5xl mb-4"></i>
+                <h4 class="font-semibold text-lg text-gray-900 dark:text-white">Payment Proof Unavailable</h4>
+                <p class="text-gray-600 dark:text-gray-400">The uploaded file could not be found.</p>
+                <p class="text-xs text-gray-500 mt-2">File: ${proofImage}</p>
             </div>
         `;
         return;
@@ -641,18 +640,15 @@ function closeBookingDetailsModal() {
 }
 
 
-async function verifyPayment(bookingId) {
+async function verifyPayment(paymentId) {
+    if (!paymentId) {
+        alert('Payment record not found for this booking');
+        return;
+    }
     if (!confirm('Are you sure you want to verify this payment?')) return;
     
     try {
         const csrfToken = document.querySelector('[name="csrf_token"]').value;
-        
-        const paymentId = await getPaymentIdFromBooking(bookingId);
-        
-        if (!paymentId) {
-            alert('Payment record not found for this booking');
-            return;
-        }
         
         const response = await fetch(`/admin/payment/${paymentId}/verify`, {
             method: 'POST',
