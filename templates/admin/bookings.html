@@ -15,30 +15,36 @@
         <div class="bg-white dark:bg-gray-800 rounded-lg shadow p-6 mb-8">
             <div class="flex flex-wrap gap-4 items-center justify-between">
                 <div class="flex flex-wrap items-center gap-2">
+                    {% set uid = request.args.get('user_id') %}
+                    {% set suffix = ('&user_id=' ~ uid) if uid else '' %}
                     <span class="text-gray-600 dark:text-gray-300">Filter by status:</span>
-                    <a href="{{ url_for('admin_bookings') }}" 
+                    <a href="{{ url_for('admin_bookings') }}{{ ('?user_id=' ~ uid) if uid else '' }}" 
                        class="px-4 py-2 rounded-full {% if status_filter == 'all' %}bg-gold text-navy font-medium{% else %}border dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:border-gold{% endif %} transition-colors">
                         All
                     </a>
-                    <a href="{{ url_for('admin_bookings') }}?status=pending" 
+                    <a href="{{ url_for('admin_bookings') }}?status=pending{{ suffix }}" 
                        class="px-4 py-2 rounded-full {% if status_filter == 'pending' %}bg-yellow-100 text-yellow-800 font-medium{% else %}border dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:border-yellow-500{% endif %} transition-colors">
                         Pending
                     </a>
-                    <a href="{{ url_for('admin_bookings') }}?status=waiting_payment" 
+                    <a href="{{ url_for('admin_bookings') }}?status=waiting_payment{{ suffix }}" 
                        class="px-4 py-2 rounded-full {% if status_filter == 'waiting_payment' %}bg-blue-100 text-blue-800 font-medium{% else %}border dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:border-blue-500{% endif %} transition-colors">
                         Waiting Payment
                     </a>
-                    <a href="{{ url_for('admin_bookings') }}?status=confirmed" 
+                    <a href="{{ url_for('admin_bookings') }}?status=confirmed{{ suffix }}" 
                        class="px-4 py-2 rounded-full {% if status_filter == 'confirmed' %}bg-green-100 text-green-800 font-medium{% else %}border dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:border-green-500{% endif %} transition-colors">
                         Confirmed
                     </a>
-                    <a href="{{ url_for('admin_bookings') }}?status=completed" 
+                    <a href="{{ url_for('admin_bookings') }}?status=completed{{ suffix }}" 
                        class="px-4 py-2 rounded-full {% if status_filter == 'completed' %}bg-purple-100 text-purple-800 font-medium{% else %}border dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:border-purple-500{% endif %} transition-colors">
                         Completed
                     </a>
-                    <a href="{{ url_for('admin_bookings') }}?status=cancelled" 
+                    <a href="{{ url_for('admin_bookings') }}?status=cancelled{{ suffix }}" 
                        class="px-4 py-2 rounded-full {% if status_filter == 'cancelled' %}bg-red-100 text-red-800 font-medium{% else %}border dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:border-red-500{% endif %} transition-colors">
                         Cancelled
+                    </a>
+                    <a href="{{ url_for('admin_bookings') }}?status=expired{{ suffix }}" 
+                       class="px-4 py-2 rounded-full {% if status_filter == 'expired' %}bg-gray-200 text-gray-700 font-medium{% else %}border dark:border-gray-700 text-gray-600 dark:text-gray-300 hover:border-gray-500{% endif %} transition-colors">
+                        Expired
                     </a>
                 </div>
             </div>
