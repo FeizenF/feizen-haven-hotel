@@ -622,9 +622,10 @@ def manage_rooms():
     
     processed_rooms = process_room_images(raw_rooms)
         
-    # TAMBAHKAN booking_count ke hasil processing
+    # TAMBAHKAN booking_count dan daftar amenities ke hasil processing
     for i, room in enumerate(processed_rooms):
         room['booking_count'] = raw_rooms[i].get('booking_count', 0)
+        room['amenities_list'] = parse_amenities_data(room.get('amenities'))
     
     return render_template('admin/manage_rooms.html',
                         rooms=processed_rooms, 
