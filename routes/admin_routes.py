@@ -39,6 +39,15 @@ def admin_dashboard():
         cur.execute("SELECT SUM(available_count) as available FROM rooms WHERE is_available = 1")
         available_result = cur.fetchone()
         available_rooms = available_result['available'] if available_result and available_result['available'] else 0
+
+        # Total room inventory (for occupancy rate)
+        cur.execute("SELECT SUM(room_count) as capacity FROM rooms WHERE is_available = 1")
+        capacity_result = cur.fetchone()
+        total_capacity = capacity_result['capacity'] if capacity_result and capacity_result['capacity'] else 0
+
+        # Completed bookings count (for completion rate)
+        cur.execute("SELECT COUNT(*) as completed FROM bookings WHERE status = 'completed'")
+        completed_bookings = cur.fetchone()['completed'] or 0
         
         # Pending bookings count
         cur.execute("SELECT COUNT(*) as pending FROM bookings WHERE status = 'pending'")
@@ -64,6 +73,11 @@ def admin_dashboard():
         """)
         recent_bookings = cur.fetchall()
         
+        # Derived rates
+        occupancy_rate = round((1 - (available_rooms / total_capacity)) * 100) if total_capacity else 0
+        occupancy_rate = max(0, min(100, occupancy_rate))
+        completion_rate = round((completed_bookings / total_bookings) * 100) if total_bookings else 0
+
         # Recent users
         cur.execute("""
             SELECT id, first_name, last_name, email, created_at 
@@ -77,6 +91,7 @@ def admin_dashboard():
         print(f"Error fetching dashboard data: {e}")
         total_rooms = total_bookings = total_users = total_revenue = 0
         available_rooms = pending_bookings = today_bookings = 0
+        occupancy_rate = completion_rate = 0
         recent_bookings = []
         recent_users = []
     
@@ -91,6 +106,8 @@ def admin_dashboard():
                          available_rooms=available_rooms,
                          pending_bookings=pending_bookings,
                          today_bookings=today_bookings,
+                         occupancy_rate=occupancy_rate,
+                         completion_rate=completion_rate,
                          recent_bookings=recent_bookings,
                          recent_users=recent_users)
 
