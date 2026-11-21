@@ -467,15 +467,29 @@ def admin_manage_user(user_id):
     user = cur.fetchone()
     
     if request.method == 'POST':
-        first_name = request.form.get('first_name')
-        last_name = request.form.get('last_name')
-        phone = request.form.get('phone')
+        first_name = (request.form.get('first_name') or '').strip()
+        last_name = (request.form.get('last_name') or '').strip()
+        phone = (request.form.get('phone') or '').strip()
         role = request.form.get('role', 'user')
-        new_password = request.form.get('new_password')
-        confirm_password = request.form.get('confirm_password')
+        new_password = request.form.get('new_password') or ''
+        confirm_password = request.form.get('confirm_password') or ''
+
+        if not first_name or not last_name:
+            flash('First name and last name are required.', 'error')
+            cur.close()
+            return redirect(url_for('admin_manage_user', user_id=user_id))
 
         if role not in ('user', 'admin'):
             role = 'user'
+
+        # An admin must not lock themselves out by demoting their own account.
+        if user_id == session.get('user_id'):
+            role = 'admin'
+
+        if new_password and new_password != confirm_password:
+            flash('Password confirmation does not match. Password was not changed.', 'error')
+            cur.close()
+            return redirect(url_for('admin_manage_user', user_id=user_id))
 
         cur.execute("""
             UPDATE users 
@@ -483,7 +497,7 @@ def admin_manage_user(user_id):
             WHERE id = %s
         """, (first_name, last_name, phone, role, user_id))
         
-        if new_password and confirm_password and new_password == confirm_password:
+        if new_password:
             hashed_password = generate_password_hash(new_password)
             cur.execute("UPDATE users SET password = %s WHERE id = %s", 
                        (hashed_password, user_id))
@@ -509,13 +523,29 @@ def admin_manage_user(user_id):
 @admin_required
 def admin_create_user():
     if request.method == 'POST':
-        first_name = request.form.get('first_name')
-        last_name = request.form.get('last_name')
-        email = request.form.get('email')
-        phone = request.form.get('phone')
+        first_name = (request.form.get('first_name') or '').strip()
+        last_name = (request.form.get('last_name') or '').strip()
+        email = (request.form.get('email') or '').strip().lower()
+        phone = (request.form.get('phone') or '').strip()
         role = request.form.get('role', 'user')
-        password = request.form.get('password')
-        
+        password = request.form.get('password') or ''
+        confirm_password = request.form.get('confirm_password') or ''
+
+        if role not in ('user', 'admin'):
+            role = 'user'
+
+        if not first_name or not last_name or not email or not password:
+            flash('First name, last name, email and password are required.', 'error')
+            return redirect(url_for('admin_create_user'))
+
+        if confirm_password and password != confirm_password:
+            flash('Passwords do not match.', 'error')
+            return redirect(url_for('admin_create_user'))
+
+        if len(password) < 6:
+            flash('Password must be at least 6 characters.', 'error')
+            return redirect(url_for('admin_create_user'))
+
         cur = mysql.connection.cursor()
         cur.execute("SELECT id FROM users WHERE email = %s", (email,))
         if cur.fetchone():
