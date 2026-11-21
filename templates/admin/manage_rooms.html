@@ -91,7 +91,7 @@
                                                  alt="{{ room.name }}"
                                                  class="w-full h-full object-cover"
                                                  loading="lazy"
-                                                 onerror="this.src='{{ url_for('static', filename='images/default-room.jpg') }}';">
+                                                 onerror="this.src='{{ url_for('static', filename='images/rooms/default.jpg') }}';">
                                         {% else %}
                                             <div class="w-full h-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
                                                 <i class="fas fa-bed text-gray-400 text-sm"></i>
@@ -154,17 +154,12 @@
                                         <span>{{ room.available_count }} available</span>
                                     </div>
                                     
-                                    {% if room.amenities %}
+                                    {% if room.amenities_list %}
                                     <div class="pt-2 border-t border-gray-100 dark:border-gray-700">
-                                        {% set amenities_list = [] %}
-                                        {% if room.amenities is string %}
-                                            {% set amenities_list = room.amenities.split(',') %}
-                                        {% endif %}
-                                        
-                                        <button onclick="showAmenitiesModal('{{ room.id }}', '{{ room.name|tojson }}', '{{ room.amenities|tojson }}')"
+                                        <button onclick='showAmenitiesModal({{ room.id }}, {{ room.name|tojson }}, {{ room.amenities_list|tojson }})'
                                                 class="text-xs text-blue-600 dark:text-blue-400 hover:underline flex items-center">
                                             <i class="fas fa-star mr-1.5 text-[10px] text-yellow-500"></i>
-                                            {{ amenities_list|length }} amenities
+                                            {{ room.amenities_list|length }} amenities
                                         </button>
                                     </div>
                                     {% endif %}
@@ -232,7 +227,7 @@
                                         </button>
                                         
                                         <!-- Delete -->
-                                        <button onclick="showDeleteModal('{{ room.id }}', '{{ room.name|tojson }}')"
+                                        <button onclick='showDeleteModal({{ room.id }}, {{ room.name|tojson }})'
                                                 class="px-2 py-1.5 bg-red-600 hover:bg-red-700 text-white text-xs font-medium rounded 
                                                        transition-colors flex items-center justify-center">
                                             <i class="fas fa-trash mr-1 text-[10px]"></i>
@@ -330,7 +325,7 @@
                 <i class="fas fa-exclamation-triangle text-red-600 dark:text-red-400 text-2xl"></i>
             </div>
             <h3 class="text-xl font-bold mb-2 text-gray-900 dark:text-white">Delete Room</h3>
-            <p class="text-gray-600 dark:text-gray-300 mb-4">
+            <p id="deleteRoomMessage" class="text-gray-600 dark:text-gray-300 mb-4">
                 Are you sure you want to delete this room?
             </p>
             <p class="text-sm text-red-600 dark:text-red-400 mb-6">
@@ -389,14 +384,20 @@ function toggleAmenities(roomId) {
 }
 
 // Show amenities modal
-function showAmenitiesModal(roomId, roomName, amenitiesString) {
-    // Parse amenities
+function showAmenitiesModal(roomId, roomName, amenitiesData) {
+    // Normalize amenities into an array of strings
     let amenities = [];
-    if (amenitiesString) {
-        if (typeof amenitiesString === 'string') {
-            amenities = amenitiesString.split(',').map(a => a.trim()).filter(a => a);
+    if (Array.isArray(amenitiesData)) {
+        amenities = amenitiesData;
+    } else if (typeof amenitiesData === 'string' && amenitiesData.trim()) {
+        try {
+            const parsed = JSON.parse(amenitiesData);
+            amenities = Array.isArray(parsed) ? parsed : amenitiesData.split(',');
+        } catch (e) {
+            amenities = amenitiesData.split(',');
         }
     }
+    amenities = amenities.map(a => String(a).trim()).filter(a => a);
     
     // Update modal title
     document.getElementById('amenitiesModalTitle').textContent = `${roomName} - Amenities`;
@@ -468,9 +469,15 @@ function showDeleteModal(roomId, roomName) {
     const form = document.getElementById('deleteForm');
     form.action = `/admin/room/delete/${roomId}`;
     
-    // Update modal content
-    document.querySelector('#deleteModal h3').nextElementSibling.innerHTML = 
-        `Are you sure you want to delete <strong>"${roomName}"</strong>?`;
+    // Update modal content safely
+    const messageEl = document.getElementById('deleteRoomMessage');
+    if (messageEl) {
+        messageEl.textContent = 'Are you sure you want to delete ';
+        const strong = document.createElement('strong');
+        strong.textContent = `"${roomName}"`;
+        messageEl.appendChild(strong);
+        messageEl.appendChild(document.createTextNode('?'));
+    }
     
     // Show modal
     const modal = document.getElementById('deleteModal');
