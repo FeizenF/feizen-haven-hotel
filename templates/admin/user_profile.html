@@ -161,11 +161,11 @@
                                 </select>
                             </div>
                             <div>
-                                <label class="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">Account Status</label>
+                                <label class="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">Member Since</label>
                                 <div class="flex items-center h-full">
-                                    <span class="px-3 py-2 rounded-lg {% if user.is_active %}bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300{% else %}bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300{% endif %}">
-                                        <i class="fas {% if user.is_active %}fa-check-circle{% else %}fa-times-circle{% endif %} mr-2"></i>
-                                        {{ 'Active' if user.is_active else 'Inactive' }}
+                                    <span class="px-3 py-2 rounded-lg bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300">
+                                        <i class="fas fa-calendar-alt mr-2"></i>
+                                        {{ user.created_at.strftime('%d %b %Y') if user.created_at else 'N/A' }}
                                     </span>
                                 </div>
                             </div>
