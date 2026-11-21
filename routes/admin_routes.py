@@ -153,70 +153,56 @@ def change_password():
 @admin_required
 def admin_bookings():
     status_filter = request.args.get('status', 'all')
+    user_filter = request.args.get('user_id', type=int)
     cur = mysql.connection.cursor()
-    
-    if status_filter == 'all':
-        cur.execute("""
-            SELECT 
-                b.id, 
-                b.booking_code, 
-                b.status, 
-                b.total_price, 
-                b.guests,
-                b.check_in,
-                b.check_out,
-                b.created_at,
-                b.special_requests,
-                b.admin_notes,
-                b.payment_status as booking_payment_status,
-                u.first_name, 
-                u.last_name, 
-                u.email, 
-                u.phone,
-                r.name as room_name,
-                p.status as payment_table_status,
-                p.proof_image,
-                p.payment_method,
-                COALESCE(p.status, b.payment_status, 'pending') as final_payment_status,
-                p.id as payment_id
-            FROM bookings b
-            JOIN users u ON b.user_id = u.id
-            JOIN rooms r ON b.room_id = r.id
-            LEFT JOIN payments p ON b.id = p.booking_id
-            ORDER BY b.created_at DESC
-        """)
-    else:
-        cur.execute("""
-            SELECT 
-                b.id, 
-                b.booking_code, 
-                b.status, 
-                b.total_price, 
-                b.guests,
-                b.check_in,
-                b.check_out,
-                b.created_at,
-                b.special_requests,
-                b.admin_notes,
-                b.payment_status as booking_payment_status,
-                u.first_name, 
-                u.last_name, 
-                u.email, 
-                u.phone,
-                r.name as room_name,
-                p.status as payment_table_status,
-                p.proof_image,
-                p.payment_method,
-                COALESCE(p.status, b.payment_status, 'pending') as final_payment_status,
-                p.id as payment_id
-            FROM bookings b
-            JOIN users u ON b.user_id = u.id
-            JOIN rooms r ON b.room_id = r.id
-            LEFT JOIN payments p ON b.id = p.booking_id
-            WHERE b.status = %s
-            ORDER BY b.created_at DESC
-        """, (status_filter,))
-        
+
+    conditions = []
+    params = []
+
+    if status_filter and status_filter != 'all':
+        conditions.append("b.status = %s")
+        params.append(status_filter)
+
+    if user_filter:
+        conditions.append("b.user_id = %s")
+        params.append(user_filter)
+
+    query = """
+        SELECT 
+            b.id, 
+            b.booking_code, 
+            b.status, 
+            b.total_price, 
+            b.guests,
+            b.check_in,
+            b.check_out,
+            b.created_at,
+            b.special_requests,
+            b.admin_notes,
+            b.payment_status as booking_payment_status,
+            u.first_name, 
+            u.last_name, 
+            u.email, 
+            u.phone,
+            r.name as room_name,
+            p.status as payment_table_status,
+            p.proof_image,
+            p.payment_method,
+            COALESCE(p.status, b.payment_status, 'pending') as final_payment_status,
+            p.id as payment_id
+        FROM bookings b
+        JOIN users u ON b.user_id = u.id
+        JOIN rooms r ON b.room_id = r.id
+        LEFT JOIN payments p ON b.id = p.booking_id
+    """
+
+    if conditions:
+        query += " WHERE " + " AND ".join(conditions)
+
+    query += " ORDER BY b.created_at DESC"
+
+    cur.execute(query, tuple(params))
+
     bookings = cur.fetchall()
     cur.close()
 
