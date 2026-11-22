@@ -6,6 +6,7 @@ import time
 from datetime import datetime
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
+from markupsafe import escape
 from helpers import (
     process_room_images,
     parse_images_data,
@@ -260,9 +261,9 @@ def admin_booking_details(booking_id):
         <div>
             <h4 class="font-semibold mb-4">Booking Information</h4>
             <div class="space-y-3 text-sm">
-                <div class="flex justify-between"><span class="text-gray-600">Booking Code:</span><span class="font-medium">{booking.get('booking_code') or 'N/A'}</span></div>
-                <div class="flex justify-between"><span class="text-gray-600">Status:</span><span class="font-medium">{(booking.get('status') or '').replace('_', ' ').title()}</span></div>
-                <div class="flex justify-between"><span class="text-gray-600">Room:</span><span class="font-medium">{booking.get('room_name') or 'N/A'}</span></div>
+                <div class="flex justify-between"><span class="text-gray-600">Booking Code:</span><span class="font-medium">{escape(booking.get('booking_code') or 'N/A')}</span></div>
+                <div class="flex justify-between"><span class="text-gray-600">Status:</span><span class="font-medium">{escape((booking.get('status') or '').replace('_', ' ').title())}</span></div>
+                <div class="flex justify-between"><span class="text-gray-600">Room:</span><span class="font-medium">{escape(booking.get('room_name') or 'N/A')}</span></div>
                 <div class="flex justify-between"><span class="text-gray-600">Guests:</span><span class="font-medium">{booking.get('guests') or 0}</span></div>
                 <div class="flex justify-between"><span class="text-gray-600">Check-in:</span><span class="font-medium">{fmt_date(booking.get('check_in'))}</span></div>
                 <div class="flex justify-between"><span class="text-gray-600">Check-out:</span><span class="font-medium">{fmt_date(booking.get('check_out'))}</span></div>
@@ -272,15 +273,15 @@ def admin_booking_details(booking_id):
         <div>
             <h4 class="font-semibold mb-4">Customer &amp; Payment</h4>
             <div class="space-y-3 text-sm">
-                <div class="flex justify-between"><span class="text-gray-600">Name:</span><span class="font-medium">{booking.get('first_name') or ''} {booking.get('last_name') or ''}</span></div>
-                <div class="flex justify-between"><span class="text-gray-600">Email:</span><span class="font-medium">{booking.get('email') or 'N/A'}</span></div>
-                <div class="flex justify-between"><span class="text-gray-600">Phone:</span><span class="font-medium">{booking.get('phone') or 'N/A'}</span></div>
-                <div class="flex justify-between"><span class="text-gray-600">Payment:</span><span class="font-medium">{(booking.get('payment_status') or 'pending').replace('_', ' ').title()}</span></div>
-                <div class="flex justify-between"><span class="text-gray-600">Method:</span><span class="font-medium">{(booking.get('payment_method') or 'Not selected').replace('_', ' ').title()}</span></div>
+                <div class="flex justify-between"><span class="text-gray-600">Name:</span><span class="font-medium">{escape(booking.get('first_name') or '')} {escape(booking.get('last_name') or '')}</span></div>
+                <div class="flex justify-between"><span class="text-gray-600">Email:</span><span class="font-medium">{escape(booking.get('email') or 'N/A')}</span></div>
+                <div class="flex justify-between"><span class="text-gray-600">Phone:</span><span class="font-medium">{escape(booking.get('phone') or 'N/A')}</span></div>
+                <div class="flex justify-between"><span class="text-gray-600">Payment:</span><span class="font-medium">{escape((booking.get('payment_status') or 'pending').replace('_', ' ').title())}</span></div>
+                <div class="flex justify-between"><span class="text-gray-600">Method:</span><span class="font-medium">{escape((booking.get('payment_method') or 'Not selected').replace('_', ' ').title())}</span></div>
                 <div class="flex justify-between"><span class="text-gray-600">Proof:</span><span>{proof_html}</span></div>
             </div>
             <h4 class="font-semibold mt-6 mb-2">Special Requests</h4>
-            <p class="text-sm text-gray-600 dark:text-gray-300">{booking.get('special_requests') or 'None'}</p>
+            <p class="text-sm text-gray-600 dark:text-gray-300">{escape(booking.get('special_requests') or 'None')}</p>
         </div>
     </div>
     """
@@ -1094,15 +1095,15 @@ def payment_details(payment_id):
             <div class="space-y-3">
                 <div class="flex justify-between">
                     <span class="text-gray-600">Name:</span>
-                    <span>{payment["customer_name"]}</span>
+                    <span>{escape(payment["customer_name"] or "")}</span>
                 </div>
                 <div class="flex justify-between">
                     <span class="text-gray-600">Email:</span>
-                    <span>{payment["customer_email"]}</span>
+                    <span>{escape(payment["customer_email"] or "")}</span>
                 </div>
                 <div class="flex justify-between">
                     <span class="text-gray-600">Phone:</span>
-                    <span>{payment.get("phone", "N/A")}</span>
+                    <span>{escape(payment.get("phone") or "N/A")}</span>
                 </div>
             </div>
         </div>
@@ -1113,7 +1114,7 @@ def payment_details(payment_id):
             <div class="space-y-3">
                 <div class="flex justify-between">
                     <span class="text-gray-600">Room:</span>
-                    <span>{payment["room_name"]}</span>
+                    <span>{escape(payment["room_name"] or "")}</span>
                 </div>
                 <div class="flex justify-between">
                     <span class="text-gray-600">Check-in:</span>
