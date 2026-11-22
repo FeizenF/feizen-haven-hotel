@@ -140,6 +140,9 @@ function setupFormSubmissionProtection() {
         let originalButtonText = submitButton ? submitButton.innerHTML : '';
         
         form.addEventListener('submit', function(e) {
+            // Another handler (e.g. page-specific validation) already blocked this submit.
+            if (e.defaultPrevented) return;
+            
             if (isSubmitting) {
                 e.preventDefault();
                 return;
@@ -188,14 +191,22 @@ function setupFormSubmissionProtection() {
                 utils.resetFormButton(submitButton, originalButtonText);
             });
             
+            // Safety net: if the page never navigates, let the user retry
+            setTimeout(function() {
+                if (isSubmitting) {
+                    isSubmitting = false;
+                    utils.resetFormButton(submitButton, originalButtonText);
+                }
+            }, 20000);
+            
             // Also reset on page unload (in case user navigates away)
-            window.addEventListener('beforeunload', function() {
+            window.addEventListener('pagehide', function() {
                 isSubmitting = false;
                 if (submitButton) {
                     submitButton.disabled = false;
                     submitButton.innerHTML = originalButtonText;
                 }
-            });
+            }, { once: true });
         });
         
         // Reset button state when form is reset
@@ -207,104 +218,27 @@ function setupFormSubmissionProtection() {
 }
 
 // ===== PAYMENT FORM SPECIFIC HANDLING =====
-function setupPaymentForm() {
-    const paymentForm = document.getElementById('paymentForm');
-    if (!paymentForm) return;
-    
-    let isSubmitting = false;
-    const submitButton = paymentForm.querySelector('button[type="submit"]');
-    const originalButtonText = submitButton ? submitButton.innerHTML : '';
-    
-    paymentForm.addEventListener('submit', function(e) {
-        if (isSubmitting) {
-            e.preventDefault();
-            return;
-        }
-        
-        // Get selected payment method
-        const selectedMethod = this.querySelector('input[name="payment_method"]');
-        if (!selectedMethod || !selectedMethod.value) {
-            e.preventDefault();
-            utils.showNotification('Please select a payment method.', 'error');
-            return;
-        }
-        
-        // For non-QRIS methods, check file upload
-        if (selectedMethod.value !== 'qris') {
-            const fileInput = this.querySelector('input[name="payment_proof"]');
-            if (!fileInput || !fileInput.files || fileInput.files.length === 0) {
-                e.preventDefault();
-                utils.showNotification(`Please upload payment proof for ${selectedMethod.value.toUpperCase()} payment.`, 'error');
-                return;
-            }
-            
-            // Validate file
-            const file = fileInput.files[0];
-            const validTypes = ['image/jpeg', 'image/png', 'image/jpg', 'application/pdf'];
-            const maxSize = 5 * 1024 * 1024;
-            
-            if (!validTypes.includes(file.type)) {
-                e.preventDefault();
-                utils.showNotification('Please upload a JPG, PNG, or PDF file.', 'error');
-                isSubmitting = false;
-                utils.resetFormButton(submitButton, originalButtonText);
-                return;
-            }
-            
-            if (file.size > maxSize) {
-                e.preventDefault();
-                utils.showNotification('File size must be less than 5MB.', 'error');
-                isSubmitting = false;
-                utils.resetFormButton(submitButton, originalButtonText);
-                return;
-            }
-        }
-        
-        isSubmitting = true;
-        
-        // Show loading state
-        if (submitButton) {
-            submitButton.disabled = true;
-            submitButton.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Processing...';
-        }
-        
-        // Add a safety timeout to reset button if form takes too long
-        const safetyTimeout = setTimeout(() => {
-            if (isSubmitting) {
-                console.warn('Form submission taking too long, resetting button');
-                isSubmitting = false;
-                utils.resetFormButton(submitButton, originalButtonText);
-            }
-        }, 10000); // 10 second timeout
-        
-        // Clear timeout when form actually submits
-        this.addEventListener('submit', function() {
-            clearTimeout(safetyTimeout);
-        }, { once: true });
-    });
-}
+// (defined once at the bottom of this file)
 
 // ===== PREVENT BROWSER BACK BUTTON =====
 function setupBackButtonPrevention() {
-    if (window.location.pathname.includes('/payment') || 
-        window.location.pathname.includes('/booking/')) {
+    // Only guard the payment step; other booking steps should navigate normally.
+    if (!window.location.pathname.includes('/payment')) return;
+    
+    window.history.replaceState(null, null, window.location.href);
+    window.history.pushState(null, null, window.location.href);
+    
+    window.addEventListener('popstate', function() {
+        const confirmLeave = confirm(
+            'Are you sure you want to leave? Your payment will be cancelled.'
+        );
         
-        // Replace history state to prevent back navigation
-        window.history.replaceState(null, null, window.location.href);
-        window.history.pushState(null, null, window.location.href);
-        
-        window.addEventListener('popstate', function(event) {
-            const confirmLeave = confirm(
-                'Are you sure you want to leave? Your payment will be cancelled.'
-            );
-            
-            if (confirmLeave) {
-                window.location.href = '/rooms';
-            } else {
-                window.history.pushState(null, null, window.location.href);
-            }
-        });
-    }
+        if (confirmLeave) {
+            window.location.href = '/rooms';
+        } else {
+            window.history.pushState(null, null, window.location.href);
+        }
+    });
 }
 
 // ===== INITIALIZE EVERYTHING (Enhanced) =====
@@ -578,7 +512,11 @@ function handleHomeClick(event) {
         document.querySelectorAll('.nav-link').forEach(link => {
             link.classList.remove('active');
         });
-        event.target.classList.add('active');
+        
+        const clickedLink = event.currentTarget;
+        if (clickedLink && clickedLink.classList) {
+            clickedLink.classList.add('active');
+        }
         
         return false;
     }
@@ -587,7 +525,7 @@ function handleHomeClick(event) {
 }
 
 function setupHomeLinks() {
-    document.querySelectorAll('a[href="/"], a[href*="index"]').forEach(link => {
+    document.querySelectorAll('a[href="/"], a[href$="/index"], a[href$="/home"]').forEach(link => {
         link.addEventListener('click', handleHomeClick);
     });
 }
@@ -624,85 +562,45 @@ if (CONFIG.debug) {
     utils.log('Debug mode enabled');
 }
 // ===== PAYMENT FORM SPECIFIC HANDLING =====
+// The payment page performs its own validation and keeps the submit button
+// disabled until a method and proof are chosen. This only prevents duplicate
+// submissions and shows a loading state.
 function setupPaymentForm() {
     const paymentForm = document.getElementById('paymentForm');
     if (!paymentForm) return;
-    
+
     let isSubmitting = false;
     const submitButton = paymentForm.querySelector('button[type="submit"]');
     const originalButtonText = submitButton ? submitButton.innerHTML : '';
-    const universalUploadSection = document.getElementById('universalUploadSection');
-    
-    // Show upload section when payment method is selected
-    paymentForm.addEventListener('change', function(e) {
-        if (e.target.name === 'payment_method' && e.target.value) {
-            if (universalUploadSection) {
-                universalUploadSection.classList.remove('hidden');
-            }
-        }
-    });
-    
+
     paymentForm.addEventListener('submit', function(e) {
         if (isSubmitting) {
             e.preventDefault();
             return;
         }
-        
-        // Get selected payment method
-        const selectedMethod = this.querySelector('input[name="payment_method"]');
-        if (!selectedMethod || !selectedMethod.value) {
+
+        if (submitButton && submitButton.disabled) {
+            // The page-level validation still considers the form incomplete.
             e.preventDefault();
-            utils.showNotification('Please select a payment method.', 'error');
             return;
         }
-        
-        // Validate file upload for ALL methods including QRIS
-        const fileInput = this.querySelector('input[name="payment_proof"]');
-        if (!fileInput || !fileInput.files || fileInput.files.length === 0) {
-            e.preventDefault();
-            utils.showNotification(`Please upload payment proof for ${selectedMethod.value.toUpperCase()} payment.`, 'error');
-            return;
-        }
-        
-        // Validate file
-        const file = fileInput.files[0];
-        const validTypes = ['image/jpeg', 'image/png', 'image/jpg', 'application/pdf'];
-        const maxSize = 5 * 1024 * 1024;
-        
-        if (!validTypes.includes(file.type)) {
-            e.preventDefault();
-            utils.showNotification('Please upload a JPG, PNG, or PDF file.', 'error');
-            isSubmitting = false;
-            utils.resetFormButton(submitButton, originalButtonText);
-            return;
-        }
-        
-        if (file.size > maxSize) {
-            e.preventDefault();
-            utils.showNotification('File size must be less than 5MB.', 'error');
-            isSubmitting = false;
-            utils.resetFormButton(submitButton, originalButtonText);
-            return;
-        }
-        
+
         isSubmitting = true;
-        
-        // Show loading state
+
         if (submitButton) {
             submitButton.disabled = true;
             submitButton.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Processing...';
         }
-        
-        // Safety timeout
-        const safetyTimeout = setTimeout(() => {
+
+        // Safety net: if navigation stalls, let the user try again.
+        const safetyTimeout = setTimeout(function() {
             if (isSubmitting) {
-                console.warn('Form submission taking too long, resetting button');
                 isSubmitting = false;
                 utils.resetFormButton(submitButton, originalButtonText);
             }
-        }, 10000);
-        
-        this.addEventListener('submit', function() {
+        }, 15000);
+
+        window.addEventListener('pagehide', function() {
             clearTimeout(safetyTimeout);
         }, { once: true });
     });
