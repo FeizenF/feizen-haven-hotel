@@ -595,7 +595,7 @@
                     <h2 class="text-2xl font-serif font-bold mb-6">Select Payment Method</h2>
                     
                     <form method="POST" action="{{ url_for('booking_payment', booking_id=booking.id) }}" 
-                          enctype="multipart/form-data" id="paymentForm">
+                          enctype="multipart/form-data" id="paymentForm" data-no-protection>
                         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                         <input type="hidden" name="payment_method" id="selectedMethod" required>
                         <input type="hidden" name="qris_simulated" id="qrisSimulated" value="false">
@@ -1171,13 +1171,13 @@ document.addEventListener('DOMContentLoaded', function() {
                         <input type="file" 
                                name="payment_proof" 
                                id="paymentProof" 
-                               accept="image/*" 
+                               accept="image/*,application/pdf" 
                                class="hidden" 
                                required>
                         <label for="paymentProof" class="cursor-pointer">
                             <i class="fas fa-cloud-upload-alt text-3xl text-gray-400 mb-3"></i>
                             <p class="font-medium mb-1">Click to upload payment proof</p>
-                            <p class="text-xs text-gray-500">JPG, PNG (Max 5MB)</p>
+                            <p class="text-xs text-gray-500">JPG, PNG, or PDF (Max 5MB)</p>
                             <button type="button" class="mt-3 px-4 py-2 bg-gold text-navy font-medium rounded hover:bg-gold/90">
                                 <i class="fas fa-image mr-1"></i> Browse from Gallery
                             </button>
@@ -1263,11 +1263,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 const file = this.files[0];
                 
                 // Validate file
-                const validTypes = ['image/jpeg', 'image/png', 'image/jpg'];
+                const validTypes = ['image/jpeg', 'image/png', 'image/jpg', 'application/pdf'];
                 const maxSize = 5 * 1024 * 1024; // 5MB
                 
                 if (!validTypes.includes(file.type)) {
-                    alert('Please upload JPG or PNG file only');
+                    alert('Please upload a JPG, PNG, or PDF file only');
                     this.value = '';
                     return;
                 }
