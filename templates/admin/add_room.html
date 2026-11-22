@@ -385,14 +385,26 @@ function addCustomAmenity() {
     const container = document.getElementById('customAmenitiesContainer');
     const tag = document.createElement('div');
     tag.className = 'inline-flex items-center px-3 py-1 bg-gold/20 text-gold rounded-full text-sm';
-    tag.innerHTML = `
-        ${amenity}
-        <button type="button" onclick="removeCustomAmenity('${amenity}')" 
-                class="ml-2 text-gold hover:text-gold/70">
-            <i class="fas fa-times text-xs"></i>
-        </button>
-        <input type="hidden" name="amenities" value="${amenity}">
-    `;
+    tag.dataset.amenity = amenity;
+
+    const label = document.createElement('span');
+    label.textContent = amenity;
+    tag.appendChild(label);
+
+    const removeBtn = document.createElement('button');
+    removeBtn.type = 'button';
+    removeBtn.className = 'ml-2 text-gold hover:text-gold/70';
+    removeBtn.setAttribute('aria-label', `Remove ${amenity}`);
+    removeBtn.innerHTML = '<i class="fas fa-times text-xs"></i>';
+    removeBtn.addEventListener('click', () => removeCustomAmenity(amenity));
+    tag.appendChild(removeBtn);
+
+    const hiddenInput = document.createElement('input');
+    hiddenInput.type = 'hidden';
+    hiddenInput.name = 'amenities';
+    hiddenInput.value = amenity;
+    tag.appendChild(hiddenInput);
+
     container.appendChild(tag);
     
     input.value = '';
@@ -401,9 +413,9 @@ function addCustomAmenity() {
 function removeCustomAmenity(amenity) {
     customAmenities = customAmenities.filter(a => a !== amenity);
     
-    const tags = document.querySelectorAll('#customAmenitiesContainer div');
+    const tags = document.querySelectorAll('#customAmenitiesContainer div[data-amenity]');
     tags.forEach(tag => {
-        if (tag.textContent.includes(amenity)) {
+        if (tag.dataset.amenity === amenity) {
             tag.remove();
         }
     });
@@ -412,17 +424,15 @@ function removeCustomAmenity(amenity) {
 function previewImages(event) {
     const files = Array.from(event.target.files);
     const container = document.getElementById('imagePreviewContainer');
+    const input = document.getElementById('imageUpload');
     
     // Clear previous previews
     container.innerHTML = '';
     imageFiles = [];
     
-    if (files.length === 0) {
-        container.classList.add('hidden');
-        return;
-    }
-    
-    files.forEach((file, index) => {
+    // Keep only valid files so the form and previews stay in sync
+    const validFiles = [];
+    files.forEach(file => {
         // Validate file size (5MB)
         if (file.size > 5 * 1024 * 1024) {
             alert(`File ${file.name} is too large. Maximum size is 5MB.`);
@@ -435,7 +445,23 @@ function previewImages(event) {
             return;
         }
         
+        validFiles.push(file);
+    });
+
+    if (validFiles.length !== files.length) {
+        const dataTransfer = new DataTransfer();
+        validFiles.forEach(file => dataTransfer.items.add(file));
+        input.files = dataTransfer.files;
+    }
+    
+    if (validFiles.length === 0) {
+        container.classList.add('hidden');
+        return;
+    }
+    
+    validFiles.forEach((file) => {
         imageFiles.push(file);
+        const index = imageFiles.length - 1;
         
         const reader = new FileReader();
         reader.onload = function(e) {
