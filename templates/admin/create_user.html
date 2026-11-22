@@ -100,7 +100,7 @@
             
             <!-- Form Content -->
             <div class="p-8">
-                <form method="POST" action="{{ url_for('admin_create_user') }}" class="space-y-6">
+                <form method="POST" action="{{ url_for('admin_create_user') }}" class="space-y-6" id="createUserForm">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     
                     <!-- Personal Information -->
@@ -387,7 +387,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // Form validation
-    const form = document.querySelector('form');
+    const form = document.getElementById('createUserForm');
     if (form) {
         form.addEventListener('submit', function(e) {
             const password = passwordInput.value;
@@ -396,7 +396,7 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // Check password strength
             const strength = checkPasswordStrength(password);
-            if (strength < 2) {
+            if (strength < 3) {
                 e.preventDefault();
                 alert('Please use a stronger password. Password should meet at least 3 requirements.');
                 return false;
