@@ -205,7 +205,7 @@
                                     Capacity <span class="text-red-500">*</span>
                                 </label>
                                 <div class="relative">
-                                    <input type="number" name="capacity" value="{{ room.capacity }}" min="1" max="10" required
+                                    <input type="number" name="capacity" value="{{ room.capacity }}" min="1" max="20" required
                                            class="w-full px-4 py-3 rounded-lg border dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:border-gold focus:ring-1 focus:ring-gold"
                                            placeholder="2">
                                     <div class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
@@ -231,24 +231,12 @@
                                 <select name="view_type"
                                         class="w-full px-4 py-3 rounded-lg border dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:border-gold focus:ring-1 focus:ring-gold">
                                     <option value="" {% if not room.view_type %}selected{% endif %}>Select view type</option>
-                                    <option value="sea_view" {% if room.view_type == 'sea_view' %}selected{% endif %}>Sea View</option>
-                                    <option value="garden_view" {% if room.view_type == 'garden_view' %}selected{% endif %}>Garden View</option>
-                                    <option value="city_view" {% if room.view_type == 'city_view' %}selected{% endif %}>City View</option>
-                                    <option value="pool_view" {% if room.view_type == 'pool_view' %}selected{% endif %}>Pool View</option>
-                                    <option value="mountain_view" {% if room.view_type == 'mountain_view' %}selected{% endif %}>Mountain View</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
-                                    Bed Type
-                                </label>
-                                <select name="bed_type"
-                                        class="w-full px-4 py-3 rounded-lg border dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:border-gold focus:ring-1 focus:ring-gold">
-                                    <option value="" {% if not room.bed_type %}selected{% endif %}>Select bed type</option>
-                                    <option value="king_bed" {% if room.bed_type == 'king_bed' %}selected{% endif %}>King Bed</option>
-                                    <option value="queen_bed" {% if room.bed_type == 'queen_bed' %}selected{% endif %}>Queen Bed</option>
-                                    <option value="twin_beds" {% if room.bed_type == 'twin_beds' %}selected{% endif %}>Twin Beds</option>
-                                    <option value="double_bed" {% if room.bed_type == 'double_bed' %}selected{% endif %}>Double Bed</option>
+                                    <option value="Sea View" {% if room.view_type == 'Sea View' %}selected{% endif %}>Sea View</option>
+                                    <option value="Garden View" {% if room.view_type == 'Garden View' %}selected{% endif %}>Garden View</option>
+                                    <option value="City View" {% if room.view_type == 'City View' %}selected{% endif %}>City View</option>
+                                    <option value="Pool View" {% if room.view_type == 'Pool View' %}selected{% endif %}>Pool View</option>
+                                    <option value="Mountain View" {% if room.view_type == 'Mountain View' %}selected{% endif %}>Mountain View</option>
+                                    <option value="Panoramic View" {% if room.view_type == 'Panoramic View' %}selected{% endif %}>Panoramic View</option>
                                 </select>
                             </div>
                         </div>
@@ -258,16 +246,7 @@
                     <div>
                         <h3 class="text-lg font-semibold mb-6 text-gray-900 dark:text-white">Room Amenities</h3>
                         <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-                            {% set amenities_list = [] %}
-                            {% if room.amenities %}
-                                {% if room.amenities is string %}
-                                    {% if room.amenities.startswith('[') %}
-                                        {% set amenities_list = room.amenities.replace("'", '"')|from_json %}
-                                    {% else %}
-                                        {% set amenities_list = room.amenities.split(',') %}
-                                    {% endif %}
-                                {% endif %}
-                            {% endif %}
+                            {% set amenities_list = room.amenities_list or [] %}
                             
                             <!-- Common Amenities -->
                             {% set common_amenities = [
@@ -322,16 +301,7 @@
                                 Current Images
                             </label>
                             
-                            {% set images_list = [] %}
-                            {% if room.images %}
-                                {% if room.images is string %}
-                                    {% if room.images.startswith('[') %}
-                                        {% set images_list = room.images.replace("'", '"')|from_json %}
-                                    {% else %}
-                                        {% set images_list = room.images.split(',') %}
-                                    {% endif %}
-                                {% endif %}
-                            {% endif %}
+                            {% set images_list = room.existing_images or [] %}
                             
                             <input type="hidden" name="existing_images" id="existingImages" value="{{ images_list|join(',') }}">
                             
@@ -404,25 +374,6 @@
                                         {% if room.is_available %}Available{% else %}Unavailable{% endif %}
                                     </span>
                                 </label>
-                            </div>
-                            
-                            <div class="mt-6 pt-6 border-t dark:border-gray-700">
-                                <div class="grid md:grid-cols-2 gap-6">
-                                    <div>
-                                        <label class="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
-                                            Minimum Stay (nights)
-                                        </label>
-                                        <input type="number" name="min_stay" value="{{ room.min_stay or 1 }}" min="1"
-                                               class="w-full px-4 py-3 rounded-lg border dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:border-gold focus:ring-1 focus:ring-gold">
-                                    </div>
-                                    <div>
-                                        <label class="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
-                                            Maximum Stay (nights)
-                                        </label>
-                                        <input type="number" name="max_stay" value="{{ room.max_stay or 30 }}" min="1"
-                                               class="w-full px-4 py-3 rounded-lg border dark:border-gray-600 dark:bg-gray-700 dark:text-white focus:border-gold focus:ring-1 focus:ring-gold">
-                                    </div>
-                                </div>
                             </div>
                         </div>
                     </div>
@@ -555,38 +506,51 @@ function removeExistingImage(imageUrl) {
 }
 
 // New images preview
+let newImageFiles = [];
+
 function previewNewImages(event) {
-    const files = event.target.files;
+    const input = document.getElementById('imageUpload');
+    const files = Array.from(event.target.files);
     const previewContainer = document.getElementById('newImagesPreview');
     
     // Clear previous preview
     previewContainer.innerHTML = '';
-    previewContainer.classList.remove('hidden');
+    newImageFiles = [];
     
-    if (files.length === 0) {
+    const validFiles = files.filter(file => {
+        if (file.size > 5 * 1024 * 1024) {
+            alert(`File ${file.name} is too large. Maximum size is 5MB.`);
+            return false;
+        }
+        if (!file.type.match('image.*')) {
+            alert(`File ${file.name} is not an image.`);
+            return false;
+        }
+        return true;
+    });
+
+    if (validFiles.length !== files.length) {
+        const dataTransfer = new DataTransfer();
+        validFiles.forEach(file => dataTransfer.items.add(file));
+        input.files = dataTransfer.files;
+    }
+    
+    if (validFiles.length === 0) {
         previewContainer.classList.add('hidden');
         return;
     }
     
-    for (let i = 0; i < files.length; i++) {
-        const file = files[i];
-        
-        // Validate file size (5MB)
-        if (file.size > 5 * 1024 * 1024) {
-            alert(`File ${file.name} is too large. Maximum size is 5MB.`);
-            continue;
-        }
-        
-        // Validate file type
-        if (!file.type.match('image.*')) {
-            alert(`File ${file.name} is not an image.`);
-            continue;
-        }
+    previewContainer.classList.remove('hidden');
+    
+    validFiles.forEach((file) => {
+        newImageFiles.push(file);
+        const index = newImageFiles.length - 1;
         
         const reader = new FileReader();
         reader.onload = function(e) {
             const div = document.createElement('div');
             div.className = 'image-container relative';
+            div.dataset.index = index;
             div.innerHTML = `
                 <img src="${e.target.result}" alt="New Image" 
                      class="w-full h-32 object-cover rounded-lg image-preview">
@@ -594,17 +558,25 @@ function previewNewImages(event) {
                         class="remove-image">
                     <i class="fas fa-times"></i>
                 </button>
-                <input type="hidden" name="new_image_${i}" value="${e.target.result}">
             `;
             previewContainer.appendChild(div);
         };
         reader.readAsDataURL(file);
-    }
+    });
 }
 
 function removeNewImage(button) {
     const container = button.closest('.image-container');
+    const index = parseInt(container.dataset.index, 10);
+    if (!isNaN(index)) {
+        newImageFiles.splice(index, 1);
+    }
     container.remove();
+    
+    // Keep the file input in sync with the remaining previews
+    const dataTransfer = new DataTransfer();
+    newImageFiles.forEach(file => dataTransfer.items.add(file));
+    document.getElementById('imageUpload').files = dataTransfer.files;
     
     // Hide container if empty
     const previewContainer = document.getElementById('newImagesPreview');
@@ -647,34 +619,39 @@ function addAmenityToUI(amenity) {
     
     const tag = document.createElement('div');
     tag.className = 'amenity-tag inline-flex items-center px-3 py-1.5 bg-gold/20 text-gold rounded-full text-sm';
-    tag.innerHTML = `
-        ${amenity}
-        <button type="button" onclick="removeCustomAmenity('${amenity}')" 
-                class="ml-2 text-gold hover:text-gold/70">
-            <i class="fas fa-times text-xs"></i>
-        </button>
-    `;
+    tag.dataset.amenity = amenity;
+
+    const label = document.createElement('span');
+    label.textContent = amenity;
+    tag.appendChild(label);
+
+    const removeBtn = document.createElement('button');
+    removeBtn.type = 'button';
+    removeBtn.className = 'ml-2 text-gold hover:text-gold/70';
+    removeBtn.setAttribute('aria-label', `Remove ${amenity}`);
+    removeBtn.innerHTML = '<i class="fas fa-times text-xs"></i>';
+    removeBtn.addEventListener('click', () => removeCustomAmenity(amenity));
+    tag.appendChild(removeBtn);
+
+    const hiddenInput = document.createElement('input');
+    hiddenInput.type = 'hidden';
+    hiddenInput.name = 'amenities';
+    hiddenInput.value = amenity;
+    tag.appendChild(hiddenInput);
+
     container.appendChild(tag);
 }
 
 function removeCustomAmenity(amenity) {
     customAmenities = customAmenities.filter(a => a !== amenity);
     
-    // Remove from UI
+    // Remove the tag (and its hidden input) from the UI
     const tags = document.querySelectorAll('#customAmenitiesList .amenity-tag');
     tags.forEach(tag => {
-        if (tag.textContent.trim().startsWith(amenity)) {
+        if (tag.dataset.amenity === amenity) {
             tag.remove();
         }
     });
-    
-    // Remove from form submission
-    const hiddenInput = document.createElement('input');
-    hiddenInput.type = 'hidden';
-    hiddenInput.name = 'amenities';
-    hiddenInput.value = amenity;
-    hiddenInput.id = `custom_amenity_${amenity}`;
-    document.querySelector('form').appendChild(hiddenInput);
 }
 
 // Form validation
@@ -691,9 +668,9 @@ if (form) {
         
         // Validate capacity
         const capacity = form.querySelector('input[name="capacity"]').value;
-        if (capacity < 1 || capacity > 10) {
+        if (capacity < 1 || capacity > 20) {
             e.preventDefault();
-            alert('Capacity must be between 1 and 10 persons');
+            alert('Capacity must be between 1 and 20 persons');
             return false;
         }
         
