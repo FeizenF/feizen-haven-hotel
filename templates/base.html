@@ -458,25 +458,9 @@
     <!-- Main JavaScript -->
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
     
-    <!-- Simple Mobile Menu Toggle -->
+    <!-- Flash message auto-hide fallback (main.js also handles this) -->
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            const menuToggle = document.getElementById('menuToggle');
-            const mobileMenu = document.getElementById('mobileMenu');
-            
-            if (menuToggle && mobileMenu) {
-                menuToggle.addEventListener('click', function() {
-                    mobileMenu.classList.toggle('hidden');
-                });
-                
-                // Close menu when clicking outside
-                document.addEventListener('click', function(event) {
-                    if (!menuToggle.contains(event.target) && !mobileMenu.contains(event.target)) {
-                        mobileMenu.classList.add('hidden');
-                    }
-                });
-            }
-            
             // Auto-hide flash messages after 5 seconds
             setTimeout(() => {
                 document.querySelectorAll('.flash-message').forEach(msg => {
