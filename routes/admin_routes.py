@@ -668,10 +668,11 @@ def add_room():
         try:
             cur.execute("""
                 INSERT INTO rooms (name, description, price, capacity, size, view_type, 
-                                 amenities, images, is_available, room_type, available_count)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                                 amenities, images, is_available, room_type, room_count, available_count)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
             """, (name, description, price, capacity, size, view_type, 
-                  ', '.join(amenities), images_str, is_available, room_type, available_count))
+                  ', '.join(amenities), images_str, is_available, room_type,
+                  available_count, available_count))
             
             mysql.connection.commit()
             flash('Room added successfully!', 'success')
@@ -734,11 +735,11 @@ def edit_room(room_id):
                 UPDATE rooms 
                 SET name=%s, description=%s, price=%s, capacity=%s, size=%s, 
                     view_type=%s, amenities=%s, images=%s, is_available=%s,
-                    room_type=%s, available_count=%s, updated_at=NOW()
+                    room_type=%s, available_count=%s, room_count=GREATEST(room_count, %s), updated_at=NOW()
                 WHERE id=%s
             """, (name, description, price, capacity, size, view_type, 
                   ', '.join(amenities), images_str, is_available,
-                  room_type, available_count, room_id))
+                  room_type, available_count, available_count, room_id))
             
             mysql.connection.commit()
             flash('Room updated successfully!', 'success')
@@ -757,6 +758,9 @@ def edit_room(room_id):
     if not room:
         flash('Room not found!', 'danger')
         return redirect(url_for('manage_rooms'))
+    
+    room = process_room_data(room)
+    room['existing_images'] = parse_images_data(room.get('images'))
     
     return render_template('admin/edit_room.html', room=room)
 
