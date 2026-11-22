@@ -385,8 +385,8 @@
 
     const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
 
-     // Helper function untuk fetch dengan CSRF
-    function fetchWithCSRF(url, options = {}) 
+    // Helper function untuk fetch dengan CSRF
+    function fetchWithCSRF(url, options = {}) {
         const defaultOptions = {
             headers: {
                 'Content-Type': 'application/json',
@@ -395,6 +395,7 @@
         };
         
         return fetch(url, { ...defaultOptions, ...options });
+    }
     // Payment modal functions
     function openPaymentModal(paymentId) {
         if (!paymentId || paymentId === 0) {
