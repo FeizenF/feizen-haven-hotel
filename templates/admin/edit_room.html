@@ -131,7 +131,7 @@
             
             <!-- Form Content -->
             <div class="p-8">
-                <form method="POST" action="{{ url_for('edit_room', room_id=room.id) }}" enctype="multipart/form-data" class="space-y-8">
+                <form method="POST" action="{{ url_for('edit_room', room_id=room.id) }}" enctype="multipart/form-data" class="space-y-8" id="editRoomForm">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     
                     <!-- Basic Information -->
@@ -655,7 +655,7 @@ function removeCustomAmenity(amenity) {
 }
 
 // Form validation
-const form = document.querySelector('form');
+const form = document.getElementById('editRoomForm');
 if (form) {
     form.addEventListener('submit', function(e) {
         // Validate price
