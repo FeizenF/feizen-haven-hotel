@@ -166,7 +166,7 @@
             
             <!-- Form Content -->
             <div class="p-8">
-                <form method="POST" action="{{ url_for('add_room') }}" enctype="multipart/form-data" class="space-y-6">
+                <form method="POST" action="{{ url_for('add_room') }}" enctype="multipart/form-data" class="space-y-6" id="addRoomForm">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     
                     <!-- Basic Information -->
@@ -495,7 +495,7 @@ function removeImage(index) {
 }
 
 // Form validation
-const form = document.querySelector('form');
+const form = document.getElementById('addRoomForm');
 if (form) {
     form.addEventListener('submit', function(e) {
         // Basic validation
