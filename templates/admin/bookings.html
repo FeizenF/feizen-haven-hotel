@@ -399,8 +399,6 @@ function showPaymentProof(proofImage, bookingCode) {
     const modal = document.getElementById('paymentProofModal');
     const content = document.getElementById('paymentProofContent');
     
-    console.log('📸 DEBUG - Opening payment proof:', proofImage, 'for booking:', bookingCode);
-    
     // Bersihkan modal sebelumnya
     content.innerHTML = `
         <div class="text-center py-8">
@@ -426,13 +424,10 @@ function showPaymentProof(proofImage, bookingCode) {
         imageUrl = `/static/uploads/payments/${encodeURIComponent(proofImage)}`;
     }
     
-    console.log('🔗 DEBUG - Image URL:', imageUrl);
-    
     // Pre-load gambar untuk menghindari flicker
     const img = new Image();
     
     img.onload = function() {
-        console.log('✅ DEBUG - Image loaded successfully');
         content.innerHTML = `
             <div class="space-y-4">
                 <div class="relative mx-auto max-w-2xl">
@@ -462,8 +457,6 @@ function showPaymentProof(proofImage, bookingCode) {
     };
     
     img.onerror = function() {
-        console.error('❌ DEBUG - Failed to load image:', imageUrl);
-        
         // Coba alternatif path
         const alternativePaths = [
             `/static/uploads/payments/${proofImage}`,
@@ -521,7 +514,6 @@ function tryAlternativePaths(paths, index, bookingCode) {
     
     const testImg = new Image();
     testImg.onload = function() {
-        console.log(`✅ DEBUG - Found image at alternative path: ${currentPath}`);
         document.getElementById('paymentProofContent').innerHTML = `
             <div class="space-y-4">
                 <div class="relative mx-auto max-w-2xl">
