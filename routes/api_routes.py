@@ -78,8 +78,8 @@ def rooms_list_api():
         min_price = request.args.get('min_price')
         max_price = request.args.get('max_price')
         capacity = request.args.get('capacity')
-        page = int(request.args.get('page', 1))
-        per_page = int(request.args.get('per_page', 10))
+        page = max(1, int(request.args.get('page', 1)))
+        per_page = min(max(1, int(request.args.get('per_page', 10))), 100)
         
         cur = mysql.connection.cursor()
         query = """
