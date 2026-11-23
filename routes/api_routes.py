@@ -1,4 +1,4 @@
-from flask import jsonify, send_file, url_for, session, make_response, request, g
+from flask import jsonify, url_for, session, request
 from config import app, mysql, csrf
 from models import login_required, admin_required
 from werkzeug.security import check_password_hash

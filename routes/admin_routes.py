@@ -1,8 +1,7 @@
 from flask import render_template, request, redirect, url_for, flash, session, jsonify
 from config import app, mysql
-from models import login_required, admin_required, allowed_file
+from models import login_required, admin_required
 import os
-import time
 import uuid
 from datetime import datetime
 from werkzeug.security import generate_password_hash, check_password_hash
