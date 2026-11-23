@@ -2,6 +2,15 @@ from flask import render_template, request, redirect, url_for, flash, session
 from werkzeug.security import generate_password_hash, check_password_hash
 from config import app, mysql
 import re
+from urllib.parse import urljoin, urlparse
+
+def is_safe_redirect(target):
+    """Only allow redirects to the same host."""
+    if not target:
+        return False
+    ref = urlparse(request.host_url)
+    test = urlparse(urljoin(request.host_url, target))
+    return test.scheme in ('http', 'https') and ref.netloc == test.netloc
 
 def validate_email(email):
     """Validasi format email sederhana tapi efektif"""
@@ -21,8 +30,8 @@ def validate_password(password, confirm_password):
     if password != confirm_password:
         errors.append("Password tidak sama")
     
-    if len(password) < 6:
-        errors.append("Password minimal 6 karakter")
+    if len(password) < 8:
+        errors.append("Password minimal 8 karakter")
     
     if not re.search(r'[A-Z]', password):
         errors.append("Password harus mengandung huruf besar (A-Z)")
@@ -39,9 +48,14 @@ def register():
         phone = request.form.get('phone', '').strip() 
         password = request.form.get('password', '')
         confirm_password = request.form.get('confirm_password', '')
+        terms_accepted = request.form.get('terms')
         
         if not first_name or not last_name or not email or not password:
             flash('Semua field wajib diisi kecuali telepon', 'danger')
+            return redirect(url_for('register'))
+        
+        if not terms_accepted:
+            flash('Anda harus menyetujui syarat dan ketentuan', 'danger')
             return redirect(url_for('register'))
         
         is_valid_email, email_error = validate_email(email)
@@ -81,10 +95,11 @@ def register():
             flash('Pendaftaran berhasil! Akun Anda telah dibuat.', 'success')
             return redirect(url_for('index'))
             
-        except Exception as e:
+        except Exception:
             mysql.connection.rollback()
             cur.close()
-            flash(f'Gagal mendaftar: {str(e)}', 'danger')
+            app.logger.exception('Registration failed for %s', email)
+            flash('Gagal mendaftar. Silakan coba lagi.', 'danger')
             return redirect(url_for('register'))
     
     return render_template('auth/register.html')
@@ -113,6 +128,10 @@ def login():
                 
                 flash('Login berhasil!', 'success')
                 
+                next_url = request.form.get('next') or request.args.get('next')
+                if is_safe_redirect(next_url):
+                    return redirect(next_url)
+                
                 if user['role'] == 'admin':
                     return redirect(url_for('admin_dashboard'))
                 else:
@@ -120,7 +139,8 @@ def login():
             else:
                 flash('Email atau password salah', 'danger')
                 
-        except Exception as e:
+        except Exception:
+            app.logger.exception('Login failed for %s', email)
             flash('Terjadi kesalahan sistem', 'danger')
     
     return render_template('auth/login.html')

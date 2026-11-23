@@ -210,12 +210,12 @@
                                         </form>
                                         {% endif %}
                                         
-                                        <!-- Invoice Button -->
+                                        <!-- Invoice Request -->
                                         {% if booking.status == 'confirmed' %}
-                                        <button onclick="requestInvoice('{{ booking.id }}')" 
-                                                class="inline-flex items-center px-3 py-1 bg-gray-100 text-gray-800 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600 rounded text-sm transition-colors">
+                                        <a href="mailto:reservations@feizenhaven.com?subject={{ ('Invoice request - ' ~ (booking.booking_code or booking.id))|urlencode }}"
+                                           class="inline-flex items-center px-3 py-1 bg-gray-100 text-gray-800 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600 rounded text-sm transition-colors">
                                             <i class="fas fa-file-invoice mr-1"></i> Invoice
-                                        </button>
+                                        </a>
                                         {% endif %}
                                     </div>
                                 </div>
@@ -360,30 +360,4 @@
         </div>
     </div>
 </div>
-<script>
-function requestInvoice(bookingId) {
-    if (confirm('Send invoice to your email?')) {
-        fetch(`/api/booking/${bookingId}/invoice`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRFToken': document.querySelector('meta[name="csrf-token"]').content
-            }
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                alert('✅ Invoice sent to your email!');
-            } else {
-                alert('❌ Error: ' + data.message);
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            alert('❌ Failed to request invoice');
-        });
-    }
-}
-</script>
-
 {% endblock %}

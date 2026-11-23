@@ -162,9 +162,9 @@ def contact():
                 mysql.connection.commit()
                 flash('Your message has been sent successfully! We will contact you soon.', 'success')
                 
-            except Exception as e:
+            except Exception:
                 mysql.connection.rollback()
-                print(f"Error: {e}")
+                app.logger.exception('Failed to save contact inquiry')
                 flash('Failed to send message. Please try again.', 'danger')
             finally:
                 cur.close()

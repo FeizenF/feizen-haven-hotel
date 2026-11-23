@@ -639,6 +639,14 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     
+    // Format a Date as YYYY-MM-DD using local time (avoids UTC off-by-one)
+    function toLocalDateStr(date) {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    }
+    
     // Set min dates and initialize
     function initializeDates() {
         const today = new Date();
@@ -648,8 +656,8 @@ document.addEventListener('DOMContentLoaded', function() {
         dayAfterTomorrow.setDate(dayAfterTomorrow.getDate() + 2);
         
         // Format dates as YYYY-MM-DD
-        const tomorrowStr = tomorrow.toISOString().split('T')[0];
-        const dayAfterTomorrowStr = dayAfterTomorrow.toISOString().split('T')[0];
+        const tomorrowStr = toLocalDateStr(tomorrow);
+        const dayAfterTomorrowStr = toLocalDateStr(dayAfterTomorrow);
         
         // Set min attributes
         checkinInput.min = tomorrowStr;
@@ -674,7 +682,7 @@ document.addEventListener('DOMContentLoaded', function() {
         nextDay.setDate(nextDay.getDate() + 1);
         
         // Format next day as YYYY-MM-DD
-        const nextDayStr = nextDay.toISOString().split('T')[0];
+        const nextDayStr = toLocalDateStr(nextDay);
         
         // Set min checkout date
         checkoutInput.min = nextDayStr;

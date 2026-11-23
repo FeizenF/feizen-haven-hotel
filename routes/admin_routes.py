@@ -3,16 +3,45 @@ from config import app, mysql
 from models import login_required, admin_required, allowed_file
 import os
 import time
+import uuid
 from datetime import datetime
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
 from markupsafe import escape
 from helpers import (
     process_room_images,
+    process_room_data,
     parse_images_data,
     parse_amenities_data,
     payment_proof_url,
 )
+
+ROOM_IMAGE_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
+ROOM_UPLOAD_DIR = os.path.join('static', 'uploads', 'rooms')
+ROOM_UPLOAD_PREFIX = 'static/uploads/rooms'
+
+
+def save_room_images(image_files):
+    """Save uploaded room images and return their stored paths.
+
+    Only image files are accepted; anything else is ignored.
+    """
+    saved = []
+    os.makedirs(ROOM_UPLOAD_DIR, exist_ok=True)
+
+    for image in image_files:
+        if not image or not image.filename:
+            continue
+
+        extension = image.filename.rsplit('.', 1)[-1].lower() if '.' in image.filename else ''
+        if extension not in ROOM_IMAGE_EXTENSIONS:
+            continue
+
+        filename = secure_filename(f"{uuid.uuid4().hex}_{image.filename}")
+        image.save(os.path.join(ROOM_UPLOAD_DIR, filename))
+        saved.append(f"{ROOM_UPLOAD_PREFIX}/{filename}")
+
+    return saved
 
 # ADMIN ROUTES
 @app.route('/admin/dashboard')
@@ -88,8 +117,8 @@ def admin_dashboard():
         """)
         recent_users = cur.fetchall()
         
-    except Exception as e:
-        print(f"Error fetching dashboard data: {e}")
+    except Exception:
+        app.logger.exception('Error fetching dashboard data')
         total_rooms = total_bookings = total_users = total_revenue = 0
         available_rooms = pending_bookings = today_bookings = 0
         occupancy_rate = completion_rate = 0
@@ -368,9 +397,10 @@ def update_booking_status(booking_id):
         
         mysql.connection.commit()
         
-    except Exception as e:
+    except Exception:
         mysql.connection.rollback()
-        flash(f'Error updating room availability: {str(e)}', 'danger')
+        app.logger.exception('Error updating room availability')
+        flash('Error updating room availability. Please try again.', 'danger')
         cur.close()
         return redirect(url_for('admin_bookings'))
     
@@ -466,6 +496,11 @@ def admin_manage_user(user_id):
     
     cur.execute("SELECT * FROM users WHERE id = %s", (user_id,))
     user = cur.fetchone()
+    
+    if not user:
+        cur.close()
+        flash('User not found.', 'danger')
+        return redirect(url_for('admin_users'))
     
     if request.method == 'POST':
         first_name = (request.form.get('first_name') or '').strip()
@@ -637,32 +672,31 @@ def manage_rooms():
 @admin_required
 def add_room():
     if request.method == 'POST':
-        name = request.form['name']
-        description = request.form['description']
-        price = float(request.form['price'])
-        capacity = int(request.form['capacity'])
-        size = request.form['size']
+        name = request.form.get('name', '').strip()
+        description = request.form.get('description', '').strip()
+        size = request.form.get('size', '').strip()
         view_type = request.form.get('view_type', '')
         amenities = request.form.getlist('amenities')
         room_type = request.form.get('room_type', 'hotel_room')
         is_available = 1 if request.form.get('is_available') == 'on' else 0
-        available_count = int(request.form.get('available_count', 1))
         
-        image_files = request.files.getlist('images')
-        image_filenames = []
+        try:
+            price = float(request.form.get('price') or 0)
+            capacity = int(request.form.get('capacity') or 0)
+            available_count = int(request.form.get('available_count') or 0)
+        except (TypeError, ValueError):
+            flash('Please enter valid numbers for price, capacity, and room count.', 'danger')
+            return redirect(url_for('add_room'))
         
-        # Create uploads directory if not exists
-        upload_dir = 'static/uploads/rooms'
-        if not os.path.exists(upload_dir):
-            os.makedirs(upload_dir)
+        if not name or not description:
+            flash('Room name and description are required.', 'danger')
+            return redirect(url_for('add_room'))
         
-        for image in image_files:
-            if image and image.filename != '':
-                filename = secure_filename(f"{int(time.time())}_{image.filename}")
-                image_path = os.path.join(upload_dir, filename)
-                image.save(image_path)
-                image_filenames.append(f"static/uploads/rooms/{filename}")
+        if price < 0 or capacity < 1 or available_count < 0:
+            flash('Price and room count cannot be negative, and capacity must be at least 1.', 'danger')
+            return redirect(url_for('add_room'))
         
+        image_filenames = save_room_images(request.files.getlist('images'))
         images_str = ','.join(image_filenames) if image_filenames else None
         
         cur = mysql.connection.cursor()
@@ -679,9 +713,10 @@ def add_room():
             flash('Room added successfully!', 'success')
             return redirect(url_for('manage_rooms'))
             
-        except Exception as e:
+        except Exception:
             mysql.connection.rollback()
-            flash(f'Error adding room: {str(e)}', 'danger')
+            app.logger.exception('Error adding room')
+            flash('Error adding room. Please try again.', 'danger')
             return redirect(url_for('add_room'))
         finally:
             cur.close()
@@ -695,37 +730,35 @@ def edit_room(room_id):
     cur = mysql.connection.cursor()
     
     if request.method == 'POST':
-        name = request.form['name']
-        description = request.form['description']
-        price = float(request.form['price'])
-        capacity = int(request.form['capacity'])
-        size = request.form['size']
+        name = request.form.get('name', '').strip()
+        description = request.form.get('description', '').strip()
+        size = request.form.get('size', '').strip()
         view_type = request.form.get('view_type', '')
         amenities = request.form.getlist('amenities')
         room_type = request.form.get('room_type', 'hotel_room')
         is_available = 1 if request.form.get('is_available') == 'on' else 0
-        available_count = int(request.form.get('available_count', 1))
+        
+        try:
+            price = float(request.form.get('price') or 0)
+            capacity = int(request.form.get('capacity') or 0)
+            available_count = int(request.form.get('available_count') or 0)
+        except (TypeError, ValueError):
+            flash('Please enter valid numbers for price, capacity, and room count.', 'danger')
+            return redirect(url_for('edit_room', room_id=room_id))
+        
+        if not name or not description:
+            flash('Room name and description are required.', 'danger')
+            return redirect(url_for('edit_room', room_id=room_id))
+        
+        if price < 0 or capacity < 1 or available_count < 0:
+            flash('Price and room count cannot be negative, and capacity must be at least 1.', 'danger')
+            return redirect(url_for('edit_room', room_id=room_id))
         
         # Handle images
         existing_images_input = request.form.get('existing_images', '')
-        existing_images = []
-        if existing_images_input:
-            existing_images = [img.strip() for img in existing_images_input.split(',') if img.strip()]
+        existing_images = [img.strip() for img in existing_images_input.split(',') if img.strip()]
         
-        image_files = request.files.getlist('images')
-        new_image_filenames = []
-        
-        # Upload new images
-        upload_dir = 'static/uploads/rooms'
-        if not os.path.exists(upload_dir):
-            os.makedirs(upload_dir)
-        
-        for image in image_files:
-            if image and image.filename != '':
-                filename = secure_filename(f"{int(time.time())}_{image.filename}")
-                image_path = os.path.join(upload_dir, filename)
-                image.save(image_path)
-                new_image_filenames.append(f"static/uploads/rooms/{filename}")
+        new_image_filenames = save_room_images(request.files.getlist('images'))
         
         # Combine existing and new images
         all_images = existing_images + new_image_filenames
@@ -746,9 +779,10 @@ def edit_room(room_id):
             flash('Room updated successfully!', 'success')
             return redirect(url_for('manage_rooms'))
             
-        except Exception as e:
+        except Exception:
             mysql.connection.rollback()
-            flash(f'Error updating room: {str(e)}', 'danger')
+            app.logger.exception('Error updating room %s', room_id)
+            flash('Error updating room. Please try again.', 'danger')
             return redirect(url_for('edit_room', room_id=room_id))
     
     # GET request - fetch room data
@@ -803,11 +837,11 @@ def toggle_room_status(room_id):
             'new_status': new_status
         })
         
-    except Exception as e:
-        print(f"Error toggling room status: {str(e)}")
+    except Exception:
+        app.logger.exception('Error toggling room status for room %s', room_id)
         return jsonify({
             'success': False,
-            'error': str(e)
+            'error': 'Failed to update room status.'
         }), 500
     
 @app.route('/admin/room/delete/<int:room_id>', methods=['POST'])
@@ -843,9 +877,10 @@ def delete_room(room_id):
         
         flash('Room deleted successfully!', 'success')
         
-    except Exception as e:
+    except Exception:
         mysql.connection.rollback()
-        flash(f'Error deleting room: {str(e)}', 'danger')
+        app.logger.exception('Error deleting room %s', room_id)
+        flash('Error deleting room. Please try again.', 'danger')
     finally:
         cur.close()
     
@@ -1250,8 +1285,8 @@ def verify_payment(payment_id):
             'message': f'Payment {action}ed successfully'
         })
         
-    except Exception as e:
+    except Exception:
         cur.execute("ROLLBACK")
         cur.close()
-        print(f"Payment verification error: {str(e)}")
-        return jsonify({'success': False, 'error': str(e)})
+        app.logger.exception('Payment verification failed')
+        return jsonify({'success': False, 'error': 'Payment verification failed. Please try again.'})

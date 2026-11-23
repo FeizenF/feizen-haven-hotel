@@ -1,5 +1,8 @@
 import json
+import logging
 import os
+
+logger = logging.getLogger(__name__)
 
 # ============================================================
 # IMAGE / PATH HELPERS
@@ -77,8 +80,8 @@ def parse_images_data(images_raw, default_dir='images/rooms'):
                 images.append(normalized)
 
         return images
-    except Exception as e:
-        print(f"Error parsing images: {e}")
+    except Exception:
+        logger.exception('Error parsing images')
         return []
 
 
@@ -106,8 +109,8 @@ def parse_amenities_data(amenities_raw):
             return [a.strip() for a in value.split(',') if a.strip()]
 
         return []
-    except Exception as e:
-        print(f"Error parsing amenities: {e}")
+    except Exception:
+        logger.exception('Error parsing amenities')
         return []
 
 

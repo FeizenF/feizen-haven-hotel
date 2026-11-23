@@ -69,7 +69,7 @@ def room_details_api(room_id):
         })
         
     except Exception as e:
-        return jsonify({'success': False, 'error': f'Server error: {str(e)}', 'code': 500}), 500
+        return jsonify({'success': False, 'error': 'Server error. Please try again.', 'code': 500}), 500
 
 @app.route('/api/rooms')
 def rooms_list_api():
@@ -148,7 +148,7 @@ def rooms_list_api():
         })
         
     except Exception as e:
-        return jsonify({'success': False, 'error': f'Server error: {str(e)}', 'code': 500}), 500
+        return jsonify({'success': False, 'error': 'Server error. Please try again.', 'code': 500}), 500
 
 @app.route('/api/check-availability')
 def check_availability_api():
@@ -203,7 +203,7 @@ def check_availability_api():
         })
         
     except Exception as e:
-        return jsonify({'success': False, 'error': f'Server error: {str(e)}', 'code': 500}), 500
+        return jsonify({'success': False, 'error': 'Server error. Please try again.', 'code': 500}), 500
 
 # =============== AUTH API ROUTES ===============
 @app.route('/api/login', methods=['POST'])
@@ -255,7 +255,7 @@ def api_login():
         })
         
     except Exception as e:
-        return jsonify({'success': False, 'error': f'Server error: {str(e)}', 'code': 500}), 500
+        return jsonify({'success': False, 'error': 'Server error. Please try again.', 'code': 500}), 500
 
 @app.route('/api/logout', methods=['POST'])
 @csrf.exempt
@@ -264,7 +264,7 @@ def api_logout():
         session.clear()
         return jsonify({'success': True, 'message': 'Logout successful'})
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e), 'code': 500}), 500
+        return jsonify({'success': False, 'error': 'Server error. Please try again.', 'code': 500}), 500
 
 # =============== USER API ROUTES ===============
 @app.route('/api/user/profile')
@@ -293,7 +293,7 @@ def user_profile_api():
         return jsonify({'success': True, 'data': user_data})
         
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e), 'code': 500}), 500
+        return jsonify({'success': False, 'error': 'Server error. Please try again.', 'code': 500}), 500
 @app.route('/api/user/profile', methods=['PUT'])
 @login_required
 @csrf.exempt
@@ -399,7 +399,7 @@ def update_user_profile():
         })
         
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e), 'code': 500}), 500
+        return jsonify({'success': False, 'error': 'Server error. Please try again.', 'code': 500}), 500
     
 @app.route('/api/user/bookings')
 @login_required
@@ -432,7 +432,7 @@ def user_bookings_api():
         return jsonify({'success': True, 'data': processed_bookings})
         
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e), 'code': 500}), 500
+        return jsonify({'success': False, 'error': 'Server error. Please try again.', 'code': 500}), 500
 
 @app.route('/api/user/booking/<int:booking_id>')
 @login_required
@@ -468,7 +468,7 @@ def user_booking_detail_api(booking_id):
         return jsonify({'success': True, 'data': booking_data})
         
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e), 'code': 500}), 500
+        return jsonify({'success': False, 'error': 'Server error. Please try again.', 'code': 500}), 500
 
 @app.route('/api/user/create-booking', methods=['POST'])
 @login_required
@@ -561,7 +561,7 @@ def create_booking_api():
             raise e
             
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e), 'code': 500}), 500
+        return jsonify({'success': False, 'error': 'Server error. Please try again.', 'code': 500}), 500
     finally:
         cur.close()
 @app.route('/api/user/booking/<int:booking_id>/cancel', methods=['POST'])
@@ -664,7 +664,7 @@ def cancel_user_booking(booking_id):
             raise e
             
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e), 'code': 500}), 500
+        return jsonify({'success': False, 'error': 'Server error. Please try again.', 'code': 500}), 500
     finally:
         cur.close()
         
@@ -729,7 +729,7 @@ def admin_bookings_api():
         })
         
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e), 'code': 500}), 500
+        return jsonify({'success': False, 'error': 'Server error. Please try again.', 'code': 500}), 500
 
 @app.route('/api/admin/booking/<int:booking_id>', methods=['GET', 'PUT'])
 @admin_required
@@ -765,7 +765,7 @@ def admin_booking_detail_api(booking_id):
             return jsonify({'success': True, 'data': booking_data})
             
         except Exception as e:
-            return jsonify({'success': False, 'error': str(e), 'code': 500}), 500
+            return jsonify({'success': False, 'error': 'Server error. Please try again.', 'code': 500}), 500
     
     elif request.method == 'PUT':
         try:
@@ -807,7 +807,7 @@ def admin_booking_detail_api(booking_id):
             })
             
         except Exception as e:
-            return jsonify({'success': False, 'error': str(e), 'code': 500}), 500
+            return jsonify({'success': False, 'error': 'Server error. Please try again.', 'code': 500}), 500
 
 # =============== HEALTH CHECK ===============
 @app.route('/api/health')
@@ -828,7 +828,7 @@ def health_check():
         return jsonify({
             'success': False,
             'status': 'unhealthy',
-            'error': str(e),
+            'error': 'Server error. Please try again.',
             'database': 'disconnected'
         }), 500
 

@@ -143,8 +143,7 @@ def my_bookings():
                 booking_dict['nights'] = (check_out - check_in).days
             else:
                 booking_dict['nights'] = 1
-        except Exception as e:
-            print(f"Error calculating nights: {e}")
+        except Exception:
             booking_dict['nights'] = 1
         
         if booking_dict.get('total_price'):
@@ -190,6 +189,7 @@ def my_bookings():
             booking_dict['time_left_display'] = "EXPIRED"
             
             if booking_dict.get('status') == 'waiting_payment':
+                cur2 = None
                 try:
                     cur2 = mysql.connection.cursor()
                     cur2.execute("""
@@ -215,14 +215,16 @@ def my_bookings():
                         """, (booking_dict['id'],))
                     
                     mysql.connection.commit()
-                    cur2.close()
                     
                     booking_dict['status'] = 'expired'
                     booking_dict['payment_status'] = 'expired'
                     
-                except Exception as e:
+                except Exception:
                     mysql.connection.rollback()
-                    print(f"Error auto-expiring booking {booking_dict['id']}: {e}")
+                    app.logger.exception('Error auto-expiring booking %s', booking_dict.get('id'))
+                finally:
+                    if cur2 is not None:
+                        cur2.close()
         else:
             total_seconds = int(time_left.total_seconds())
             booking_dict['hours_left'] = total_seconds // 3600
@@ -297,8 +299,6 @@ def cancel_booking(booking_id):
     cur = mysql.connection.cursor()
     
     try:
-        print(f"\n=== DEBUG: CANCEL BOOKING {booking_id} ===")
-        
         cur.execute("""
             SELECT b.*, r.available_count as room_available
             FROM bookings b
@@ -315,22 +315,10 @@ def cancel_booking(booking_id):
         
         booking = dict(booking)
         
-        print(f"DEBUG: Found booking {booking.get('booking_code')}")
-        print(f"  - Status: {booking.get('status')}")
-        print(f"  - Room ID: {booking.get('room_id')}")
-        print(f"  - Room current available: {booking.get('room_available')}")
-        
         if booking['status'] not in ['pending', 'waiting_payment']:
             flash(f'Cannot cancel booking with status: {booking["status"]}', 'warning')
             cur.close()
             return redirect(url_for('my_bookings'))
-        
-        current_available = booking.get('room_available', 0)
-        new_available = current_available + 1
-        
-        print(f"DEBUG: Updating room availability")
-        print(f"  - From: {current_available}")
-        print(f"  - To: {new_available}")
         
         # Update booking status
         cur.execute("""
@@ -344,10 +332,10 @@ def cancel_booking(booking_id):
         room_id = booking['room_id']
         cur.execute("""
             UPDATE rooms 
-            SET available_count = %s,
-                is_available = CASE WHEN %s > 0 THEN 1 ELSE 0 END
+            SET available_count = LEAST(room_count, available_count + 1),
+                is_available = 1
             WHERE id = %s
-        """, (new_available, new_available, room_id))
+        """, (room_id,))
         
         # Update payment jika ada
         cur.execute("""
@@ -358,13 +346,11 @@ def cancel_booking(booking_id):
         
         mysql.connection.commit()
         
-        print(f"DEBUG: Cancellation successful")
-        
         flash(f'✅ Booking {booking.get("booking_code", f"#{booking_id}")} cancelled successfully.', 'success')
         
-    except Exception as e:
+    except Exception:
         mysql.connection.rollback()
-        print(f"DEBUG: CANCEL ERROR - {str(e)}")
+        app.logger.exception('Failed to cancel booking %s', booking_id)
         flash('❌ Failed to cancel booking.', 'danger')
     finally:
         cur.close()
@@ -398,5 +384,6 @@ def get_users():
             'technology': 'Flask-MySQLdb',
             'format': 'JSON (no HTML)'
         })
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
+    except Exception:
+        app.logger.exception('Failed to fetch users')
+        return jsonify({'error': 'Server error. Please try again.'}), 500

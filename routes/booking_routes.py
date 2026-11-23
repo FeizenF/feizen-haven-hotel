@@ -7,6 +7,7 @@ import json
 import time
 import uuid
 from werkzeug.utils import secure_filename
+from helpers import parse_images_data
 
 PAYMENT_UPLOAD_DIR = os.path.join('static', 'uploads', 'payments')
 PAYMENT_UPLOAD_PREFIX = 'uploads/payments'
@@ -28,9 +29,6 @@ def book():
         cur = mysql.connection.cursor()
         
         try:
-            print(f"\n=== DEBUG: START BOOKING PROCESS ===")
-            print(f"Room ID: {room_id}, Dates: {check_in} to {check_out}")
-            
             # 1. CEK KAMAR TERSEDIA DENGAN LOCK ROW
             cur.execute("""
                 SELECT * FROM rooms 
@@ -41,17 +39,12 @@ def book():
             room = cur.fetchone()
             
             if not room:
-                print(f"DEBUG: Room {room_id} not available")
                 flash('Room not available or fully booked.', 'danger')
                 cur.close()
                 return redirect(url_for('rooms'))
             
             room = dict(room)
             current_available = room['available_count']
-            
-            print(f"DEBUG: Room {room['name']}")
-            print(f"  - Current available_count: {current_available}")
-            print(f"  - Room count: {room['room_count']}")
             
             # 2. VALIDASI KAPASITAS
             if guests > room['capacity']:
@@ -104,14 +97,6 @@ def book():
             # **TOTAL HARGA SETELAH PAJAK**
             total_price = subtotal + tax_amount + service_charge
             
-            print(f"DEBUG: Price Calculation")
-            print(f"  - Room price per night: Rp{room_price:,.0f}")
-            print(f"  - Nights: {nights}")
-            print(f"  - Subtotal: Rp{subtotal:,.0f}")
-            print(f"  - Tax (10%): Rp{tax_amount:,.0f}")
-            print(f"  - Service Charge (11%): Rp{service_charge:,.0f}")
-            print(f"  - TOTAL: Rp{total_price:,.0f}")
-            
             # 6. GENERATE KODE BOOKING
             import random, string
             def generate_booking_code():
@@ -121,13 +106,11 @@ def book():
             
             booking_code = generate_booking_code()
             
-            print(f"DEBUG: Creating booking with code {booking_code}")
-            
             # 7. SIMPAN BOOKING DENGAN HARGA YANG SUDAH PAJAK
             cur.execute("""
                 INSERT INTO bookings 
                 (user_id, room_id, check_in, check_out, guests, 
-                total_price, subtotal, tax_amount, service_charge,  -- PERHATIKAN URUTAN!
+                total_price, subtotal, tax_amount, service_charge,
                 special_requests, status, booking_code,
                 guest_name, guest_email, guest_phone, guest_country)
                 VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, 'waiting_payment', %s, 
@@ -154,10 +137,6 @@ def book():
             
             new_available_count = current_available - 1
             
-            print(f"DEBUG: Updating room availability")
-            print(f"  - From: {current_available}")
-            print(f"  - To: {new_available_count}")
-            
             # 9. UPDATE ROOM AVAILABILITY
             cur.execute("""
                 UPDATE rooms 
@@ -169,12 +148,6 @@ def book():
             mysql.connection.commit()
             cur.close()
             
-            print(f"=== DEBUG: BOOKING SUCCESS ===")
-            print(f"Booking ID: {booking_id}")
-            print(f"Booking Code: {booking_code}")
-            print(f"Total Price (with tax): Rp{total_price:,.0f}")
-            print(f"New available_count for room {room_id}: {new_available_count}")
-            
             flash(f'Booking successful! Please complete payment.', 'success')
             
             return redirect(url_for('booking_success', booking_id=booking_id))
@@ -182,15 +155,12 @@ def book():
         except Exception as e:
             mysql.connection.rollback()
             cur.close()
-            print(f"DEBUG: BOOKING ERROR - {str(e)}")
+            app.logger.exception('Booking creation failed for room %s', room_id)
             flash(f'Booking failed. Please try again.', 'danger')
             return redirect(url_for('book', room_id=room_id))
     
     room_id = request.args.get('room_id')
     cur = mysql.connection.cursor()
-    
-    print(f"\n=== DEBUG: GET BOOK PAGE ===")
-    print(f"Requested room_id: {room_id}")
     
     if room_id:
         cur.execute("""
@@ -220,15 +190,10 @@ def book():
     cur.close()
     
     if not room:
-        print(f"DEBUG: Room not found or not available")
         flash('Room not available.', 'warning')
         return redirect(url_for('rooms'))
     
     room = dict(room)
-    
-    print(f"DEBUG: Displaying room {room['name']}")
-    print(f"  - Available: {room.get('available_count')}")
-    print(f"  - Availability text: {room.get('availability_text')}")
     
     if room.get('images'):
         images_raw = room['images']
@@ -409,8 +374,6 @@ def booking_success(booking_id):
 def booking_payment(booking_id):
     cur = mysql.connection.cursor()
     
-    print(f"=== DEBUG booking_payment for booking_id={booking_id} ===")
-    
     # Ambil data booking dengan informasi lengkap
     cur.execute("""
         SELECT b.*, 
@@ -534,7 +497,6 @@ def handle_ajax_payment(booking_id, booking, cur):
         try:
             # Save file
             proof_file.save(filepath)
-            print(f"DEBUG: Payment proof saved: {filepath}")
             
             # Set expiration date (24 hours from now)
             expiration_date = datetime.now() + timedelta(hours=24)
@@ -597,24 +559,24 @@ def handle_ajax_payment(booking_id, booking, cur):
                     except:
                         pass
                 
-                print(f"Database error: {db_error}")
+                app.logger.exception('Payment processing failed for booking %s', booking_id)
                 return jsonify({
                     'success': False,
-                    'error': f'Payment processing failed: {str(db_error)}'
+                    'error': 'Payment processing failed. Please try again.'
                 }), 500
                 
         except Exception as file_error:
-            print(f"File save error: {file_error}")
+            app.logger.exception('Failed to save payment proof for booking %s', booking_id)
             return jsonify({
                 'success': False,
-                'error': f'Failed to save payment proof: {str(file_error)}'
+                'error': 'Failed to save payment proof. Please try again.'
             }), 500
             
     except Exception as e:
-        print(f"General error: {e}")
+        app.logger.exception('Unexpected error while processing payment for booking %s', booking_id)
         return jsonify({
             'success': False,
-            'error': f'Unexpected error: {str(e)}'
+            'error': 'Unexpected error. Please try again.'
         }), 500
 
 def handle_form_payment(booking_id, booking, cur):
@@ -671,7 +633,6 @@ def handle_form_payment(booking_id, booking, cur):
     try:
         # Save file
         proof_file.save(filepath)
-        print(f"DEBUG: Payment proof saved: {filepath}")
         
         # Set expiration date (24 hours from now)
         expiration_date = datetime.now() + timedelta(hours=24)
@@ -732,23 +693,23 @@ def handle_form_payment(booking_id, booking, cur):
             cur.close()
             return redirect(url_for('booking_success', booking_id=booking_id))
             
-        except Exception as db_error:
+        except Exception:
             cur.execute("ROLLBACK")
             # Delete uploaded file if database error
             if os.path.exists(filepath):
                 try:
                     os.remove(filepath)
-                except:
+                except OSError:
                     pass
             
-            print(f"Database error: {db_error}")
-            flash(f'Payment processing failed: {str(db_error)}', 'danger')
+            app.logger.exception('Payment processing failed for booking %s', booking_id)
+            flash('Payment processing failed. Please try again.', 'danger')
             cur.close()
             return redirect(url_for('booking_payment', booking_id=booking_id))
             
-    except Exception as file_error:
-        print(f"File save error: {file_error}")
-        flash(f' Failed to save payment proof: {str(file_error)}', 'danger')
+    except Exception:
+        app.logger.exception('Failed to save payment proof for booking %s', booking_id)
+        flash('Failed to save payment proof. Please try again.', 'danger')
         cur.close()
         return redirect(url_for('booking_payment', booking_id=booking_id))
 
@@ -759,10 +720,7 @@ def generate_payment_filename(booking_id, payment_method, original_filename, qri
     unique_id = uuid.uuid4().hex[:8]
     timestamp = int(time.time())
     
-    if file_extension:
-        base_name = f"payment_{booking_id}_{payment_method}_{timestamp}_{unique_id}"
-    else:
-        base_name = f"payment_{booking_id}_{payment_method}_{timestamp}_{unique_id}"
+    base_name = f"payment_{booking_id}_{payment_method}_{timestamp}_{unique_id}"
     
     # For QRIS simulated, add note to filename
     if payment_method == 'qris' and qris_simulated == 'true':
@@ -773,30 +731,9 @@ def generate_payment_filename(booking_id, payment_method, original_filename, qri
 def prepare_booking_data_for_template(booking_id, booking, cur):
     """Prepare booking data for template rendering"""
     # Parse room images
-    if booking.get('room_images'):
-        try:
-            if isinstance(booking['room_images'], str):
-                try:
-                    images_list = json.loads(booking['room_images'])
-                except json.JSONDecodeError:
-                    images_list = [img.strip() for img in booking['room_images'].split(',') if img.strip()]
-            else:
-                images_list = []
-            
-            if images_list and len(images_list) > 0:
-                # Ensure the path is correct
-                first_image = images_list[0]
-                if not first_image.startswith(('http', '/static', '/')):
-                    booking['room_main_image'] = url_for('static', filename=f'images/rooms/{first_image}')
-                else:
-                    booking['room_main_image'] = first_image
-            else:
-                booking['room_main_image'] = None
-        except Exception as e:
-            print(f"Error parsing room images: {e}")
-            booking['room_main_image'] = None
-    else:
-        booking['room_main_image'] = None
+    images_list = parse_images_data(booking.get('room_images'), default_dir='images/rooms')
+    booking['room_main_image'] = images_list[0] if images_list else None
+    booking['room_images_list'] = images_list
     
     # Format price
     if booking.get('total_price'):
@@ -882,8 +819,7 @@ def prepare_booking_data_for_template(booking_id, booking, cur):
         else:
             booking['nights'] = 1
             
-    except Exception as e:
-        print(f"Error calculating nights: {e}")
+    except Exception:
         booking['nights'] = 1
     
     booking_created = booking.get('created_at')
@@ -922,8 +858,6 @@ def prepare_booking_data_for_template(booking_id, booking, cur):
     booking['expiry_time'] = expiry_time.strftime('%d %b %Y %H:%M')
     booking['countdown_seconds'] = total_seconds if not is_expired else 0
     booking['countdown_display'] = f"{hours_left:02d}:{minutes_left:02d}:{seconds_left:02d}"
-    
-    print(f"DEBUG - Booking {booking_id}: {hours_left}h {minutes_left}m {seconds_left}s left")
     
     # Ensure room name exists
     if not booking.get('room_name'):
