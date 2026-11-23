@@ -114,11 +114,11 @@
                             <!-- Customer Info -->
                             <td class="px-6 py-4">
                                 <div class="text-sm font-medium text-gray-900 dark:text-white">
-                                    {{ booking.first_name }} {{ booking.last_name }}
+                                    {{ booking.first_name|e }} {{ booking.last_name|e }}
                                 </div>
-                                <div class="text-sm text-gray-500 dark:text-gray-400">{{ booking.email }}</div>
+                                <div class="text-sm text-gray-500 dark:text-gray-400">{{ booking.email|e }}</div>
                                 <div class="text-xs text-gray-500 dark:text-gray-400">
-                                    {{ booking.phone or 'No phone' }}
+                                    {{ (booking.phone or 'No phone')|e }}
                                 </div>
                             </td>
                             

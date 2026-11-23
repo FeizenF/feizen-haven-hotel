@@ -429,7 +429,7 @@
         <!-- Header -->
         <div class="mb-8">
             <h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-2">Admin Dashboard</h1>
-            <p class="text-gray-600 dark:text-gray-300">Welcome back, {{ session.name }}! Here's what's happening today.</p>
+            <p class="text-gray-600 dark:text-gray-300">Welcome back, {{ session.name|e }}! Here's what's happening today.</p>
         </div>
 
         <!-- Stats Grid -->
@@ -570,8 +570,8 @@
                                             {{ booking.booking_code or 'FH' + '%04d'|format(booking.id) }}
                                         </td>
                                         <td>
-                                            <div class="font-medium">{{ booking.first_name }} {{ booking.last_name }}</div>
-                                            <div class="text-xs text-gray-500">{{ booking.email }}</div>
+                                            <div class="font-medium">{{ booking.first_name|e }} {{ booking.last_name|e }}</div>
+                                            <div class="text-xs text-gray-500">{{ booking.email|e }}</div>
                                         </td>
                                         <td class="font-medium">{{ booking.room_name }}</td>
                                         <td>
@@ -633,7 +633,7 @@
                                     {% for user in recent_users %}
                                     <tr>
                                         <td class="font-medium">{{ user.first_name }} {{ user.last_name }}</td>
-                                        <td class="text-sm text-gray-500">{{ user.email }}</td>
+                                        <td class="text-sm text-gray-500">{{ user.email|e }}</td>
                                         <td class="text-sm">
                                             {% if user.created_at %}
                                                 {{ user.created_at.strftime('%d/%m/%Y') }}

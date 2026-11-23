@@ -244,7 +244,7 @@
                         <tr class="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors user-row" 
                             data-role="{{ user.role }}" 
                             data-name="{{ user.first_name|lower }} {{ user.last_name|lower }}"
-                            data-email="{{ user.email|lower }}"
+                            data-email="{{ (user.email or '')|e|lower }}"
                             data-phone="{{ user.phone or '' }}"
                             data-bookings="{{ user.total_bookings or 0 }}"
                             data-joined="{{ user.created_at.isoformat() if user.created_at else '' }}">
@@ -276,14 +276,14 @@
                                 <div class="text-sm">
                                     <div class="flex items-center text-gray-900 dark:text-white mb-1">
                                         <i class="fas fa-envelope text-gray-400 mr-2 w-4"></i>
-                                        <a href="mailto:{{ user.email }}" class="hover:text-gold hover:underline truncate max-w-[200px]">
-                                            {{ user.email }}
+                                        <a href="mailto:{{ user.email|e }}" class="hover:text-gold hover:underline truncate max-w-[200px]">
+                                            {{ user.email|e }}
                                         </a>
                                     </div>
                                     {% if user.phone %}
                                     <div class="flex items-center text-gray-600 dark:text-gray-400">
                                         <i class="fas fa-phone text-gray-400 mr-2 w-4"></i>
-                                        <a href="tel:{{ user.phone }}" class="hover:text-gold hover:underline">
+                                        <a href="tel:{{ (user.phone or '')|e }}" class="hover:text-gold hover:underline">
                                             {{ user.phone }}
                                         </a>
                                     </div>
@@ -368,12 +368,12 @@
                                     
                                     <!-- Quick Actions -->
                                     <div class="flex gap-1 mt-1 sm:mt-0">
-                                        <a href="mailto:{{ user.email }}" 
+                                        <a href="mailto:{{ user.email|e }}" 
                                            class="action-btn inline-flex items-center justify-center w-8 h-8 border dark:border-gray-600 rounded text-gray-600 dark:text-gray-400 hover:border-gold hover:text-gold">
                                             <i class="fas fa-envelope text-xs"></i>
                                         </a>
                                         {% if user.phone %}
-                                        <a href="tel:{{ user.phone }}" 
+                                        <a href="tel:{{ (user.phone or '')|e }}" 
                                            class="action-btn inline-flex items-center justify-center w-8 h-8 border dark:border-gray-600 rounded text-gray-600 dark:text-gray-400 hover:border-gold hover:text-gold">
                                             <i class="fas fa-phone text-xs"></i>
                                         </a>
