@@ -518,7 +518,8 @@ h4 { font-size: 1.5rem; }
     border-left-color: #10B981;
 }
 
-.flash-error {
+.flash-error,
+.flash-danger {
     border-left-color: #EF4444;
 }
 
@@ -959,37 +960,79 @@ img.loaded {
     border-radius: inherit;
 }
 /* FORM STYLES FOR DARK MODE */
-.form-input {
-    @apply w-full px-4 py-3 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg;
-    @apply text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400;
-    @apply focus:ring-2 focus:ring-gold focus:border-transparent transition-all;
-}
-
+/* NOTE: Tailwind is loaded from the CDN, which does not compile @apply in
+   external stylesheets. These rules are written in plain CSS on purpose. */
 .form-select {
-    @apply w-full px-4 py-3 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg;
-    @apply text-gray-900 dark:text-white;
-    @apply focus:ring-2 focus:ring-gold focus:border-transparent transition-all;
+    width: 100%;
+    padding: 0.75rem 2.5rem 0.75rem 1rem;
+    background-color: #ffffff;
+    border: 1px solid #d1d5db;
+    border-radius: 0.5rem;
+    color: #111827;
+    transition: all 0.3s ease;
     appearance: none;
     background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
     background-position: right 0.5rem center;
     background-repeat: no-repeat;
     background-size: 1.5em 1.5em;
-    padding-right: 2.5rem;
 }
 
 .dark .form-select {
+    background-color: #374151;
+    border-color: #4b5563;
+    color: #ffffff;
     background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%23d1d5db' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
 }
 
+.form-select:focus {
+    outline: none;
+    border-color: #C5A145;
+    box-shadow: 0 0 0 2px rgba(197, 161, 69, 0.4);
+}
+
 .form-textarea {
-    @apply w-full px-4 py-3 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg;
-    @apply text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400;
-    @apply focus:ring-2 focus:ring-gold focus:border-transparent transition-all;
+    width: 100%;
+    padding: 0.75rem 1rem;
+    background-color: #ffffff;
+    border: 1px solid #d1d5db;
+    border-radius: 0.5rem;
+    color: #111827;
+    transition: all 0.3s ease;
     resize: none;
 }
 
+.dark .form-textarea {
+    background-color: #374151;
+    border-color: #4b5563;
+    color: #ffffff;
+}
+
+.form-textarea:focus {
+    outline: none;
+    border-color: #C5A145;
+    box-shadow: 0 0 0 2px rgba(197, 161, 69, 0.4);
+}
+
+.form-input::placeholder,
+.form-textarea::placeholder {
+    color: #6b7280;
+}
+
+.dark .form-input::placeholder,
+.dark .form-textarea::placeholder {
+    color: #9ca3af;
+}
+
 .form-label {
-    @apply block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2;
+    display: block;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #374151;
+    margin-bottom: 0.5rem;
+}
+
+.dark .form-label {
+    color: #d1d5db;
 }
 /* QUICK FIX FOR DARK MODE FORM */
 .dark input:not([type="submit"]):not([type="button"]),

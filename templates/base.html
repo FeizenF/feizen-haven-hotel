@@ -165,7 +165,7 @@
                         <div class="flex items-center">
                             {% if category == 'success' %}
                                 <i class="fas fa-check-circle text-green-500 mr-3"></i>
-                            {% elif category == 'danger' %}
+                            {% elif category in ['danger', 'error'] %}
                                 <i class="fas fa-exclamation-circle text-red-500 mr-3"></i>
                             {% elif category == 'warning' %}
                                 <i class="fas fa-exclamation-triangle text-yellow-500 mr-3"></i>

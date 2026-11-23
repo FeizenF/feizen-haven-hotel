@@ -121,15 +121,6 @@
     background-color: rgba(197, 161, 69, 0.05);
 }
 
-.status-badge {
-    padding: 2px 8px;
-    border-radius: 12px;
-    font-size: 0.75rem;
-    font-weight: 500;
-    display: inline-flex;
-    align-items: center;
-}
-
 .pay-now-btn {
     background: linear-gradient(135deg, #C5A145, #E6C366);
     color: #1A2B3C;
@@ -147,6 +138,7 @@
 
 /* Payment Method Styles */
 .payment-method {
+    position: relative;
     border: 2px solid #E5E7EB;
     border-radius: 12px;
     padding: 20px;
